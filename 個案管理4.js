@@ -416,7 +416,7 @@ function renderList(container){
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="搜尋姓名、病歷號…">
       </div>
-      <select class="filter-sel"><option>全部照護模式</option><option>住院</option><option>日照</option><option>居家</option><option>一般</option></select>
+      <select class="filter-sel"><option>全部類型</option><option>住院PAC</option><option>日照PAC</option><option>居家PAC</option><option>一般</option></select>
       <select class="filter-sel" id="status-filter" onchange="onStatusFilterChange(this.value)">
         <option value="">全部狀態</option>
         <option>收案判斷中</option><option>待補件</option>
@@ -426,12 +426,7 @@ function renderList(container){
       </select>
       <select class="filter-sel">
         <option>全部疾病別</option>
-        <optgroup label="PAC 四大疾病別">
-          <option>腦中風</option><option>創傷性神經損傷</option><option>脆弱性骨折</option><option>衰弱高齡</option>
-        </optgroup>
-        <optgroup label="一般（非PAC）">
-          <option>外科開刀</option><option>一般復健</option><option>安寧住院</option><option>內科住院</option>
-        </optgroup>
+        <option>腦中風</option><option>創傷性神經損傷</option><option>脆弱性骨折</option><option>衰弱高齡</option><option>一般（非PAC）</option>
       </select>
     </div>
 
@@ -1024,15 +1019,15 @@ function renderDetail(container,caseId){
       <div class="sc-header"><div class="sc-title">🩺 醫療紀錄查看</div><span style="font-size:10px;color:var(--gray-400)">僅限住院個案</span></div>
       <div class="sc-body">
         <div class="forms-grid">
-          <div class="form-item" onclick="alert('將跳轉至杏翔系統查看護理紀錄')">
+          <div class="form-item" onclick="alert('將串接杏翔系統查看護理紀錄')">
             <div class="form-item-left"><div class="form-icon">📋</div><div><div class="form-name">護理紀錄</div><div class="form-meta">*杏翔</div></div></div>
             <span class="form-status fs-pending">查看</span>
           </div>
-          <div class="form-item" onclick="alert('將跳轉至杏翔系統查看病程記錄')">
+          <div class="form-item" onclick="alert('將串接杏翔系統查看病程記錄')">
             <div class="form-item-left"><div class="form-icon">📈</div><div><div class="form-name">病程記錄</div><div class="form-meta">*杏翔</div></div></div>
             <span class="form-status fs-pending">查看</span>
           </div>
-          <div class="form-item" onclick="alert('將跳轉至杏翔系統查看生命徵象')">
+          <div class="form-item" onclick="alert('將串接杏翔系統查看生命徵象')">
             <div class="form-item-left"><div class="form-icon">💓</div><div><div class="form-name">生命徵象</div><div class="form-meta">*杏翔</div></div></div>
             <span class="form-status fs-pending">查看</span>
           </div>

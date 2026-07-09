@@ -15,7 +15,7 @@ let currentForm=null;
 // PAC 四大疾病別（依員郭醫院實際收案範圍）
 const PAC_DISEASE_TYPES=['腦中風','創傷性神經損傷','脆弱性骨折','衰弱高齡'];
 // 一般（非PAC）住院常見分類，含「其他」開放手動輸入
-const GENERAL_DISEASE_TYPES=['外科開刀（甲狀腺/脊椎/神經外科等）','一般復健（中風/脊椎損傷，非PAC專案）','安寧住院','內科住院（甲乙科）','其他'];
+const GENERAL_DISEASE_TYPES=['外科開刀（甲狀腺/脊椎/神經外科等）','一般復健（中風/脊椎損傷，非PAC專案）','安寧住院','內科住院（家醫科）','其他'];
 // PAC 收案條件對照表：用於開案日/結案日自動推算（取週數下限）
 const PAC_CARE_PERIOD={
   '腦中風':{minAge:0,weeksMin:6,weeksMax:12},
@@ -42,7 +42,8 @@ function calcCloseDate(openDateStr,disease){
 }
 
 // ── 個案資料 ──
-// 精簡狀態（12組）：收案判斷中／待補件／確認收案／待排床／待聯絡／待開案／待評估／照護中／展延中／即將結案／已結案／封存
+// 精簡狀態（11組）：收案判斷中／待補件／確認收案／待排床／待聯絡／待開案／待評估／照護中／展延中／即將結案／封存
+// 結案（成功/失敗）不再是獨立狀態，一律經由封存 Modal 直接轉為「封存」，類型記錄於 archiveType（正常結案／結案失敗）
 // （移除「新轉介」：新增個案時即決定收案判斷中 or 待補件，無需中間暫存狀態）
 // timelineStep：目前停在哪個時間軸節點（時間軸保留「新轉介」作為歷史事件節點）
 // archiveType：封存類型（僅封存狀態使用，詳情頁漸進式揭露）
@@ -66,7 +67,7 @@ const CASES={
     {id:'f4',name:'林翠娟',birthDate:'1946/10/11',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'台中榮總',date:'2026/04/15',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:11,timelineStep:'即將結案',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',openDate:'2026/04/15',closeDate:'2026/04/29',roomPref:'single'},
     {id:'f5',name:'張明輝',birthDate:'1951/03/28',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/01',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:10,timelineStep:'即將結案',referral:{status:'轉介中',note:'轉介長照服務，已聯繫長照管理中心'},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/05/01',closeDate:'2026/06/12',roomPref:null},
     {id:'f6',name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null},
-    {id:'f7',name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',status:'已結案',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:'已結案',timelineSub:'成功',archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double'},
+    {id:'f7',name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:null,archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double'},
     {id:'f8',name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'結案失敗',archiveDate:'2026/03/15',archiveOperator:'林美惠',archiveReason:'個案病況變化，需轉回急性醫院持續治療，無法繼續 PAC 療程。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null},
     // 封存：正式病歷非PAC個案（PAC判斷後確認為非PAC，移交病床管理並封存於此模組）
     {id:'f9',name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'一般復健（中風/脊椎損傷，非PAC專案）',source:'門診',date:'2026/06/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null},
@@ -95,15 +96,28 @@ const STATUS_COLOR={
   '照護中':'badge-teal',
   '展延中':'badge-purple',
   '即將結案':'badge-amber',
-  '已結案':'badge-green',
   '封存':'badge-gray',
 };
 
-// ── 封存類型完整清單（11種，僅詳情頁顯示）──
-const ARCHIVE_TYPES=[
-  '非PAC退案','日照不收治','住院當日未報到','日照當日未報到',
-  '決定不報到','決定不參加','居家不收治','非PAC（居家二次確認）',
-  '正常結案','結案失敗'
+// ── 封存類型清單：依個案 formal 欄位分成臨時／正式病歷兩套 ──
+// field：選擇該類型後顯示的必填文字欄位標籤；未設定表示不需額外說明
+// 「正常結案」「結案失敗」不在此清單內，改由成功結案／不成功結案按鈕鎖定觸發（見 openArchiveModal 呼叫處）
+const ARCHIVE_TYPES_TEMP=[
+  {type:'非PAC退案'},
+  {type:'住院不收治'},
+  {type:'日照不收治'},
+  {type:'居家不收治'},
+  {type:'決定不報到／參加',field:'原因說明',hint:'例如：家屬拒絕、病情改變等'},
+  {type:'住院當日未報到',field:'原因說明'},
+  {type:'日照當日未報到',field:'原因說明'},
+  {type:'居家未報到/未參加',field:'原因說明'},
+  {type:'資料輸入錯誤'},
+  {type:'重複建立個案'},
+];
+// 正式病歷手動封存僅保留資料性錯誤兩項；「非PAC」「正常結案」「結案失敗」皆走各自獨立流程（鎖定 preset 觸發 openArchiveModal，不出現在此清單）
+const ARCHIVE_TYPES_FORMAL=[
+  {type:'資料輸入錯誤'},
+  {type:'重複建立個案'},
 ];
 
 // ── 時間軸節點定義 ──
@@ -126,7 +140,7 @@ const TIMELINE_TEMP_BY_MODE={
     {label:'待評估',sub:'待復健主管回覆是否收治'},
     {label:'確認收案',sub:'居家'},
     {label:'待聯絡',sub:'待個案／家屬確認'},
-    {label:'待評估',sub:'待醫師居家評估'},
+    {label:'待評估',sub:'待醫師評估'},
     {label:'待開案'},
   ],
   general:[
@@ -143,7 +157,6 @@ const TIMELINE_FORMAL_COMMON=[
   {label:'即將結案',sub:'結案兩週前提醒'},
   {label:'待轉介',event:true},
   {label:'待安排出院/結束服務',event:true},
-  {label:'已結案',sub:'成功 / 失敗'},
 ];
 
 
@@ -422,7 +435,7 @@ function renderList(container){
         <option>收案判斷中</option><option>待補件</option>
         <option>確認收案</option><option>待排床</option><option>待聯絡</option>
         <option>待開案</option><option>待評估</option><option>照護中</option>
-        <option>展延中</option><option>即將結案</option><option>已結案</option><option>封存</option>
+        <option>展延中</option><option>即將結案</option><option>封存</option>
       </select>
       <select class="filter-sel">
         <option>全部疾病別</option>
@@ -485,11 +498,11 @@ function renderArchiveList(cases){
       const age=c.birthDate?calcAge(c.birthDate):null;
       const archiveColor={
         '非PAC個案':'var(--blue-light)','結案失敗':'var(--red-light)','正常結案':'var(--green-light)',
-        '住院當日未報到':'var(--amber-light)','日照當日未報到':'var(--amber-light)'
+        '決定不報到／參加':'var(--amber-light)','住院當日未報到':'var(--amber-light)','日照當日未報到':'var(--amber-light)','居家未報到/未參加':'var(--amber-light)'
       }[c.archiveType]||'var(--gray-100)';
       const archiveTextColor={
         '非PAC個案':'var(--blue)','結案失敗':'var(--red)','正常結案':'var(--green)',
-        '住院當日未報到':'var(--amber)','日照當日未報到':'var(--amber)'
+        '決定不報到／參加':'var(--amber)','住院當日未報到':'var(--amber)','日照當日未報到':'var(--amber)','居家未報到/未參加':'var(--amber)'
       }[c.archiveType]||'var(--gray-500)';
       return `<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:14px 16px">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
@@ -692,15 +705,16 @@ function renderDetail(container,caseId){
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-translate')">📄 病摘翻譯</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-judge')">🩺 轉交判斷</button>
       <button class="btn btn-amber btn-sm" onclick="openModal('modal-convert')">→ 轉正式病歷</button>
-      <button class="btn btn-danger btn-sm" onclick="openModal('modal-retire')">退案</button>
-      <button class="btn btn-secondary btn-sm" onclick="openModal('modal-archive')">封存</button>
+      <button class="btn btn-danger btn-sm" onclick="openArchiveModal({formal:false})">退案</button>
+      <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:false})">封存</button>
     `;
     else actions=`
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-translate')">📄 病摘翻譯</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-extend')">📤 匯出展延</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-close')">📤 匯出結案</button>
-      <button class="btn btn-green btn-sm" onclick="openModal('modal-success-close')">✓ 成功結案</button>
-      <button class="btn btn-danger btn-sm" onclick="openModal('modal-fail-close')">不成功結案</button>
+      <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:true})">封存</button>
+      <button class="btn btn-green btn-sm" onclick="openArchiveModal({formal:true,presetType:'正常結案',locked:true,showCloseDate:true,successMsg:()=>'已成功結案，個案移至封存'})">✓ 成功結案</button>
+      <button class="btn btn-danger btn-sm" onclick="openArchiveModal({formal:true,presetType:'結案失敗',locked:true,showCloseDate:true,successMsg:()=>'已標記結案失敗，個案移至封存'})">不成功結案</button>
     `;
   } else if(isDoc) actions=`<span class="badge badge-amber" style="font-size:12px">醫師視角・可填寫 PAC 判斷與醫囑</span>`;
   else if(isNur) actions=`<span class="badge badge-teal" style="font-size:12px">護理師視角・可填寫護理相關欄位</span>`;
@@ -819,8 +833,8 @@ function renderDetail(container,caseId){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-        <button class="btn btn-green btn-sm" onclick="openModal('modal-success-close')">✓ 成功結案</button>
-        <button class="btn btn-danger btn-sm" onclick="openModal('modal-fail-close')">不成功結案</button>
+        <button class="btn btn-green btn-sm" onclick="openArchiveModal({formal:true,presetType:'正常結案',locked:true,showCloseDate:true,successMsg:()=>'已成功結案，個案移至封存'})">✓ 成功結案</button>
+        <button class="btn btn-danger btn-sm" onclick="openArchiveModal({formal:true,presetType:'結案失敗',locked:true,showCloseDate:true,successMsg:()=>'已標記結案失敗，個案移至封存'})">不成功結案</button>
       </div>
     </div>
     `:''}
@@ -855,18 +869,6 @@ function renderDetail(container,caseId){
         <div><strong style="color:var(--gray-800)">操作人員：</strong>${c.archiveOperator||'—'}</div>
       </div>
       ${c.archiveReason?`<div style="margin-top:8px;font-size:12px;color:var(--gray-600);background:var(--white);padding:10px;border-radius:6px">${c.archiveReason}</div>`:''}
-    </div>
-    `:''}
-
-    <!-- 已結案說明 banner -->
-    ${c.status==='已結案'?`
-    <div style="background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;padding:14px 18px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px">✓ 結案說明</div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--gray-700)">
-        <div><strong>結案類型：</strong>${c.archiveType||c.timelineSub||'—'}</div>
-        <div><strong>結案日期：</strong>${c.archiveDate||'—'}</div>
-        <div><strong>操作人員：</strong>${c.archiveOperator||'—'}</div>
-      </div>
     </div>
     `:''}
 
@@ -939,7 +941,10 @@ function renderDetail(container,caseId){
               <div class="contact-meta">2026/06/17 14:00・電話</div>
               <div class="contact-note">確認入院計畫，家屬已確認，無異動。</div>
             </div>
-            ${isMgr&&!isFormal?`<button class="btn btn-green btn-xs" style="flex-shrink:0;align-self:center" onclick="alert('已確認個案確定報到，狀態更新為「待開案」')">✓ 個案確定報到</button>`:''}
+            ${isMgr&&!isFormal?`<div style="display:flex;gap:6px;flex-shrink:0;align-self:center">
+              <button class="btn btn-green btn-xs" onclick="alert('已確認個案確定報到，狀態更新為「待開案」')">✓ 個案確定報到</button>
+              <button class="btn btn-danger btn-xs" onclick="openNoShowArchive()">✕ 確定不報到</button>
+            </div>`:''}
           </div>
         </div>
         ${c.modeType==='hosp'?`
@@ -963,7 +968,7 @@ function renderDetail(container,caseId){
 
     <!-- 上游聯繫紀錄 -->
     <div class="section-card">
-      <div class="sc-header"><div class="sc-title">🏥 上游聯繫紀錄</div>${isMgr?`<button class="btn btn-ghost btn-xs" onclick="alert('新增聯繫紀錄')">＋ 新增</button>`:''}</div>
+      <div class="sc-header"><div class="sc-title">🏥 上游聯繫紀錄</div>${isMgr?`<button class="btn btn-ghost btn-xs" onclick="openUpstreamContactModal()">＋ 新增</button>`:''}</div>
       <div class="sc-body">
         <div class="info-grid-2" style="margin-bottom:12px">
           <div class="info-item"><label>上游醫院</label><span>${c.source}</span></div>
@@ -976,6 +981,21 @@ function renderDetail(container,caseId){
             </span>
           </div>
         </div>
+        ${c.upstreamLog&&c.upstreamLog.length?`
+        <div style="padding-top:12px;border-top:1px solid var(--gray-100)">
+          <div class="contact-log">
+            ${[...c.upstreamLog].reverse().map(log=>`
+              <div class="contact-entry ${log.result==='已回報退案'?'':'done'}">
+                <div>
+                  <div class="contact-label">${log.result||'已聯繫，尚無結果'}</div>
+                  <div class="contact-meta">${log.datetime}・${log.method}</div>
+                  ${log.openDate?`<div class="contact-note">預計開案日：${log.openDate}</div>`:''}
+                  ${log.note?`<div class="contact-note">${log.note}</div>`:''}
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+        `:`<div style="font-size:12px;color:var(--gray-400);padding-top:8px;border-top:1px solid var(--gray-100)">尚無聯繫紀錄，點擊「＋ 新增」開始記錄</div>`}
       </div>
     </div>
 
@@ -1115,11 +1135,6 @@ function buildTimeline(c){
   if(c.hadExtensionFail&&currentIdx===-1){
     currentIdx=allNodes.findIndex(n=>n.label==='照護中'&&n.sub==='展延後');
   }
-  // 封存或已結案：視為走到最後一步（若有對應節點）或標記特殊
-  if(c.status==='已結案'){
-    currentIdx=allNodes.length-1;
-  }
-
   return allNodes.map((n,i)=>({
     label:n.label,
     sub:n.sub||'',
@@ -1136,20 +1151,12 @@ function judgeOption(label,selected,disabled){
 }
 
 function submitPacJudgment(caseId){
-  // 三分支邏輯示意：
-  // 是PAC → 直接轉換狀態，依模式分流到「確認收案」
-  // 非PAC → 彈窗詢問「是否收治為一般個案？」→ 是則轉一般個案；否則進入封存彈窗
-  // 需再評估 → 維持原狀態，僅記錄判斷意見
   const selected=document.querySelector('input[name="judge-result"]:checked');
   const result=selected?selected.nextElementSibling.textContent:'是 PAC';
   if(result==='是 PAC'){
     alert('判斷結果：是 PAC\n\n狀態將依照護模式（住院/日照/居家）轉換為「確認收案」');
   } else if(result==='非 PAC'){
-    if(confirm('判斷結果：非 PAC\n\n是否收治為一般個案？\n\n選擇「確定」→ 轉為一般個案（仍可參與排床，但不出現在個案管理列表）\n選擇「取消」→ 將進入封存流程')){
-      alert('已轉為一般個案，維持於個案管理流程中（個案管理列表中不再顯示）');
-    } else {
-      openModal('modal-retire');
-    }
+    openModal('modal-nonpac-step1');
   } else {
     alert('判斷結果：需再評估\n\n狀態維持不變，已記錄本次判斷意見供後續參考');
   }
@@ -1371,6 +1378,183 @@ function showLinkTip(formName,target){
 function openModal(id){document.getElementById(id).classList.remove('hidden')}
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden')}));
+
+function getCurrentCaseObj(){
+  return [...CASES.temp,...CASES.formal].find(x=>x.id===currentCase)||null;
+}
+
+// 家屬聯繫紀錄「確定不報到」：依個案照護模式自動預選對應封存類型，理由欄必填
+function openNoShowArchive(){
+  const c=getCurrentCaseObj();
+  const presetMap={hosp:'決定不報到／參加',day:'決定不報到／參加',home:'決定不報到／參加'};
+  openArchiveModal({formal:false,presetType:(c&&presetMap[c.modeType])||'決定不報到／參加',locked:true});
+}
+
+// ── PAC 判斷＝非PAC：兩步驟處理（匯入排床模組 or 直接封存）──
+function nonPacGoArchive(){
+  closeModal('modal-nonpac-step1');
+  openArchiveModal({formal:false,presetType:'非PAC退案',locked:true});
+}
+
+function nonPacGoImport(){
+  closeModal('modal-nonpac-step1');
+  document.querySelectorAll('input[name="nonpac-hosp-type"]').forEach(r=>r.checked=false);
+  openModal('modal-nonpac-step2');
+}
+
+function nonPacBackToStep1(){
+  closeModal('modal-nonpac-step2');
+  openModal('modal-nonpac-step1');
+}
+
+function confirmNonPacImport(){
+  const checked=document.querySelector('input[name="nonpac-hosp-type"]:checked');
+  if(!checked){alert('請選擇住院類型');return;}
+  const type=checked.value;
+  const c=getCurrentCaseObj();
+  if(c){
+    c.modeType='general';
+    c.mode='一般';
+    c.disease=type;
+    c.status='封存';
+    c.archiveType='非PAC個案';
+    c.archiveReason=`收案判斷確認為非PAC個案，選擇住院類型：${type}，個案資料已移交排床管理模組。`;
+    c.archiveDate='2026/07/09';
+    c.archiveOperator='林美惠';
+    c.timelineStep=null;
+    delete c.timelineSub;
+  }
+  closeModal('modal-nonpac-step2');
+  alert(`已選擇住院類型：${type}。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。個案管理模組中本個案狀態更新為封存（類型：非PAC個案）。`);
+  if(c) renderPage('detail',currentCase);
+}
+
+// ── 封存 Modal（統一入口，temp/formal 兩套清單 + 可鎖定單一類型）──
+// opts: {formal, presetType, locked, showCloseDate, successMsg(type)=>string}
+let archiveCtx=null;
+function openArchiveModal(opts){
+  archiveCtx={formal:false,presetType:null,locked:false,showCloseDate:false,successMsg:null,...opts};
+  renderArchiveModalBody();
+  openModal('modal-archive');
+}
+
+function selectArchiveType(type){
+  archiveCtx.presetType=type;
+  renderArchiveModalBody();
+}
+
+function archiveTypeDef(type){
+  if(type==='結案失敗') return {type,field:'結案失敗原因'};
+  if(type==='正常結案') return {type};
+  return [...ARCHIVE_TYPES_TEMP,...ARCHIVE_TYPES_FORMAL].find(o=>o.type===type)||null;
+}
+
+function renderArchiveModalBody(){
+  const {formal,presetType,locked,showCloseDate}=archiveCtx;
+  const list=formal?ARCHIVE_TYPES_FORMAL:ARCHIVE_TYPES_TEMP;
+  document.getElementById('archive-modal-title').textContent=locked&&presetType?`封存確認：${presetType}`:'封存個案';
+
+  const optsHtml=locked
+    ? `<div class="retire-list"><div class="retire-opt selected" style="cursor:default;opacity:.85"><input type="radio" checked disabled><span style="font-size:13px">${presetType}</span></div></div>`
+    : `<div class="retire-list">${list.map(o=>`
+        <div class="retire-opt ${o.type===presetType?'selected':''}" onclick="selectArchiveType('${o.type}')">
+          <input type="radio" name="archive-type" ${o.type===presetType?'checked':''}><span style="font-size:13px">${o.type}</span>
+        </div>`).join('')}</div>`;
+
+  const def=presetType?archiveTypeDef(presetType):null;
+  const fieldHtml=def&&def.field?`
+    <div class="form-group" style="margin-bottom:10px">
+      <label>${def.field} <span class="required">*</span></label>
+      <textarea class="form-control" rows="2" id="archive-field-input" placeholder="${def.hint||''}"></textarea>
+    </div>`:'';
+
+  const dateHtml=showCloseDate?`
+    <div class="form-group" style="margin-bottom:10px">
+      <label>結案日期</label>
+      <input class="form-control" type="date" id="archive-close-date" value="2026-07-09">
+    </div>`:'';
+
+  const note=`<div class="info-note amber">封存後個案狀態將轉為「封存」，並記錄以下類型供後續統計。</div>`;
+
+  document.getElementById('archive-modal-body').innerHTML=note+optsHtml+fieldHtml+dateHtml;
+}
+
+function confirmArchive(){
+  const {formal,locked,showCloseDate,successMsg}=archiveCtx;
+  let type=archiveCtx.presetType;
+  if(!locked){
+    const checked=document.querySelector('input[name="archive-type"]:checked');
+    if(!checked){alert('請選擇封存類型');return;}
+  }
+  if(!type){alert('請選擇封存類型');return;}
+  const def=archiveTypeDef(type);
+  let reasonText='';
+  if(def&&def.field){
+    const input=document.getElementById('archive-field-input');
+    reasonText=input?input.value.trim():'';
+    if(!reasonText){alert(`請填寫「${def.field}」`);return;}
+  }
+  const c=getCurrentCaseObj();
+  if(c){
+    const closeDate=showCloseDate?(document.getElementById('archive-close-date')?.value||'2026-07-09').replace(/-/g,'/'):'2026/07/09';
+    c.status='封存';
+    c.archiveType=type;
+    c.archiveReason=reasonText;
+    c.archiveDate=closeDate;
+    c.archiveOperator='林美惠';
+    if(showCloseDate) c.closeDate=closeDate;
+    c.timelineStep=null;
+    delete c.timelineSub;
+  }
+  closeModal('modal-archive');
+  alert(successMsg?successMsg(type):'個案已封存');
+  if(c) renderPage('detail',currentCase);
+}
+
+// ── 上游聯繫紀錄：新增 ──
+function openUpstreamContactModal(){
+  document.getElementById('uc-datetime').value='2026-07-09T09:30';
+  document.querySelector('input[name="uc-method"][value="電話"]').checked=true;
+  ['uc-status-hosp','uc-status-day','uc-status-home','uc-status-decline'].forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById('uc-opendate').value='2026-07-09';
+  document.getElementById('uc-opendate-wrap').classList.add('hidden');
+  document.getElementById('uc-note').value='';
+  openModal('modal-upstream-contact');
+}
+
+function toggleUpstreamOpenDate(){
+  const anyAdmit=['uc-status-hosp','uc-status-day','uc-status-home'].some(id=>document.getElementById(id).checked);
+  document.getElementById('uc-opendate-wrap').classList.toggle('hidden',!anyAdmit);
+}
+
+function submitUpstreamContact(){
+  const c=getCurrentCaseObj();
+  if(!c){closeModal('modal-upstream-contact');return;}
+  const datetime=document.getElementById('uc-datetime').value;
+  const method=document.querySelector('input[name="uc-method"]:checked').value;
+  const statusBoxes=['uc-status-hosp','uc-status-day','uc-status-home','uc-status-decline'].map(id=>document.getElementById(id));
+  const statuses=statusBoxes.filter(b=>b.checked).map(b=>b.value);
+  const admitSelected=statuses.some(s=>s!=='已回報退案');
+  const declineSelected=statuses.includes('已回報退案');
+  const openDate=admitSelected?document.getElementById('uc-opendate').value:'';
+  const note=document.getElementById('uc-note').value.trim();
+
+  const entry={
+    datetime:datetime.replace('T',' '),
+    method,
+    result:statuses.join('、')||null,
+    openDate:openDate?openDate.replace(/-/g,'/'):'',
+    note,
+  };
+  if(!c.upstreamLog) c.upstreamLog=[];
+  c.upstreamLog.push(entry);
+  if(admitSelected) c.upstreamStatus='已回報收案';
+  else if(declineSelected) c.upstreamStatus='已回報退案';
+
+  closeModal('modal-upstream-contact');
+  alert('已新增上游聯繫紀錄');
+  renderPage('detail',currentCase);
+}
 
 function switchRole(role){
   currentRole=role;

@@ -237,31 +237,47 @@
   </div>
 </div>
 
-<!-- 退案 -->
-<div id="modal-retire" class="modal-overlay hidden">
+<!-- 上游聯繫紀錄：新增 -->
+<div id="modal-upstream-contact" class="modal-overlay hidden">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title">退案 → 封存原因</div>
-      <button class="modal-close" onclick="closeModal('modal-retire')">✕</button>
+      <div class="modal-title">🏥 新增上游聯繫紀錄</div>
+      <button class="modal-close" onclick="closeModal('modal-upstream-contact')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="info-note amber">退案後個案狀態將直接轉為「封存」，並記錄以下類型供後續統計。</div>
-      <div class="retire-list">
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">非PAC退案</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">日照不收治</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">居家不收治</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">非PAC（居家二次確認）</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">決定不報到（家屬拒絕等）</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">決定不參加（居家）</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">住院當日未報到</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">日照當日未報到</span></div>
-        <div class="retire-opt"><input type="radio" name="retire"><span style="font-size:13px">其他</span></div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>聯繫日期與時間</label>
+        <input class="form-control" type="datetime-local" id="uc-datetime" value="2026-07-09T09:30">
       </div>
-      <textarea class="form-control" rows="2" placeholder="補充說明（選填）"></textarea>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>聯繫方式</label>
+        <div style="display:flex;gap:16px;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="uc-method" value="電話" checked style="accent-color:var(--blue)"> 電話</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="uc-method" value="Line" style="accent-color:var(--blue)"> Line</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="uc-method" value="當面" style="accent-color:var(--blue)"> 當面</label>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>回報狀態（可複選）</label>
+        <div class="checklist" style="margin-top:6px">
+          <div class="check-item"><input type="checkbox" id="uc-status-hosp" value="已回報收治・住院" onchange="toggleUpstreamOpenDate()"><span>已回報收治・住院</span></div>
+          <div class="check-item"><input type="checkbox" id="uc-status-day" value="已回報收治・日照" onchange="toggleUpstreamOpenDate()"><span>已回報收治・日照</span></div>
+          <div class="check-item"><input type="checkbox" id="uc-status-home" value="已回報收治・居家" onchange="toggleUpstreamOpenDate()"><span>已回報收治・居家</span></div>
+          <div class="check-item"><input type="checkbox" id="uc-status-decline" value="已回報退案" onchange="toggleUpstreamOpenDate()"><span>已回報退案</span></div>
+        </div>
+      </div>
+      <div class="form-group hidden" id="uc-opendate-wrap" style="margin-bottom:12px">
+        <label>預計開案日</label>
+        <input class="form-control" type="date" id="uc-opendate" value="2026-07-09">
+      </div>
+      <div class="form-group">
+        <label>備註</label>
+        <textarea class="form-control" rows="2" id="uc-note" placeholder="例如：已回報上游收治住院，預計7/15開案"></textarea>
+      </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-retire')">取消</button>
-      <button class="btn btn-danger" onclick="closeModal('modal-retire');alert('個案已封存（退案）')">確認封存</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-upstream-contact')">取消</button>
+      <button class="btn btn-primary" onclick="submitUpstreamContact()">儲存紀錄</button>
     </div>
   </div>
 </div>
@@ -287,54 +303,6 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-convert')">取消</button>
       <button class="btn btn-primary" onclick="closeModal('modal-convert');alert('已轉換為正式病歷，相關表單已自動建立，行政通知已發出')">確認轉換</button>
-    </div>
-  </div>
-</div>
-
-<!-- 不成功結案 -->
-<div id="modal-fail-close" class="modal-overlay hidden">
-  <div class="modal modal-sm">
-    <div class="modal-header">
-      <div class="modal-title">不成功結案原因</div>
-      <button class="modal-close" onclick="closeModal('modal-fail-close')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="info-note red">結案後系統將更新狀態為「已結案」，並記錄封存類型為「結案失敗」。</div>
-      <div class="retire-list">
-        <div class="retire-opt"><input type="radio" name="failclose"><span style="font-size:13px">個案病況改變，需回急性醫院</span></div>
-        <div class="retire-opt"><input type="radio" name="failclose"><span style="font-size:13px">個案/家屬選擇不繼續</span></div>
-        <div class="retire-opt"><input type="radio" name="failclose"><span style="font-size:13px">健保不通過</span></div>
-        <div class="retire-opt"><input type="radio" name="failclose"><span style="font-size:13px">個案死亡</span></div>
-        <div class="retire-opt"><input type="radio" name="failclose"><span style="font-size:13px">其他</span></div>
-      </div>
-      <textarea class="form-control" rows="2" placeholder="補充說明（必填）"></textarea>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-fail-close')">取消</button>
-      <button class="btn btn-danger" onclick="closeModal('modal-fail-close');alert('已記錄結案失敗，狀態更新為已結案')">確認結案</button>
-    </div>
-  </div>
-</div>
-
-<!-- 成功結案 -->
-<div id="modal-success-close" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">✓ 成功結案確認</div>
-      <button class="modal-close" onclick="closeModal('modal-success-close')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="info-note green">結案後系統將自動建立 PAC 個案滿意度調查表、出院追蹤記錄表，並記錄封存類型為「正常結案」。</div>
-      <div class="checklist">
-        <div class="check-item"><input type="checkbox"><span>結案評估已完成</span></div>
-        <div class="check-item"><input type="checkbox"><span>出院準備資料已完成</span></div>
-        <div class="check-item"><input type="checkbox"><span>PAC 個案滿意度調查已完成</span></div>
-        <div class="check-item"><input type="checkbox"><span>轉介安排已確認（如需要，可至個案詳情頁「轉介安排」區塊查看）</span></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-success-close')">取消</button>
-      <button class="btn btn-green" onclick="closeModal('modal-success-close');alert('個案已成功結案')">確認結案</button>
     </div>
   </div>
 </div>
@@ -416,25 +384,59 @@
   </div>
 </div>
 
-<!-- 封存 -->
+<!-- 封存（臨時／正式病歷依 formal 動態切換類型清單，或由呼叫端鎖定單一類型） -->
 <div id="modal-archive" class="modal-overlay hidden">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title">封存個案</div>
+      <div class="modal-title" id="archive-modal-title">封存個案</div>
       <button class="modal-close" onclick="closeModal('modal-archive')">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="info-note amber">封存後個案資料將保留，可隨時查閱但不可編輯。</div>
-      <div class="retire-list">
-        <div class="retire-opt"><input type="radio" name="archive"><span style="font-size:13px">個案取消入院/報到</span></div>
-        <div class="retire-opt"><input type="radio" name="archive"><span style="font-size:13px">重複建立個案</span></div>
-        <div class="retire-opt"><input type="radio" name="archive"><span style="font-size:13px">資料輸入錯誤</span></div>
-        <div class="retire-opt"><input type="radio" name="archive"><span style="font-size:13px">其他</span></div>
-      </div>
+    <div class="modal-body" id="archive-modal-body">
+      <!-- 由 JS 動態渲染（見 openArchiveModal / renderArchiveModalBody） -->
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-archive')">取消</button>
-      <button class="btn btn-amber" onclick="closeModal('modal-archive');alert('個案已封存')">確認封存</button>
+      <button class="btn btn-danger" onclick="confirmArchive()">確認封存</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAC 判斷＝非PAC → 第一步：選擇後續處理方式 -->
+<div id="modal-nonpac-step1" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">非PAC 個案處理</div>
+      <button class="modal-close" onclick="closeModal('modal-nonpac-step1')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-note amber">此個案已判斷為非PAC，請選擇後續處理方式。</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="nonPacGoArchive()">直接封存</button>
+      <button class="btn btn-primary" onclick="nonPacGoImport()">匯入排床模組</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAC 判斷＝非PAC → 第二步：選擇住院類型並匯入排床模組 -->
+<div id="modal-nonpac-step2" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">選擇住院類型</div>
+      <button class="modal-close" onclick="closeModal('modal-nonpac-step2')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-note blue">請選擇此個案的住院類型，系統將把個案資料移交排床管理模組。</div>
+      <div class="retire-list">
+        <label class="retire-opt"><input type="radio" name="nonpac-hosp-type" value="一般復健"><span style="font-size:13px">一般復健</span></label>
+        <label class="retire-opt"><input type="radio" name="nonpac-hosp-type" value="外科開刀"><span style="font-size:13px">外科開刀</span></label>
+        <label class="retire-opt"><input type="radio" name="nonpac-hosp-type" value="內科住院"><span style="font-size:13px">內科住院</span></label>
+        <label class="retire-opt"><input type="radio" name="nonpac-hosp-type" value="安寧住院"><span style="font-size:13px">安寧住院</span></label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="nonPacBackToStep1()">上一步</button>
+      <button class="btn btn-primary" onclick="confirmNonPacImport()">確認匯入</button>
     </div>
   </div>
 </div>

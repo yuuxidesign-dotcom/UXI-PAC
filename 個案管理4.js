@@ -345,6 +345,8 @@ function renderPage(page,caseId,formName){
 let currentListTab='temp'; // 'temp' | 'formal' | 'archive'
 let tabView={temp:'card',formal:'card'}; // 各 Tab 各自的視圖狀態：'card' or 'list'（封存 Tab 僅列表視圖，不記錄於此）
 let listSelection={temp:null,formal:null,archive:null}; // 列表視圖（左右分割）時，各 Tab 目前選中的個案 id
+let archiveTypeFilter=''; // 封存 Tab：封存類型篩選（空字串＝全部封存類型）
+let archiveRecordTypeFilter='all'; // 封存 Tab：病歷類型篩選 'all' | 'temp' | 'formal'
 
 function renderList(container){
   document.getElementById('bc').textContent='個案管理';
@@ -367,7 +369,14 @@ function renderList(container){
 
   const tempActive=applyRoleFilter(CASES.temp.filter(c=>c.status!=='封存'));
   const formalActive=applyRoleFilter(CASES.formal.filter(c=>c.status!=='封存'));
-  const archiveCases=allCases.filter(c=>c.status==='封存');
+  const archiveCasesAll=allCases.filter(c=>c.status==='封存');
+  // 封存 Tab：病歷類型（臨時／正式）與封存類型篩選同時作用
+  const archiveCases=archiveCasesAll.filter(c=>{
+    if(archiveRecordTypeFilter==='temp'&&c.formal) return false;
+    if(archiveRecordTypeFilter==='formal'&&!c.formal) return false;
+    if(archiveTypeFilter&&c.archiveType!==archiveTypeFilter) return false;
+    return true;
+  });
   const tabCaseMap={temp:tempActive,formal:formalActive,archive:archiveCases};
   const currentTabCases=tabCaseMap[currentListTab];
   const isSplitView=currentListTab==='archive'||tabView[currentListTab]==='list';
@@ -381,10 +390,12 @@ function renderList(container){
 
   let tabBodyHtml='';
   if(currentListTab==='archive'){
+    const archiveEmptyMsg=archiveCasesAll.length?'沒有符合條件的封存個案':'目前沒有封存個案';
     tabBodyHtml=`
+      ${archiveFilterBar()}
       <div style="display:flex;gap:16px;align-items:flex-start">
         <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:12px;max-height:calc(100vh - 340px);overflow-y:auto">
-          ${archiveCases.length?archiveCases.map(c=>caseListSidebarItem(c,'archive')).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">目前沒有封存個案</div>`}
+          ${archiveCases.length?archiveCases.map(c=>caseListSidebarItem(c,'archive')).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">${archiveEmptyMsg}</div>`}
         </div>
         <div id="list-detail-panel" style="flex:1;min-width:0"></div>
       </div>
@@ -503,7 +514,7 @@ function renderList(container){
       <div class="tabs" style="margin-bottom:0">
         <div class="tab ${currentListTab==='temp'?'active':''}" onclick="switchTab('temp')">臨時病歷 <span class="badge badge-amber" style="margin-left:4px">${tempActive.length}</span></div>
         <div class="tab ${currentListTab==='formal'?'active':''}" onclick="switchTab('formal')">正式病歷 <span class="badge badge-blue" style="margin-left:4px">${formalActive.length}</span></div>
-        <div class="tab ${currentListTab==='archive'?'active':''}" onclick="switchTab('archive')" style="color:var(--gray-400)">封存 <span class="badge badge-gray" style="margin-left:4px">${archiveCases.length}</span></div>
+        <div class="tab ${currentListTab==='archive'?'active':''}" onclick="switchTab('archive')" style="color:var(--gray-400)">封存 <span class="badge badge-gray" style="margin-left:4px">${archiveCasesAll.length}</span></div>
       </div>
       ${currentListTab!=='archive'?`<div class="view-toggle">
         <button class="view-toggle-btn ${tabView[currentListTab]==='card'?'active':''}" onclick="switchView('card')">▦ 卡片</button>
@@ -603,6 +614,37 @@ function switchView(view){
 }
 function selectListCase(tabKey,caseId){
   listSelection[tabKey]=caseId;
+  renderList(document.getElementById('main-content'));
+}
+
+// ── 封存 Tab：篩選區（封存類型 + 病歷類型，兩者同時作用）──
+function archiveFilterBar(){
+  const formalPresetTypes=['非PAC個案','正常結案','結案失敗']; // 不在 ARCHIVE_TYPES_FORMAL 內，走各自獨立流程觸發，但仍為封存類型篩選選項
+  return `
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+    <select class="filter-sel" onchange="onArchiveTypeFilterChange(this.value)">
+      <option value="" ${archiveTypeFilter===''?'selected':''}>全部封存類型</option>
+      <optgroup label="── 臨時病歷 ──">
+        ${ARCHIVE_TYPES_TEMP.map(o=>`<option value="${o.type}" ${archiveTypeFilter===o.type?'selected':''}>${o.type}</option>`).join('')}
+      </optgroup>
+      <optgroup label="── 正式病歷 ──">
+        ${formalPresetTypes.map(t=>`<option value="${t}" ${archiveTypeFilter===t?'selected':''}>${t}</option>`).join('')}
+        ${ARCHIVE_TYPES_FORMAL.map(o=>`<option value="${o.type}" ${archiveTypeFilter===o.type?'selected':''}>${o.type}</option>`).join('')}
+      </optgroup>
+    </select>
+    <div style="display:flex;gap:4px;background:var(--gray-100);padding:3px;border-radius:8px">
+      <button class="btn ${archiveRecordTypeFilter==='all'?'btn-secondary':'btn-ghost'} btn-xs" onclick="setArchiveRecordTypeFilter('all')">全部</button>
+      <button class="btn ${archiveRecordTypeFilter==='temp'?'btn-secondary':'btn-ghost'} btn-xs" onclick="setArchiveRecordTypeFilter('temp')">臨時病歷</button>
+      <button class="btn ${archiveRecordTypeFilter==='formal'?'btn-secondary':'btn-ghost'} btn-xs" onclick="setArchiveRecordTypeFilter('formal')">正式病歷</button>
+    </div>
+  </div>`;
+}
+function onArchiveTypeFilterChange(val){
+  archiveTypeFilter=val;
+  renderList(document.getElementById('main-content'));
+}
+function setArchiveRecordTypeFilter(val){
+  archiveRecordTypeFilter=val;
   renderList(document.getElementById('main-content'));
 }
 
@@ -744,7 +786,6 @@ function renderDetail(container,caseId){
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-judge')">🩺 轉交判斷</button>
       <button class="btn btn-ghost btn-sm" onclick="openConvertModeModal()">🔁 轉換模式</button>
       <button class="btn btn-amber btn-sm" onclick="openModal('modal-convert')">→ 轉正式病歷</button>
-      <button class="btn btn-danger btn-sm" onclick="openArchiveModal({formal:false})">退案</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:false})">封存</button>
     `;
     else actions=`

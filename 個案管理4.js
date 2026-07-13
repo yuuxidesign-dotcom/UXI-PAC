@@ -329,7 +329,9 @@ function renderPage(page,caseId,formName){
   else if(page==='form') renderFormFill(content,caseId,formName);
 }
 
-let currentView='card'; // 'card' or 'list'
+let currentListTab='temp'; // 'temp' | 'formal' | 'archive'
+let tabView={temp:'card',formal:'card'}; // 各 Tab 各自的視圖狀態：'card' or 'list'（封存 Tab 僅列表視圖，不記錄於此）
+let listSelection={temp:null,formal:null,archive:null}; // 列表視圖（左右分割）時，各 Tab 目前選中的個案 id
 
 function renderList(container){
   document.getElementById('bc').textContent='個案管理';
@@ -344,6 +346,43 @@ function renderList(container){
   const modeCount={hosp:0,day:0,home:0,general:0};
   allCases.forEach(c=>{if(c.modeType)modeCount[c.modeType]++});
 
+  const tempActive=CASES.temp.filter(c=>c.status!=='封存');
+  const formalActive=CASES.formal.filter(c=>c.status!=='封存');
+  const archiveCases=allCases.filter(c=>c.status==='封存');
+  const tabCaseMap={temp:tempActive,formal:formalActive,archive:archiveCases};
+  const currentTabCases=tabCaseMap[currentListTab];
+  const isSplitView=currentListTab==='archive'||tabView[currentListTab]==='list';
+
+  // 列表（左右分割）視圖：先確定選中個案，讓側邊欄 highlight 與右側詳情頁一致
+  if(isSplitView){
+    let sel=listSelection[currentListTab];
+    if(!sel||!currentTabCases.find(c=>c.id===sel)) sel=currentTabCases.length?currentTabCases[0].id:null;
+    listSelection[currentListTab]=sel;
+  }
+
+  let tabBodyHtml='';
+  if(currentListTab==='archive'){
+    tabBodyHtml=`
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:10px;max-height:calc(100vh - 340px);overflow-y:auto">
+          ${archiveCases.length?archiveCases.map(c=>caseListSidebarItem(c,'archive')).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">目前沒有封存個案</div>`}
+        </div>
+        <div id="list-detail-panel" style="flex:1;min-width:0"></div>
+      </div>
+    `;
+  } else if(tabView[currentListTab]==='card'){
+    tabBodyHtml=`<div class="case-grid">${currentTabCases.map(c=>caseCard(c)).join('')}</div>`;
+  } else {
+    tabBodyHtml=`
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:10px;max-height:calc(100vh - 340px);overflow-y:auto">
+          ${currentTabCases.length?currentTabCases.map(c=>caseListSidebarItem(c,currentListTab)).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">目前沒有個案</div>`}
+        </div>
+        <div id="list-detail-panel" style="flex:1;min-width:0"></div>
+      </div>
+    `;
+  }
+
   container.innerHTML=`
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div>
@@ -351,10 +390,6 @@ function renderList(container){
         <div style="font-size:12px;color:var(--gray-500);margin-top:3px">共 ${allCases.length} 位個案・住院 ${modeCount.hosp}・日照 ${modeCount.day}・居家 ${modeCount.home}・一般 ${modeCount.general}</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <div class="view-toggle">
-          <button class="view-toggle-btn ${currentView==='card'?'active':''}" onclick="switchView('card')">▦ 卡片</button>
-          <button class="view-toggle-btn ${currentView==='list'?'active':''}" onclick="switchView('list')">☰ 列表</button>
-        </div>
         ${isMgr?`<button class="btn btn-primary" onclick="openModal('modal-new')">＋ 新增個案</button>`:''}
       </div>
     </div>
@@ -398,30 +433,25 @@ function renderList(container){
       </div>
     </div>
 
-    <!-- 提醒卡：下排2張橫排，雙階段展延倒數＋即將結案提醒 -->
+    <!-- 提醒卡：展延倒數（獨立雙階段）＋ 即將結案提醒（整合原本卡片與文字列） -->
     <div class="stats-row">
       <div class="stat-card ${urgentExtend>0?'urgent':''}" style="${urgentExtend===0&&warnExtend>0?'border-color:#FDE68A;background:var(--amber-light)':''}" onclick="filterByStatus('展延中')">
         <div class="stat-label" style="${urgentExtend===0&&warnExtend>0?'color:var(--amber)':''}">⚠ 展延倒數 ≤3天（紅）／≤7天（黃）</div>
         <div class="stat-value" style="${urgentExtend===0&&warnExtend>0?'color:var(--amber)':''}">${urgentExtend} <span style="font-size:13px;font-weight:500;color:var(--amber)">+ ${warnExtend}</span></div>
         <div class="stat-sub" style="${urgentExtend===0&&warnExtend>0?'color:var(--amber)':''}">紅色急需優先處理・黃色提前準備</div>
       </div>
-      <div class="stat-card" style="border-color:#DDD6FE;background:var(--purple-light)" onclick="filterByStatus('即將結案')">
-        <div class="stat-label" style="color:var(--purple)">🏁 即將結案</div>
-        <div class="stat-value" style="color:var(--purple)">${countBy('即將結案')}</div>
-        <div class="stat-sub" style="color:var(--purple)">結案兩週前提醒</div>
+      <div class="stat-card" style="border-color:#DDD6FE;background:var(--purple-light);flex:2;min-width:280px;cursor:default">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div class="stat-label" style="color:var(--purple)">🏁 即將結案提醒</div>
+            <div class="stat-value" style="color:var(--purple)">${countBy('即將結案')}</div>
+            <div class="stat-sub" style="color:var(--purple)">結案兩週前提醒</div>
+            ${closingSoon.length?`<div style="font-size:11px;color:var(--purple);margin-top:8px;line-height:1.6">${closingSoon.map(c=>`${c.name}（第 ${c.week} 週・${c.disease}）`).join('、')}</div>`:`<div style="font-size:11px;color:var(--gray-400);margin-top:8px">目前沒有即將結案個案</div>`}
+          </div>
+          <button class="btn btn-xs" style="background:var(--purple);color:var(--white);border:none;flex-shrink:0" onclick="switchTab('formal')">查看個案 →</button>
+        </div>
       </div>
     </div>
-
-    <!-- 即將結案提醒文字列 -->
-    ${closingSoon.length?`
-    <div style="background:var(--purple-light);border:1px solid #DDD6FE;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:12px;color:var(--purple)">
-        <strong>🏁 即將結案提醒</strong>
-        <span style="margin-left:8px">${closingSoon.map(c=>`${c.name}（第 ${c.week} 週・${c.disease}）`).join('、')}・請儘快安排結案評估及出院準備</span>
-      </div>
-      <button class="btn btn-xs" style="background:var(--purple);color:var(--white);border:none" onclick="document.querySelectorAll('.tab')[1].click()">查看個案 →</button>
-    </div>
-    `:''}
 
     <!-- 搜尋列 -->
     <div class="search-bar">
@@ -443,91 +473,44 @@ function renderList(container){
       </select>
     </div>
 
-    <!-- Tabs：臨時病歷 / 正式病歷 / 封存 -->
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab(this,'tab-temp')">臨時病歷 <span class="badge badge-amber" style="margin-left:4px">${CASES.temp.filter(c=>c.status!=='封存').length}</span></div>
-      <div class="tab" onclick="switchTab(this,'tab-formal')">正式病歷 <span class="badge badge-blue" style="margin-left:4px">${CASES.formal.filter(c=>c.status!=='封存').length}</span></div>
-      <div class="tab" onclick="switchTab(this,'tab-archive')" style="color:var(--gray-400)">封存 <span class="badge badge-gray" style="margin-left:4px">${allCases.filter(c=>c.status==='封存').length}</span></div>
+    <!-- Tabs：臨時病歷 / 正式病歷 / 封存，右側為該 Tab 專屬的視圖切換 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div class="tabs" style="margin-bottom:0">
+        <div class="tab ${currentListTab==='temp'?'active':''}" onclick="switchTab('temp')">臨時病歷 <span class="badge badge-amber" style="margin-left:4px">${tempActive.length}</span></div>
+        <div class="tab ${currentListTab==='formal'?'active':''}" onclick="switchTab('formal')">正式病歷 <span class="badge badge-blue" style="margin-left:4px">${formalActive.length}</span></div>
+        <div class="tab ${currentListTab==='archive'?'active':''}" onclick="switchTab('archive')" style="color:var(--gray-400)">封存 <span class="badge badge-gray" style="margin-left:4px">${archiveCases.length}</span></div>
+      </div>
+      ${currentListTab!=='archive'?`<div class="view-toggle">
+        <button class="view-toggle-btn ${tabView[currentListTab]==='card'?'active':''}" onclick="switchView('card')">▦ 卡片</button>
+        <button class="view-toggle-btn ${tabView[currentListTab]==='list'?'active':''}" onclick="switchView('list')">☰ 列表</button>
+      </div>`:''}
     </div>
+    <div style="border-bottom:2px solid var(--gray-200);margin-bottom:16px"></div>
 
-    ${currentView==='card'?`
-    <!-- 臨時病歷：卡片視圖（排除封存） -->
-    <div id="tab-temp" class="case-grid">
-      ${CASES.temp.filter(c=>c.status!=='封存').map(c=>caseCard(c)).join('')}
-    </div>
-    <!-- 正式病歷：卡片視圖（排除封存，只顯示PAC個案） -->
-    <div id="tab-formal" class="case-grid hidden">
-      ${CASES.formal.filter(c=>c.status!=='封存').map(c=>caseCard(c)).join('')}
-    </div>
-    <!-- 封存 Tab -->
-    <div id="tab-archive" class="hidden">
-      ${renderArchiveList(allCases.filter(c=>c.status==='封存'))}
-    </div>
-    `:`
-    <!-- 臨時病歷：列表視圖 -->
-    <div id="tab-temp">
-      <table class="case-list-table">
-        <thead><tr>
-          ${isAdm?'<th>姓名</th><th>身分證</th><th>照護模式</th><th>疾病別</th><th>床位</th><th>轉介日期</th><th>狀態</th>':'<th>姓名</th><th>照護模式</th><th>疾病別</th><th>轉介來源</th><th>轉介日期</th><th>負責個管師</th><th>狀態</th><th></th>'}
-        </tr></thead>
-        <tbody>${CASES.temp.filter(c=>c.status!=='封存').map(c=>caseListRow(c)).join('')}</tbody>
-      </table>
-    </div>
-    <div id="tab-formal" class="hidden">
-      <table class="case-list-table">
-        <thead><tr>
-          ${isAdm?'<th>姓名</th><th>身分證</th><th>照護模式</th><th>疾病別</th><th>床位</th><th>轉介日期</th><th>狀態</th>':'<th>姓名</th><th>照護模式</th><th>疾病別</th><th>轉介來源</th><th>轉介日期</th><th>負責個管師</th><th>狀態</th><th></th>'}
-        </tr></thead>
-        <tbody>${CASES.formal.filter(c=>c.status!=='封存').map(c=>caseListRow(c)).join('')}</tbody>
-      </table>
-    </div>
-    <!-- 封存 Tab -->
-    <div id="tab-archive" class="hidden">
-      ${renderArchiveList(allCases.filter(c=>c.status==='封存'))}
-    </div>
-    `}
+    ${tabBodyHtml}
   `;
+
+  // 列表（左右分割）視圖：於右側面板渲染選中個案的完整詳情頁
+  if(isSplitView){
+    const panel=document.getElementById('list-detail-panel');
+    const sel=listSelection[currentListTab];
+    if(panel){
+      if(sel) renderDetail(panel,sel);
+      else panel.innerHTML=`<div style="text-align:center;padding:60px 20px;color:var(--gray-400);font-size:13px">請從左側選擇個案</div>`;
+    }
+  }
 }
 
-// ── 封存 Tab 渲染 ──
-function renderArchiveList(cases){
-  const ROOM_PREF_LABEL={'single':'單人房','double':'雙人房','multi':'多人房（3人以上）'};
-  if(!cases.length) return `<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:13px">目前沒有封存個案</div>`;
-  return `<div style="display:flex;flex-direction:column;gap:10px">
-    ${cases.map(c=>{
-      const age=c.birthDate?calcAge(c.birthDate):null;
-      const archiveColor={
-        '非PAC個案':'var(--blue-light)','結案失敗':'var(--red-light)','正常結案':'var(--green-light)',
-        '決定不報到／參加':'var(--amber-light)','住院當日未報到':'var(--amber-light)','日照當日未報到':'var(--amber-light)','居家未報到/未參加':'var(--amber-light)'
-      }[c.archiveType]||'var(--gray-100)';
-      const archiveTextColor={
-        '非PAC個案':'var(--blue)','結案失敗':'var(--red)','正常結案':'var(--green)',
-        '決定不報到／參加':'var(--amber)','住院當日未報到':'var(--amber)','日照當日未報到':'var(--amber)','居家未報到/未參加':'var(--amber)'
-      }[c.archiveType]||'var(--gray-500)';
-      return `<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:14px 16px">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="font-size:15px;font-weight:700">${c.name}${age!==null?`<span style="font-size:12px;color:var(--gray-400);font-weight:500">(${age})</span>`:''}</span>
-              <span style="background:${archiveColor};color:${archiveTextColor};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">${c.archiveType||'封存'}</span>
-              <span class="badge badge-gray">${c.formal?'正式病歷':'臨時病歷'}</span>
-            </div>
-            <div style="font-size:12px;color:var(--gray-500);margin-top:4px">${c.mode}・${c.disease}・${c.source}</div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost btn-xs" onclick="renderPage('detail','${c.id}')">查看詳情</button>
-            <button class="btn btn-secondary btn-xs" onclick="openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;font-size:12px">
-          <div><span style="color:var(--gray-400)">封存時間</span><br><strong>${c.archiveDate||'—'}</strong></div>
-          <div><span style="color:var(--gray-400)">操作人員</span><br><strong>${c.archiveOperator||'—'}</strong></div>
-          <div><span style="color:var(--gray-400)">負責個管師</span><br><strong>${c.mgr}</strong></div>
-          ${c.openDate?`<div><span style="color:var(--gray-400)">開案日</span><br><strong>${c.openDate}</strong></div>`:''}
-        </div>
-        ${c.archiveReason?`<div style="margin-top:10px;padding:9px 12px;background:var(--gray-50);border-radius:6px;font-size:12px;color:var(--gray-600);border-left:3px solid var(--gray-300)"><strong style="color:var(--gray-500)">封存原因</strong>　${c.archiveReason}</div>`:''}
-      </div>`;
-    }).join('')}
+// ── 列表（左右分割）視圖：左側個案迷你列表項目 ──
+function caseListSidebarItem(c,tabKey){
+  const age=c.birthDate?calcAge(c.birthDate):null;
+  const selected=listSelection[tabKey]===c.id;
+  return `<div style="padding:9px 10px;border-radius:7px;cursor:pointer;${selected?'background:var(--blue-light);border:1px solid var(--blue-mid)':'border:1px solid transparent'}">
+    <div onclick="selectListCase('${tabKey}','${c.id}')">
+      <div style="font-size:13px;font-weight:600;color:${selected?'var(--blue)':'var(--gray-800)'}">${c.name}${age!==null?`<span style="font-size:11px;color:var(--gray-400);font-weight:500">(${age})</span>`:''}</div>
+      <div style="font-size:11px;color:var(--gray-500);margin-top:2px">${c.mode}・${c.disease}</div>
+    </div>
+    ${tabKey==='archive'?`<button class="btn btn-ghost btn-xs" style="margin-top:6px;width:100%" onclick="event.stopPropagation();openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button>`:''}
   </div>`;
 }
 
@@ -580,8 +563,17 @@ function confirmRestore(){
   alert(`個案已回復！狀態更新為「${status}」，已移回臨時病歷列表。`);
 }
 
+function switchTab(tabKey){
+  currentListTab=tabKey;
+  renderList(document.getElementById('main-content'));
+}
 function switchView(view){
-  currentView=view;
+  if(currentListTab==='archive') return; // 封存 Tab 僅列表視圖，無切換
+  tabView[currentListTab]=view;
+  renderList(document.getElementById('main-content'));
+}
+function selectListCase(tabKey,caseId){
+  listSelection[tabKey]=caseId;
   renderList(document.getElementById('main-content'));
 }
 
@@ -593,8 +585,8 @@ function onStatusFilterChange(status){
   // 切到含目標狀態個案較多的 tab，並示意篩選（prototype 簡化處理）
   const inFormal=CASES.formal.some(c=>c.status===status);
   const inTemp=CASES.temp.some(c=>c.status===status);
-  if(inFormal&&!inTemp) document.querySelectorAll('.tab')[1].click();
-  else if(inTemp&&!inFormal) document.querySelectorAll('.tab')[0].click();
+  if(inFormal&&!inTemp) switchTab('formal');
+  else if(inTemp&&!inFormal) switchTab('temp');
 }
 
 
@@ -627,10 +619,17 @@ function caseCard(c){
     ${isClosingSoon?`<div style="font-size:11px;color:var(--purple);font-weight:600;background:var(--purple-light);padding:5px 10px;margin:-3px -3px 10px;border-radius:3px">🏁 療程即將結束・請準備結案評估</div>`:''}
     <div class="case-card-header"><div><div class="case-name">${nameWithAge}</div><div class="case-id">${modeLabel}・${c.disease}</div></div>${statusBadge}</div>
     <div class="case-card-body">
+      ${c.formal?`
+      <div class="case-field"><label>照護模式</label><span>${c.mode}</span></div>
+      <div class="case-field"><label>疾病別</label><span>${c.disease}</span></div>
+      <div class="case-field"><label>開案日期</label><span>${c.openDate||'—'}</span></div>
+      <div class="case-field"><label>預計結案日期</label><span>${c.closeDate||'—'}</span></div>
+      `:`
       <div class="case-field"><label>照護模式</label><span>${c.mode}</span></div>
       <div class="case-field"><label>轉介來源</label><span>${c.source}</span></div>
       <div class="case-field"><label>轉介日期</label><span>${c.date}</span></div>
       <div class="case-field"><label>疾病別</label><span>${c.disease}</span></div>
+      `}
     </div>
     <div class="case-card-footer">
       <div class="case-manager"><div class="mini-av">林</div>${c.mgr}</div>
@@ -640,34 +639,6 @@ function caseCard(c){
       </div>
     </div>
   </div>`;
-}
-
-function caseListRow(c){
-  const statusBadge=`<span class="badge ${STATUS_COLOR[c.status]||'badge-gray'}">${c.status}</span>`;
-  const age=c.birthDate?calcAge(c.birthDate):null;
-  const modeLabel={hosp:'🏥 住院',day:'☀️ 日照',home:'🏡 居家',general:'🏋️ 一般'}[c.modeType]||c.mode;
-  const countdownText=c.countdown!==null?`<span style="color:var(--red);font-weight:700;font-size:11px">展延倒數 ${c.countdown} 天</span>`:'';
-  if(currentRole==='adm'){
-    return `<tr onclick="renderPage('detail','${c.id}')" style="cursor:pointer">
-      <td><strong>${c.name}</strong>${age!==null?` <span style="color:var(--gray-400);font-weight:500">(${age})</span>`:''}</td>
-      <td>A123456789</td>
-      <td>${c.mode}</td>
-      <td>${c.disease}</td>
-      <td>${c.formal?'A301':'待確認'}</td>
-      <td>${c.date}</td>
-      <td>${statusBadge}</td>
-    </tr>`;
-  }
-  return `<tr onclick="renderPage('detail','${c.id}')" style="cursor:pointer">
-    <td><strong>${c.name}</strong>${age!==null?` <span style="color:var(--gray-400);font-weight:500">(${age})</span>`:''}</td>
-    <td>${modeLabel}</td>
-    <td>${c.disease}</td>
-    <td>${c.source}</td>
-    <td>${c.date}</td>
-    <td>${c.mgr}</td>
-    <td>${statusBadge}</td>
-    <td>${countdownText}</td>
-  </tr>`;
 }
 
 function renderDetail(container,caseId){
@@ -704,12 +675,14 @@ function renderDetail(container,caseId){
     if(!isFormal) actions=`
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-translate')">📄 病摘翻譯</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-judge')">🩺 轉交判斷</button>
+      <button class="btn btn-ghost btn-sm" onclick="openConvertModeModal()">🔁 轉換模式</button>
       <button class="btn btn-amber btn-sm" onclick="openModal('modal-convert')">→ 轉正式病歷</button>
       <button class="btn btn-danger btn-sm" onclick="openArchiveModal({formal:false})">退案</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:false})">封存</button>
     `;
     else actions=`
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-translate')">📄 病摘翻譯</button>
+      <button class="btn btn-ghost btn-sm" onclick="openConvertModeModal()">🔁 轉換模式</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-extend')">📤 匯出展延</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-close')">📤 匯出結案</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:true})">封存</button>
@@ -869,6 +842,7 @@ function renderDetail(container,caseId){
         <div><strong style="color:var(--gray-800)">操作人員：</strong>${c.archiveOperator||'—'}</div>
       </div>
       ${c.archiveReason?`<div style="margin-top:8px;font-size:12px;color:var(--gray-600);background:var(--white);padding:10px;border-radius:6px">${c.archiveReason}</div>`:''}
+      <div style="margin-top:8px;font-size:12px;color:var(--gray-600)">若需保留個人資料與病摘重新開案，請封存後於新增個案頁面選擇『從封存個案複製資料』。</div>
     </div>
     `:''}
 
@@ -881,11 +855,11 @@ function renderDetail(container,caseId){
       </div>
       <div class="sc-body">
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn ${c.status==='照護中'?'btn-secondary':'btn-ghost'} btn-sm" onclick="alert('狀態更新為「展延中・待展延申請」')">① 待送出展延</button>
-          <button class="btn ${c.status==='展延中'&&c.timelineSub==='待展延申請'?'btn-amber':'btn-ghost'} btn-sm" onclick="alert('狀態更新為「展延中・待展延申請」（已送出展延）')">② 已送出展延</button>
-          <button class="btn ${c.status==='展延中'&&c.timelineSub==='審核中'?'btn-amber':'btn-ghost'} btn-sm" onclick="alert('狀態更新為「展延中・審核中」')">③ 審核中</button>
+          <button class="btn btn-ghost btn-sm" onclick="markNoExtension('${c.id}')">① 不展延</button>
+          <button class="btn ${c.status==='照護中'?'btn-secondary':'btn-ghost'} btn-sm" onclick="alert('狀態更新為「展延中・待展延申請」')">② 待送出展延</button>
+          <button class="btn ${c.status==='展延中'?'btn-amber':'btn-ghost'} btn-sm" onclick="markExtensionSubmitted('${c.id}')">③ 已送出展延（審核中）</button>
           <button class="btn btn-green btn-sm" onclick="alert('狀態更新為「照護中・展延後」，療程繼續')">④ 展延成功</button>
-          <button class="btn btn-danger btn-sm" onclick="alert('狀態更新為「即將結案」，請安排結案評估')">④ 展延失敗</button>
+          <button class="btn btn-danger btn-sm" onclick="alert('狀態更新為「即將結案」，請安排結案評估')">⑤ 展延失敗</button>
         </div>
         <div style="margin-top:10px;font-size:11px;color:var(--gray-400)">目前狀態：<strong style="color:var(--gray-700)">${c.status}${c.timelineSub?'・'+c.timelineSub:''}</strong></div>
       </div>
@@ -1331,14 +1305,6 @@ function renderFormFill(container,caseId,formName){
 }
 
 // ── 工具函式 ──
-function switchTab(el,targetId){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  ['tab-temp','tab-formal','tab-archive'].forEach(id=>{
-    const el2=document.getElementById(id);
-    if(el2) el2.classList.toggle('hidden',id!==targetId);
-  });
-}
 function switchModalTab(el,targetId){
   el.closest('.modal-body').querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
@@ -1381,6 +1347,28 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 
 function getCurrentCaseObj(){
   return [...CASES.temp,...CASES.formal].find(x=>x.id===currentCase)||null;
+}
+
+// ── 展延狀態切換器：不展延／已送出展延（審核中）──
+function markNoExtension(caseId){
+  const c=getCurrentCaseObj();
+  if(c){
+    c.status='照護中';
+    c.timelineStep='照護中';
+    c.timelineSub='展延後';
+  }
+  alert('已標記不展延，個案將從照護中直接進入照護中（展延後）階段，請繼續照護直到即將結案。');
+  if(c) renderPage('detail',currentCase);
+}
+function markExtensionSubmitted(caseId){
+  const c=getCurrentCaseObj();
+  if(c){
+    c.status='展延中';
+    c.timelineStep='展延中';
+    c.timelineSub='審核中';
+  }
+  alert('已標記展延已送出，目前審核中，請等待健保署回覆。');
+  if(c) renderPage('detail',currentCase);
 }
 
 // 家屬聯繫紀錄「確定不報到」：依個案照護模式自動預選對應封存類型，理由欄必填
@@ -1426,6 +1414,74 @@ function confirmNonPacImport(){
   }
   closeModal('modal-nonpac-step2');
   alert(`已選擇住院類型：${type}。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。個案管理模組中本個案狀態更新為封存（類型：非PAC個案）。`);
+  if(c) renderPage('detail',currentCase);
+}
+
+// ── 轉換照護模式（兩步驟）──
+let convertModeCtx=null;
+function openConvertModeModal(){
+  convertModeCtx={step:1,newMode:null};
+  renderConvertModeModal();
+  openModal('modal-convert-mode');
+}
+function convertModeNext(){
+  const checked=document.querySelector('input[name="convert-mode-radio"]:checked');
+  if(!checked){alert('請選擇要轉換的照護模式');return;}
+  convertModeCtx.newMode=checked.value;
+  convertModeCtx.step=2;
+  renderConvertModeModal();
+}
+function convertModeBack(){
+  convertModeCtx.step=1;
+  renderConvertModeModal();
+}
+function renderConvertModeModal(){
+  const {step,newMode}=convertModeCtx;
+  document.getElementById('convert-mode-title').textContent='轉換照護模式';
+  if(step===1){
+    document.getElementById('convert-mode-body').innerHTML=`
+      <div class="info-note blue" style="margin-bottom:12px">轉換後將保留現有所有紀錄，療程週數不重新計算。</div>
+      <div class="retire-list">
+        ${['住院','日照','居家'].map(m=>`
+          <label class="retire-opt">
+            <input type="radio" name="convert-mode-radio" value="${m}" ${newMode===m?'checked':''}>
+            <span style="font-size:13px">${m}</span>
+          </label>`).join('')}
+      </div>
+    `;
+    document.getElementById('convert-mode-footer').innerHTML=`
+      <button class="btn btn-secondary" onclick="closeModal('modal-convert-mode')">取消</button>
+      <button class="btn btn-primary" onclick="convertModeNext()">下一步</button>
+    `;
+  } else {
+    const isHomeOrDay=newMode==='居家'||newMode==='日照';
+    const infoText=isHomeOrDay?'請填寫轉換後的相關資訊，轉換完成後需至排床模組更新床位狀態。':'轉換為住院後，需至排床模組重新安排床位。';
+    const homeHint=newMode==='居家'?`<div class="info-note amber" style="margin-top:10px">轉換為居家後，需重新交付復健主管進行居家報名流程。</div>`:'';
+    document.getElementById('convert-mode-body').innerHTML=`
+      <div class="info-note blue" style="margin-bottom:12px">${infoText}</div>
+      <div class="form-group" style="margin-bottom:10px"><label>轉換日期</label><input class="form-control" type="date" id="convert-mode-date" value="2026-07-09"></div>
+      <div class="form-group" style="margin-bottom:10px"><label>新的預計結案日期</label><input class="form-control" type="date" id="convert-mode-closedate"></div>
+      <div class="form-group"><label>備註（選填）</label><textarea class="form-control" rows="2" id="convert-mode-note" placeholder="補充說明..."></textarea></div>
+      ${homeHint}
+    `;
+    document.getElementById('convert-mode-footer').innerHTML=`
+      <button class="btn btn-secondary" onclick="convertModeBack()">上一步</button>
+      <button class="btn btn-primary" onclick="confirmConvertMode()">確認轉換</button>
+    `;
+  }
+}
+function confirmConvertMode(){
+  const {newMode}=convertModeCtx;
+  const modeTypeMap={'住院':'hosp','日照':'day','居家':'home'};
+  const c=getCurrentCaseObj();
+  if(c){
+    c.mode=newMode;
+    c.modeType=modeTypeMap[newMode];
+    const closeDateVal=document.getElementById('convert-mode-closedate')?.value;
+    if(closeDateVal) c.closeDate=closeDateVal.replace(/-/g,'/');
+  }
+  closeModal('modal-convert-mode');
+  alert(`照護模式已轉換為 ${newMode}，請至排床模組更新相關資訊。`);
   if(c) renderPage('detail',currentCase);
 }
 

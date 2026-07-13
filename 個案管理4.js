@@ -1208,8 +1208,8 @@ function renderModeFlowBlock(c){
     <div class="section-card">
       <div class="sc-header"><div class="sc-title">🏥 住院收案流程</div>${confirmed?'<span class="badge badge-purple">確認收案</span>':'<span class="badge badge-gray">待排床</span>'}</div>
       <div class="sc-body">
-        <div style="font-size:11px;color:var(--gray-400);margin-bottom:10px">預約床位後狀態自動轉為「確認收案」，可至上方按鈕通知專科護理師。</div>
-        ${!confirmed?`<button class="btn btn-secondary btn-sm" onclick="alert('已進入收案流程確認，後續可由個案管理師完成收案')">→ 確認收案流程</button>`:`<div style="font-size:12px;color:var(--green);font-weight:600">✓ 已預約床位 A301，狀態已轉為「確認收案」</div>`}
+        <div style="font-size:11px;color:var(--gray-400);margin-bottom:10px">可至下方按鈕通知專科護理師。</div>
+        ${!confirmed?`<button class="btn btn-secondary btn-sm" onclick="alert('已進入收案流程確認，後續可由個案管理師完成收案')">→ 確認住院收案</button>`:`<div style="font-size:12px;color:var(--green);font-weight:600">✓ 已預約床位 A301，狀態已轉為「確認收案」</div>`}
       </div>
     </div>`;
   }

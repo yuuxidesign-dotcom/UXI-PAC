@@ -10,6 +10,7 @@ let currentRole='mgr';
 let currentPage='list';
 let currentCase=null;
 let currentForm=null;
+let roleFilterStatus=null; // 醫師／護理師視角的狀態篩選（預設進入時鎖定「收案判斷中」，可自行切換查閱其他狀態）
 
 // ── 疾病別定義 ──
 // PAC 四大疾病別（依員郭醫院實際收案範圍）
@@ -51,26 +52,26 @@ function calcCloseDate(openDateStr,disease){
 // roomPref：房型偏好（null=無偏好，'single'=單人房，'double'=雙人房，'multi'=多人房）
 const CASES={
   temp:[
-    {id:'t1',name:'李志明',birthDate:'1940/03/12',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/24',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'single'},
-    {id:'t2',name:'黃秋香',birthDate:'1948/11/02',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/06/22',status:'待補件',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待補件',upstreamStatus:'尚未回報',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',roomPref:null},
-    {id:'t3',name:'吳金水',birthDate:'1945/07/20',mode:'日照',modeType:'day',disease:'腦中風',source:'台中榮總',date:'2026/06/20',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',timelineSub:'醫師／護理師收案判斷',upstreamStatus:'尚未回報',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',roomPref:null},
-    {id:'t4',name:'鄭文雄',birthDate:'1952/01/15',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'門診自轉',date:'2026/06/18',status:'待排床',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待排床',upstreamStatus:'已回報收案',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'兒子',roomPref:'double'},
-    {id:'t5',name:'許美雲',birthDate:'1943/09/08',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/06/19',status:'待評估',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待評估',timelineSub:'待醫師居家評估',upstreamStatus:'已回報收案',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',roomPref:null},
-    {id:'t6',name:'周大為',birthDate:'1947/04/30',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/15',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',upstreamStatus:'已回報收案',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'multi'},
-    {id:'t7',name:'蔡素珍',birthDate:'1950/12/25',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'台中榮總',date:'2026/06/12',status:'待開案',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待開案',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'媳婦',roomPref:null},
-    {id:'t8',name:'謝國雄',birthDate:'1944/06/17',mode:'住院',modeType:'hosp',disease:'腦中風',source:'彰基醫院',date:'2026/06/08',status:'封存',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:null,archiveType:'住院當日未報到',archiveDate:'2026/06/09',archiveOperator:'林美惠',archiveReason:'個案確認入院當日聯繫家屬後表示暫不入院，需重新評估時機。',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',roomPref:null},
+    {id:'t1',name:'李志明',birthDate:'1940/03/12',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/24',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'single',address:'彰化縣彰化市中山路一段100號'},
+    {id:'t2',name:'黃秋香',birthDate:'1948/11/02',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/06/22',status:'待補件',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待補件',upstreamStatus:'尚未回報',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',roomPref:null,address:'彰化縣員林市中正路200號'},
+    {id:'t3',name:'吳金水',birthDate:'1945/07/20',mode:'日照',modeType:'day',disease:'腦中風',source:'台中榮總',date:'2026/06/20',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',timelineSub:'醫師／護理師收案判斷',upstreamStatus:'尚未回報',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',roomPref:null,address:'彰化縣鹿港鎮中山路50號'},
+    {id:'t4',name:'鄭文雄',birthDate:'1952/01/15',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'門診自轉',date:'2026/06/18',status:'待排床',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待排床',upstreamStatus:'已回報收案',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'兒子',roomPref:'double',address:'彰化縣和美鎮和平路88號'},
+    {id:'t5',name:'許美雲',birthDate:'1943/09/08',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/06/19',status:'待評估',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待評估',timelineSub:'待醫師居家評估',upstreamStatus:'已回報收案',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',roomPref:null,address:'彰化縣北斗鎮中華路15號'},
+    {id:'t6',name:'周大為',birthDate:'1947/04/30',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/15',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',upstreamStatus:'已回報收案',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'multi',address:'彰化縣溪湖鎮西環路66號'},
+    {id:'t7',name:'蔡素珍',birthDate:'1950/12/25',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'台中榮總',date:'2026/06/12',status:'待開案',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待開案',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'媳婦',roomPref:null,address:'彰化縣田中鎮中州路120號'},
+    {id:'t8',name:'謝國雄',birthDate:'1944/06/17',mode:'住院',modeType:'hosp',disease:'腦中風',source:'彰基醫院',date:'2026/06/08',status:'封存',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:null,archiveType:'住院當日未報到',archiveDate:'2026/06/09',archiveOperator:'林美惠',archiveReason:'個案確認入院當日聯繫家屬後表示暫不入院，需重新評估時機。',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',roomPref:null,address:'彰化縣二林鎮斗苑路300號'},
   ],
   formal:[
-    {id:'f1',name:'陳建國',birthDate:'1954/02/10',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/10',status:'展延中',mgr:'林美惠',formal:true,countdown:2,week:2,timelineStep:'展延中',timelineSub:'待展延申請',referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/06/10',closeDate:'2026/07/22',roomPref:'double'},
-    {id:'f2',name:'王淑芬',birthDate:'1958/08/03',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰基醫院',date:'2026/05/28',status:'展延中',mgr:'林美惠',formal:true,countdown:3,week:4,timelineStep:'展延中',timelineSub:'審核中',referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',openDate:'2026/05/28',closeDate:'2026/06/11',roomPref:null},
-    {id:'f3',name:'劉家豪',birthDate:'1949/05/22',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/05',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',openDate:'2026/06/05',closeDate:'2026/07/17',roomPref:null},
-    {id:'f4',name:'林翠娟',birthDate:'1946/10/11',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'台中榮總',date:'2026/04/15',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:11,timelineStep:'即將結案',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',openDate:'2026/04/15',closeDate:'2026/04/29',roomPref:'single'},
-    {id:'f5',name:'張明輝',birthDate:'1951/03/28',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/01',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:10,timelineStep:'即將結案',referral:{status:'轉介中',note:'轉介長照服務，已聯繫長照管理中心'},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/05/01',closeDate:'2026/06/12',roomPref:null},
-    {id:'f6',name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null},
-    {id:'f7',name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:null,archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double'},
-    {id:'f8',name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'結案失敗',archiveDate:'2026/03/15',archiveOperator:'林美惠',archiveReason:'個案病況變化，需轉回急性醫院持續治療，無法繼續 PAC 療程。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null},
+    {id:'f1',name:'陳建國',birthDate:'1954/02/10',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/10',status:'展延中',mgr:'林美惠',formal:true,countdown:2,week:2,timelineStep:'展延中',timelineSub:'待展延申請',referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/06/10',closeDate:'2026/07/22',roomPref:'double',address:'彰化縣社頭鄉中山路33號'},
+    {id:'f2',name:'王淑芬',birthDate:'1958/08/03',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰基醫院',date:'2026/05/28',status:'展延中',mgr:'林美惠',formal:true,countdown:3,week:4,timelineStep:'展延中',timelineSub:'審核中',referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',openDate:'2026/05/28',closeDate:'2026/06/11',roomPref:null,address:'彰化縣永靖鄉中山路77號'},
+    {id:'f3',name:'劉家豪',birthDate:'1949/05/22',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/05',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',openDate:'2026/06/05',closeDate:'2026/07/17',roomPref:null,address:'彰化縣埔心鄉義民路22號'},
+    {id:'f4',name:'林翠娟',birthDate:'1946/10/11',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'台中榮總',date:'2026/04/15',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:11,timelineStep:'即將結案',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',openDate:'2026/04/15',closeDate:'2026/04/29',roomPref:'single',address:'彰化縣溪州鄉中央路45號'},
+    {id:'f5',name:'張明輝',birthDate:'1951/03/28',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/01',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:10,timelineStep:'即將結案',referral:{status:'轉介中',note:'轉介長照服務，已聯繫長照管理中心'},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/05/01',closeDate:'2026/06/12',roomPref:null,address:'彰化縣大村鄉村上路18號'},
+    {id:'f6',name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null,address:'彰化縣埔鹽鄉南新路9號'},
+    {id:'f7',name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:null,archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double',address:'彰化縣秀水鄉安東路60號'},
+    {id:'f8',name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'結案失敗',archiveDate:'2026/03/15',archiveOperator:'林美惠',archiveReason:'個案病況變化，需轉回急性醫院持續治療，無法繼續 PAC 療程。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null,address:'彰化縣花壇鄉中山路150號'},
     // 封存：正式病歷非PAC個案（PAC判斷後確認為非PAC，移交病床管理並封存於此模組）
-    {id:'f9',name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'一般復健（中風/脊椎損傷，非PAC專案）',source:'門診',date:'2026/06/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null},
+    {id:'f9',name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'一般復健（中風/脊椎損傷，非PAC專案）',source:'門診',date:'2026/06/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null,address:'彰化縣芬園鄉彰南路5號'},
   ]
 };
 
@@ -81,6 +82,18 @@ const FREQUENT_UPSTREAM_CONTACTS=[
   {name:'陳出院準備護理師',hospital:'台中榮總',phone:'04-3333-4444',line:'tc_chen'},
   {name:'王個管師',hospital:'彰化秀傳',phone:'04-2222-3333',line:'cy_wang'},
 ];
+
+// ── 行政視角：待建檔通知（假資料）── 個管師已按下「轉成正式病歷」但行政尚未輸入病歷號的個案
+let PENDING_RECORDS=[
+  {id:'pr1',name:'陳志明',age:68,mode:'住院PAC',disease:'腦中風',mgr:'林美惠',convertedAt:'2026/06/25 09:30'},
+];
+
+// ── 通知鈴鐺（假資料）── 行政完成建檔後通知負責個管師
+const NOTIFICATIONS=[
+  {id:1,text:'陳志明 已成功轉為正式病歷，病歷號：00073450（行政 蔡書明 建檔，2026/06/25 14:20）',read:false},
+  {id:2,text:'王淑芬 已成功轉為正式病歷，病歷號：00073521（行政 蔡書明 建檔，2026/06/24 11:05）',read:false},
+];
+let notifDropdownOpen=false;
 
 
 
@@ -337,6 +350,9 @@ function renderList(container){
   document.getElementById('bc').textContent='個案管理';
   const isAdm=currentRole==='adm';
   const isMgr=currentRole==='mgr';
+  const isDoc=currentRole==='doc';
+  const isNur=currentRole==='nur';
+  const isJudgeRole=isDoc||isNur;
 
   const allCases=[...CASES.temp,...CASES.formal];
   const countBy=(status)=>allCases.filter(c=>c.status===status&&c.status!=='封存').length;
@@ -346,8 +362,11 @@ function renderList(container){
   const modeCount={hosp:0,day:0,home:0,general:0};
   allCases.forEach(c=>{if(c.modeType)modeCount[c.modeType]++});
 
-  const tempActive=CASES.temp.filter(c=>c.status!=='封存');
-  const formalActive=CASES.formal.filter(c=>c.status!=='封存');
+  // 醫師／護理師視角：套用狀態篩選（唯讀查閱），預設鎖定「收案判斷中」
+  const applyRoleFilter=(arr)=>(isJudgeRole&&roleFilterStatus)?arr.filter(c=>c.status===roleFilterStatus):arr;
+
+  const tempActive=applyRoleFilter(CASES.temp.filter(c=>c.status!=='封存'));
+  const formalActive=applyRoleFilter(CASES.formal.filter(c=>c.status!=='封存'));
   const archiveCases=allCases.filter(c=>c.status==='封存');
   const tabCaseMap={temp:tempActive,formal:formalActive,archive:archiveCases};
   const currentTabCases=tabCaseMap[currentListTab];
@@ -384,6 +403,12 @@ function renderList(container){
   }
 
   container.innerHTML=`
+    ${isJudgeRole?`
+    <div style="background:var(--amber-light);border:1px solid #FDE68A;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;font-weight:600;color:var(--amber)">
+      ⚠️ 以下個案待您完成收案判斷，其他狀態個案可透過篩選查閱
+    </div>
+    `:''}
+    ${isAdm?pendingRecordsBlock():''}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div>
         <div style="font-size:18px;font-weight:700">個案管理</div>
@@ -461,11 +486,11 @@ function renderList(container){
       </div>
       <select class="filter-sel"><option>全部類型</option><option>住院PAC</option><option>日照PAC</option><option>居家PAC</option><option>一般</option></select>
       <select class="filter-sel" id="status-filter" onchange="onStatusFilterChange(this.value)">
-        <option value="">全部狀態</option>
-        <option>收案判斷中</option><option>待補件</option>
-        <option>確認收案</option><option>待排床</option><option>待聯絡</option>
-        <option>待開案</option><option>待評估</option><option>照護中</option>
-        <option>展延中</option><option>即將結案</option><option>封存</option>
+        <option value="" ${isJudgeRole&&!roleFilterStatus?'selected':''}>全部狀態</option>
+        <option ${isJudgeRole&&roleFilterStatus==='收案判斷中'?'selected':''}>收案判斷中</option><option ${isJudgeRole&&roleFilterStatus==='待補件'?'selected':''}>待補件</option>
+        <option ${isJudgeRole&&roleFilterStatus==='確認收案'?'selected':''}>確認收案</option><option ${isJudgeRole&&roleFilterStatus==='待排床'?'selected':''}>待排床</option><option ${isJudgeRole&&roleFilterStatus==='待聯絡'?'selected':''}>待聯絡</option>
+        <option ${isJudgeRole&&roleFilterStatus==='待開案'?'selected':''}>待開案</option><option ${isJudgeRole&&roleFilterStatus==='待評估'?'selected':''}>待評估</option><option ${isJudgeRole&&roleFilterStatus==='照護中'?'selected':''}>照護中</option>
+        <option ${isJudgeRole&&roleFilterStatus==='展延中'?'selected':''}>展延中</option><option ${isJudgeRole&&roleFilterStatus==='即將結案'?'selected':''}>即將結案</option><option ${isJudgeRole&&roleFilterStatus==='封存'?'selected':''}>封存</option>
       </select>
       <select class="filter-sel">
         <option>全部疾病別</option>
@@ -582,11 +607,49 @@ function filterByStatus(status){
   onStatusFilterChange(status);
 }
 function onStatusFilterChange(status){
-  // 切到含目標狀態個案較多的 tab，並示意篩選（prototype 簡化處理）
+  if(currentRole==='doc'||currentRole==='nur'){
+    // 醫師／護理師視角：篩選僅限縮目前 Tab 內容（唯讀查閱），不切換 Tab
+    roleFilterStatus=status||null;
+    renderList(document.getElementById('main-content'));
+    return;
+  }
+  // 個管師／行政：維持現有行為，切到含目標狀態個案較多的 tab（prototype 簡化處理）
   const inFormal=CASES.formal.some(c=>c.status===status);
   const inTemp=CASES.temp.some(c=>c.status===status);
   if(inFormal&&!inTemp) switchTab('formal');
   else if(inTemp&&!inFormal) switchTab('temp');
+}
+
+// ── 行政視角：待建檔通知區塊 ──
+function pendingRecordsBlock(){
+  if(!PENDING_RECORDS.length) return '';
+  return `
+  <div style="background:var(--amber-light);border:1px solid #FDE68A;border-radius:10px;padding:16px 18px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:700;color:var(--amber);margin-bottom:10px">📋 待建檔通知</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${PENDING_RECORDS.map(r=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--white);border-radius:8px;padding:10px 14px">
+          <div style="font-size:12px;color:var(--gray-700);line-height:1.7">
+            <strong style="font-size:13px">${r.name}${r.age!==undefined?`（${r.age}歲）`:''}</strong><br>
+            ${r.mode}・${r.disease}<br>
+            個管師 ${r.mgr} 按下轉正式病歷時間：${r.convertedAt}
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="form-control" type="text" placeholder="輸入病歷號" id="pr-input-${r.id}" style="width:160px">
+            <button class="btn btn-primary btn-sm" onclick="confirmPendingRecord('${r.id}')">確認建檔</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+function confirmPendingRecord(id){
+  const input=document.getElementById(`pr-input-${id}`);
+  const val=input?input.value.trim():'';
+  if(!val){alert('請輸入病歷號');return;}
+  PENDING_RECORDS=PENDING_RECORDS.filter(r=>r.id!==id);
+  alert('病歷號已輸入，個案已正式轉入正式病歷 Tab，系統將通知負責個管師。');
+  renderPage('list');
 }
 
 
@@ -858,7 +921,7 @@ function renderDetail(container,caseId){
           <button class="btn btn-ghost btn-sm" onclick="markNoExtension('${c.id}')">① 不展延</button>
           <button class="btn ${c.status==='照護中'?'btn-secondary':'btn-ghost'} btn-sm" onclick="alert('狀態更新為「展延中・待展延申請」')">② 待送出展延</button>
           <button class="btn ${c.status==='展延中'?'btn-amber':'btn-ghost'} btn-sm" onclick="markExtensionSubmitted('${c.id}')">③ 已送出展延（審核中）</button>
-          <button class="btn btn-green btn-sm" onclick="alert('狀態更新為「照護中・展延後」，療程繼續')">④ 展延成功</button>
+          <button class="btn btn-green btn-sm" onclick="openExtensionSuccessModal('${c.id}')">④ 展延成功</button>
           <button class="btn btn-danger btn-sm" onclick="alert('狀態更新為「即將結案」，請安排結案評估')">⑤ 展延失敗</button>
         </div>
         <div style="margin-top:10px;font-size:11px;color:var(--gray-400)">目前狀態：<strong style="color:var(--gray-700)">${c.status}${c.timelineSub?'・'+c.timelineSub:''}</strong></div>
@@ -885,6 +948,7 @@ function renderDetail(container,caseId){
         <div class="info-grid">
           <div class="info-item"><label>家屬姓名</label><span>陳小明${c.familyRelation?`（${c.familyRelation}）`:''}</span></div>
           <div class="info-item"><label>家屬電話</label><span>0912-345-678</span></div>
+          <div class="info-item"><label>地址</label><span>${c.address||'—'}</span></div>
           <div class="info-item"><label>關係</label><span>${c.familyRelation||'—'}</span></div>
         </div>
         <div class="divider"></div>
@@ -1000,6 +1064,7 @@ function renderDetail(container,caseId){
             <button class="btn btn-ghost btn-xs" onclick="alert('預覽附件：家屬提供影片.mp4')">預覽</button>
           </div>
         </div>
+        ${(isDoc||isNur)?`<div style="font-size:11px;color:var(--gray-500);background:var(--gray-50);padding:8px 10px;border-radius:6px">此為個案病摘資料，僅供查閱，如需修改請聯繫負責個管師。</div>`:''}
         ${isMgr?`<div class="upload-zone" style="padding:14px" onclick="alert('選擇檔案上傳（PDF / Word / JPG / 影片）')"><div style="font-size:12px">📎 點擊或拖曳上傳附件（PDF / Word / JPG / 影片）</div></div>`:''}
       </div>
     </div>
@@ -1030,8 +1095,8 @@ function renderDetail(container,caseId){
     </div>
     ` : ''}
 
-    <!-- 復健排班查看（正式病歷階段）-->
-    ${isFormal?`
+    <!-- 復健排班查看（正式病歷階段・僅居家個案）-->
+    ${isFormal&&c.modeType==='home'?`
     <div class="section-card">
       <div class="sc-header"><div class="sc-title">📅 復健排班查看</div></div>
       <div class="sc-body" style="padding:0">
@@ -1371,11 +1436,74 @@ function markExtensionSubmitted(caseId){
   if(c) renderPage('detail',currentCase);
 }
 
+// ── 展延成功：開啟 Modal，依疾病別自動帶入新的預計結案日期（以今日 2026/07/09 為基準）──
+function openExtensionSuccessModal(caseId){
+  const c=getCurrentCaseObj();
+  const period=c?PAC_CARE_PERIOD[c.disease]:null;
+  const weeks=period?period.weeksMax:12;
+  const base=new Date('2026-07-09');
+  base.setDate(base.getDate()+weeks*7);
+  const defaultDate=`${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;
+  document.getElementById('ext-success-closedate').value=defaultDate;
+  document.getElementById('ext-success-note').value='';
+  openModal('modal-extension-success');
+}
+function confirmExtensionSuccess(){
+  const c=getCurrentCaseObj();
+  const closeDateVal=document.getElementById('ext-success-closedate').value;
+  if(c){
+    c.status='照護中';
+    c.timelineStep='照護中';
+    c.timelineSub='展延後';
+    if(closeDateVal) c.closeDate=closeDateVal.replace(/-/g,'/');
+  }
+  closeModal('modal-extension-success');
+  alert('展延成功，預計結案日期已更新，已發送站內通知給復健師。');
+  if(c) renderPage('detail',currentCase);
+}
+
 // 家屬聯繫紀錄「確定不報到」：依個案照護模式自動預選對應封存類型，理由欄必填
 function openNoShowArchive(){
   const c=getCurrentCaseObj();
   const presetMap={hosp:'決定不報到／參加',day:'決定不報到／參加',home:'決定不報到／參加'};
   openArchiveModal({formal:false,presetType:(c&&presetMap[c.modeType])||'決定不報到／參加',locked:true});
+}
+
+// ── 轉成正式病歷確認：關閉 Modal 後依序顯示兩則 alert，並提醒行政完成杏翔建檔 ──
+function confirmConvertToFormal(){
+  closeModal('modal-convert');
+  alert('已轉換為正式病歷，相關表單已自動建立，行政通知已發出');
+  alert('已通知行政人員，請行政至個案管理模組完成杏翔建檔並輸入病歷號，完成後您將收到通知。');
+}
+
+// ── 通知鈴鐺（右上角）：假資料示意行政完成建檔後的通知，僅個管師（mgr）收到此類通知 ──
+function renderNotifBell(){
+  const container=document.getElementById('notif-bell-container');
+  if(!container) return;
+  const isMgr=currentRole==='mgr';
+  const list=isMgr?NOTIFICATIONS:[];
+  const unread=isMgr?NOTIFICATIONS.filter(n=>!n.read).length:0;
+  container.innerHTML=`
+    <button onclick="toggleNotifDropdown()" style="position:relative;background:none;border:none;cursor:pointer;font-size:18px;padding:4px;line-height:1">
+      🔔
+      <span style="position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:${unread>0?'flex':'none'};align-items:center;justify-content:center;padding:0 3px">${unread}</span>
+    </button>
+    <div style="display:${notifDropdownOpen?'block':'none'};position:absolute;top:32px;right:0;width:300px;background:var(--white);border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;overflow:hidden">
+      ${list.length?list.map(n=>`
+        <div onclick="markNotifRead(${n.id})" style="padding:10px 12px;font-size:12px;line-height:1.6;border-bottom:1px solid var(--gray-100);cursor:pointer;${n.read?'color:var(--gray-400)':'color:var(--gray-800);background:var(--blue-light)'}">${n.text}</div>
+      `).join(''):`<div style="padding:14px;font-size:12px;color:var(--gray-400);text-align:center">目前沒有新通知</div>`}
+    </div>
+  `;
+}
+function toggleNotifDropdown(){
+  notifDropdownOpen=!notifDropdownOpen;
+  renderNotifBell();
+}
+function markNotifRead(id){
+  const n=NOTIFICATIONS.find(x=>x.id===id);
+  if(n&&!n.read) n.read=true;
+  renderNotifBell();
+  alert('已標記為已讀');
 }
 
 // ── PAC 判斷＝非PAC：兩步驟處理（匯入排床模組 or 直接封存）──
@@ -1619,6 +1747,18 @@ function switchRole(role){
   document.getElementById('user-av').className='user-avatar '+cfg.av;
   document.getElementById('user-name').textContent=cfg.name;
   document.getElementById('user-role-label').textContent=cfg.label;
+
+  if(role==='doc'||role==='nur'){
+    // 醫師／護理師：預設停在臨時病歷 Tab，並自動套用「收案判斷中」篩選，只顯示待判斷個案
+    currentPage='list';
+    currentListTab='temp';
+    roleFilterStatus='收案判斷中';
+  }
+  // 個管師（mgr）：維持現有行為，無變化
+
+  // 通知鈴鐺：依角色立即更新（僅個管師收到轉正式病歷建檔通知，其他角色為空狀態），不需重新整理頁面
+  renderNotifBell();
+
   // 重新渲染目前頁面
   if(currentPage==='list') renderPage('list');
   else if(currentPage==='detail'&&currentCase) renderPage('detail',currentCase);
@@ -1627,3 +1767,4 @@ function switchRole(role){
 
 // Init
 renderPage('list');
+renderNotifBell();

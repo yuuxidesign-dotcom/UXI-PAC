@@ -48,7 +48,10 @@
 <div class="main">
   <div class="topbar">
     <div class="breadcrumb" id="bc">個案管理</div>
-    <div style="font-size:11px;color:var(--gray-400)">2026/06/25 週四</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="font-size:11px;color:var(--gray-400)">2026/06/25 週四</div>
+      <div id="notif-bell-container" style="position:relative"></div>
+    </div>
   </div>
   <div class="content" id="main-content">
     <!-- 由 JS 渲染 -->
@@ -136,6 +139,7 @@
 
           <div class="form-group"><label>家屬姓名</label><input class="form-control" placeholder="主要照顧者姓名"></div>
           <div class="form-group"><label>與個案關係</label><select class="form-control"><option value="">請選擇</option><option>配偶</option><option>兒子</option><option>女兒</option><option>媳婦</option><option>女婿</option><option>孫子女</option><option>其他親屬</option><option>看護</option></select></div>
+          <div class="form-group full" style="grid-column:1/-1"><label>地址</label><input class="form-control" placeholder="例如：彰化縣員林市○○路○○號"></div>
 
           <div class="form-group" style="grid-column:1/-1"><label>入院診斷</label><textarea class="form-control" rows="2" placeholder="英文原文診斷（可後續填寫）"></textarea></div>
 
@@ -305,7 +309,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-convert')">取消</button>
-      <button class="btn btn-primary" onclick="closeModal('modal-convert');alert('已轉換為正式病歷，相關表單已自動建立，行政通知已發出')">確認轉換</button>
+      <button class="btn btn-primary" onclick="confirmConvertToFormal()">確認轉換</button>
     </div>
   </div>
 </div>
@@ -322,6 +326,31 @@
     </div>
     <div class="modal-footer" id="convert-mode-footer">
       <!-- 由 JS 動態渲染 -->
+    </div>
+  </div>
+</div>
+
+<!-- 展延成功：更新預計結案日期 -->
+<div id="modal-extension-success" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">展延成功・更新預計結案日期</div>
+      <button class="modal-close" onclick="closeModal('modal-extension-success')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-note blue">請確認新的預計結案日期，系統已依疾病別法規規定自動帶入，可手動修正。</div>
+      <div class="form-group" style="margin-top:12px;margin-bottom:12px">
+        <label>新的預計結案日期</label>
+        <input class="form-control" type="date" id="ext-success-closedate">
+      </div>
+      <div class="form-group">
+        <label>備註（選填）</label>
+        <textarea class="form-control" rows="2" id="ext-success-note" placeholder="補充說明..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-extension-success')">取消</button>
+      <button class="btn btn-primary" onclick="confirmExtensionSuccess()">確認並通知復健師</button>
     </div>
   </div>
 </div>

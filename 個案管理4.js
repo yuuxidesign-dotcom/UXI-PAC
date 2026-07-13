@@ -62,16 +62,16 @@ const CASES={
     {id:'t8',name:'謝國雄',birthDate:'1944/06/17',mode:'住院',modeType:'hosp',disease:'腦中風',source:'彰基醫院',date:'2026/06/08',status:'封存',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:null,archiveType:'住院當日未報到',archiveDate:'2026/06/09',archiveOperator:'林美惠',archiveReason:'個案確認入院當日聯繫家屬後表示暫不入院，需重新評估時機。',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',roomPref:null,address:'彰化縣二林鎮斗苑路300號'},
   ],
   formal:[
-    {id:'f1',name:'陳建國',birthDate:'1954/02/10',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/10',status:'展延中',mgr:'林美惠',formal:true,countdown:2,week:2,timelineStep:'展延中',timelineSub:'待展延申請',referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/06/10',closeDate:'2026/07/22',roomPref:'double',address:'彰化縣社頭鄉中山路33號'},
-    {id:'f2',name:'王淑芬',birthDate:'1958/08/03',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰基醫院',date:'2026/05/28',status:'展延中',mgr:'林美惠',formal:true,countdown:3,week:4,timelineStep:'展延中',timelineSub:'審核中',referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',openDate:'2026/05/28',closeDate:'2026/06/11',roomPref:null,address:'彰化縣永靖鄉中山路77號'},
-    {id:'f3',name:'劉家豪',birthDate:'1949/05/22',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/05',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',openDate:'2026/06/05',closeDate:'2026/07/17',roomPref:null,address:'彰化縣埔心鄉義民路22號'},
-    {id:'f4',name:'林翠娟',birthDate:'1946/10/11',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'台中榮總',date:'2026/04/15',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:11,timelineStep:'即將結案',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',openDate:'2026/04/15',closeDate:'2026/04/29',roomPref:'single',address:'彰化縣溪州鄉中央路45號'},
-    {id:'f5',name:'張明輝',birthDate:'1951/03/28',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/01',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:10,timelineStep:'即將結案',referral:{status:'轉介中',note:'轉介長照服務，已聯繫長照管理中心'},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/05/01',closeDate:'2026/06/12',roomPref:null,address:'彰化縣大村鄉村上路18號'},
-    {id:'f6',name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null,address:'彰化縣埔鹽鄉南新路9號'},
-    {id:'f7',name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:null,archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double',address:'彰化縣秀水鄉安東路60號'},
-    {id:'f8',name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'結案失敗',archiveDate:'2026/03/15',archiveOperator:'林美惠',archiveReason:'個案病況變化，需轉回急性醫院持續治療，無法繼續 PAC 療程。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null,address:'彰化縣花壇鄉中山路150號'},
+    {id:'f1',name:'陳建國',birthDate:'1954/02/10',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/10',status:'展延中',mgr:'林美惠',formal:true,countdown:2,week:2,timelineStep:'展延中',timelineSub:'待展延申請',referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/06/10',closeDate:'2026/07/22',roomPref:'double',address:'彰化縣社頭鄉中山路33號',department:'神經內科'},
+    {id:'f2',name:'王淑芬',birthDate:'1958/08/03',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰基醫院',date:'2026/05/28',status:'展延中',mgr:'林美惠',formal:true,countdown:3,week:4,timelineStep:'展延中',timelineSub:'審核中',referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',openDate:'2026/05/28',closeDate:'2026/06/11',roomPref:null,address:'彰化縣永靖鄉中山路77號',department:'骨科'},
+    {id:'f3',name:'劉家豪',birthDate:'1949/05/22',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/05',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',openDate:'2026/06/05',closeDate:'2026/07/17',roomPref:null,address:'彰化縣埔心鄉義民路22號',department:'神經內科'},
+    {id:'f4',name:'林翠娟',birthDate:'1946/10/11',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'台中榮總',date:'2026/04/15',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:11,timelineStep:'即將結案',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',openDate:'2026/04/15',closeDate:'2026/04/29',roomPref:'single',address:'彰化縣溪州鄉中央路45號',department:'骨科'},
+    {id:'f5',name:'張明輝',birthDate:'1951/03/28',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/01',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:10,timelineStep:'即將結案',referral:{status:'轉介中',note:'轉介長照服務，已聯繫長照管理中心'},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/05/01',closeDate:'2026/06/12',roomPref:null,address:'彰化縣大村鄉村上路18號',department:'神經內科'},
+    {id:'f6',name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null,address:'彰化縣埔鹽鄉南新路9號',department:'神經內科'},
+    {id:'f7',name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:null,archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double',address:'彰化縣秀水鄉安東路60號',department:'神經內科'},
+    {id:'f8',name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'結案失敗',archiveDate:'2026/03/15',archiveOperator:'林美惠',archiveReason:'個案病況變化，需轉回急性醫院持續治療，無法繼續 PAC 療程。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null,address:'彰化縣花壇鄉中山路150號',department:'骨科'},
     // 封存：正式病歷非PAC個案（PAC判斷後確認為非PAC，移交病床管理並封存於此模組）
-    {id:'f9',name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'一般復健（中風/脊椎損傷，非PAC專案）',source:'門診',date:'2026/06/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null,address:'彰化縣芬園鄉彰南路5號'},
+    {id:'f9',name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'一般復健（中風/脊椎損傷，非PAC專案）',source:'門診',date:'2026/06/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null,address:'彰化縣芬園鄉彰南路5號',department:'復健科'},
   ]
 };
 
@@ -340,6 +340,7 @@ function renderPage(page,caseId,formName){
   if(page==='list') renderList(content);
   else if(page==='detail') renderDetail(content,caseId);
   else if(page==='form') renderFormFill(content,caseId,formName);
+  else if(page==='his-record') renderHisRecord(content,caseId);
 }
 
 let currentListTab='temp'; // 'temp' | 'formal' | 'archive'
@@ -694,7 +695,7 @@ function confirmPendingRecord(id){
   const val=input?input.value.trim():'';
   if(!val){alert('請輸入病歷號');return;}
   PENDING_RECORDS=PENDING_RECORDS.filter(r=>r.id!==id);
-  alert('病歷號已輸入，個案已正式轉入正式病歷 Tab，系統將通知負責個管師。');
+  alert('病歷號已輸入，系統將自動從杏翔匯入科別與主治醫師，個案已正式轉入正式病歷 Tab，系統將通知負責個管師。');
   renderPage('list');
 }
 
@@ -986,7 +987,8 @@ function renderDetail(container,caseId){
           <div class="info-item"><label>${c.modeType==='general'?'一般疾病類型':'PAC 疾病別'}</label><span>${c.disease}</span></div>
           <div class="info-item"><label>照護模式</label><span>${c.mode}</span></div>
           ${isFormal?`<div class="info-item"><label>病歷號</label><span>00073450</span></div>`:''}
-          ${isFormal&&c.mode==='住院'?`<div class="info-item"><label>床位</label><span>A301</span></div><div class="info-item"><label>主治醫師</label><span>張宗達 醫師</span></div>`:''}
+          ${isFormal&&c.mode==='住院'?`<div class="info-item"><label>床位</label><span>A301</span></div><div class="info-item"><label>主治醫師</label><span>張宗達 醫師</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div><div class="info-item"><label>科別</label><span>${c.department||'—'}</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div>`:''}
+          ${isFormal&&c.mode!=='住院'?`<div class="info-item"><label>科別</label><span>${c.department||'—'}</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div>`:''}
           ${isFormal?`<div class="info-item"><label>開案日</label><span>${c.openDate||'—'}</span></div><div class="info-item"><label>結案日（預估）</label><span>${c.closeDate||'—'}</span></div>`:''}
         </div>
         <div class="divider"></div>
@@ -1135,10 +1137,29 @@ function renderDetail(container,caseId){
             <div class="form-item-left"><div class="form-icon">💓</div><div><div class="form-name">生命徵象</div><div class="form-meta">*杏翔</div></div></div>
             <span class="form-status fs-pending">查看</span>
           </div>
+          <div class="form-item" onclick="renderPage('his-record','${caseId}')">
+            <div class="form-item-left"><div class="form-icon">🏥</div><div><div class="form-name">正式病歷</div><div class="form-meta">*杏翔</div></div></div>
+            <span class="form-status fs-pending">查看</span>
+          </div>
         </div>
       </div>
     </div>
     ` : ''}
+
+    <!-- 醫療紀錄查看（正式病歷階段・僅日照／居家個案，僅含正式病歷入口）-->
+    ${isFormal&&(c.modeType==='day'||c.modeType==='home')?`
+    <div class="section-card">
+      <div class="sc-header"><div class="sc-title">🩺 醫療紀錄查看</div><span style="font-size:11px;color:var(--gray-400)">僅限正式病歷個案</span></div>
+      <div class="sc-body">
+        <div class="forms-grid">
+          <div class="form-item" onclick="renderPage('his-record','${caseId}')">
+            <div class="form-item-left"><div class="form-icon">🏥</div><div><div class="form-name">正式病歷</div><div class="form-meta">*杏翔</div></div></div>
+            <span class="form-status fs-pending">查看</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    `:''}
 
     <!-- 復健排班查看（正式病歷階段・僅居家個案）-->
     ${isFormal&&c.modeType==='home'?`
@@ -1410,6 +1431,80 @@ function renderFormFill(container,caseId,formName){
         <button class="btn btn-secondary btn-sm" onclick="alert('已暫存')">暫存</button>
         ${isMgr||currentRole==='doc'||currentRole==='nur'?`<button class="btn btn-primary btn-sm" onclick="alert('表單已送出')">送出</button>`:''}
       </div>
+    </div>
+  `;
+}
+
+// ── 正式病歷（杏翔）唯讀詳情頁：由醫療紀錄查看 section 的「正式病歷」卡片點擊進入 ──
+function renderHisRecord(container,caseId){
+  currentCase=caseId;
+  const allCases=[...CASES.temp,...CASES.formal];
+  const c=allCases.find(x=>x.id===caseId)||CASES.formal[0];
+  document.getElementById('bc').textContent=`個案管理 › ${c.name} › 正式病歷（杏翔）`;
+
+  const isHosp=c.modeType==='hosp';
+  const dateLabel1=isHosp?'入院日期':'開案日期';
+  const dateLabel2=isHosp?'預計出院日期':'結案日期';
+
+  container.innerHTML=`
+    <div class="back-link" onclick="renderPage('detail','${caseId}')">← 返回 ${c.name} 個案詳情</div>
+
+    <div class="form-fill-header">
+      <div>
+        <div class="ff-title">正式病歷（杏翔）</div>
+        <div class="ff-meta">${c.name}・${c.mode}・${c.disease}・${c.openDate||'—'}</div>
+      </div>
+      <div style="font-size:11px;color:var(--gray-400)">由杏翔系統同步・如需修改請至杏翔操作</div>
+    </div>
+
+    <div class="form-section">
+      <div class="fs-header"><div class="fs-title">基本資料</div></div>
+      <div class="fs-body">
+        <div class="form-row">
+          <div class="form-group"><label>姓名</label><input class="form-control" value="${c.name}" readonly></div>
+          <div class="form-group"><label>性別</label><input class="form-control" value="男" readonly></div>
+          <div class="form-group"><label>血型</label><input class="form-control" value="A 型" readonly></div>
+          <div class="form-group"><label>生日</label><input class="form-control" value="${c.birthDate||'—'}" readonly></div>
+          <div class="form-group"><label>科別</label><input class="form-control" value="${c.department||'—'}" readonly></div>
+          <div class="form-group"><label>主治醫師</label><input class="form-control" value="張宗達 醫師" readonly></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="fs-header"><div class="fs-title">診斷</div></div>
+      <div class="fs-body">
+        <div class="form-row">
+          <div class="form-group"><label>主診斷</label><input class="form-control" value="${c.disease}" readonly></div>
+          <div class="form-group"><label>藥物過敏</label><input class="form-control" value="盤尼西林" readonly></div>
+          <div class="form-group"><label>其他過敏</label><input class="form-control" value="無" readonly></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="fs-header"><div class="fs-title">住院資訊</div></div>
+      <div class="fs-body">
+        <div class="form-row">
+          <div class="form-group"><label>${dateLabel1}</label><input class="form-control" value="${c.openDate||'—'}" readonly></div>
+          <div class="form-group"><label>${dateLabel2}</label><input class="form-control" value="${c.closeDate||'—'}" readonly></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="fs-header"><div class="fs-title">病歷內容</div></div>
+      <div class="fs-body">
+        <div class="form-group full"><label>主訴</label><textarea class="form-control" rows="2" readonly>右側肢體無力合併言語不清，發病約 2 天</textarea></div>
+        <div class="form-group full"><label>現在病歷</label><textarea class="form-control" rows="3" readonly>患者於發病當日由家屬送至急診，經影像學確認為左側大腦中動脈梗塞，已接受靜脈血栓溶解治療，病情穩定後轉介 PAC 復健療程。</textarea></div>
+        <div class="form-group full"><label>過去病史</label><textarea class="form-control" rows="2" readonly>高血壓 10 年、第二型糖尿病 5 年</textarea></div>
+        <div class="form-group full"><label>家族史</label><textarea class="form-control" rows="2" readonly>父親有高血壓病史</textarea></div>
+        <div class="form-group full"><label>系統回顧</label><textarea class="form-control" rows="2" readonly>心血管系統：高血壓控制中；神經系統：右側偏癱、輕度失語</textarea></div>
+      </div>
+    </div>
+
+    <div class="form-footer" style="justify-content:flex-end">
+      <button class="btn btn-secondary btn-sm" onclick="renderPage('detail','${caseId}')">← 返回個案詳情</button>
     </div>
   `;
 }
@@ -1808,6 +1903,7 @@ function switchRole(role){
   if(currentPage==='list') renderPage('list');
   else if(currentPage==='detail'&&currentCase) renderPage('detail',currentCase);
   else if(currentPage==='form'&&currentCase&&currentForm) renderPage('form',currentCase,currentForm);
+  else if(currentPage==='his-record'&&currentCase) renderPage('his-record',currentCase);
 }
 
 // Init

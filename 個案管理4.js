@@ -383,7 +383,7 @@ function renderList(container){
   if(currentListTab==='archive'){
     tabBodyHtml=`
       <div style="display:flex;gap:16px;align-items:flex-start">
-        <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:10px;max-height:calc(100vh - 340px);overflow-y:auto">
+        <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:12px;max-height:calc(100vh - 340px);overflow-y:auto">
           ${archiveCases.length?archiveCases.map(c=>caseListSidebarItem(c,'archive')).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">目前沒有封存個案</div>`}
         </div>
         <div id="list-detail-panel" style="flex:1;min-width:0"></div>
@@ -394,7 +394,7 @@ function renderList(container){
   } else {
     tabBodyHtml=`
       <div style="display:flex;gap:16px;align-items:flex-start">
-        <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:10px;max-height:calc(100vh - 340px);overflow-y:auto">
+        <div style="width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:12px;max-height:calc(100vh - 340px);overflow-y:auto">
           ${currentTabCases.length?currentTabCases.map(c=>caseListSidebarItem(c,currentListTab)).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">目前沒有個案</div>`}
         </div>
         <div id="list-detail-panel" style="flex:1;min-width:0"></div>
@@ -530,10 +530,14 @@ function renderList(container){
 function caseListSidebarItem(c,tabKey){
   const age=c.birthDate?calcAge(c.birthDate):null;
   const selected=listSelection[tabKey]===c.id;
-  return `<div style="padding:9px 10px;border-radius:7px;cursor:pointer;${selected?'background:var(--blue-light);border:1px solid var(--blue-mid)':'border:1px solid transparent'}">
+  const statusBadge=tabKey==='archive'
+    ? `<span class="badge badge-gray">封存</span><span style="font-size:10px;color:var(--gray-400);margin-left:4px">・${c.archiveType||''}</span>`
+    : `<span class="badge ${STATUS_COLOR[c.status]||'badge-gray'}">${c.status}</span>`;
+  return `<div style="padding:10px 10px;border-radius:7px;cursor:pointer;${selected?'background:var(--blue-light);border:1px solid var(--blue-mid)':'border:1px solid transparent'}">
     <div onclick="selectListCase('${tabKey}','${c.id}')">
       <div style="font-size:13px;font-weight:600;color:${selected?'var(--blue)':'var(--gray-800)'}">${c.name}${age!==null?`<span style="font-size:11px;color:var(--gray-400);font-weight:500">(${age})</span>`:''}</div>
       <div style="font-size:11px;color:var(--gray-500);margin-top:2px">${c.mode}・${c.disease}</div>
+      <div style="margin-top:5px">${statusBadge}</div>
     </div>
     ${tabKey==='archive'?`<button class="btn btn-ghost btn-xs" style="margin-top:6px;width:100%" onclick="event.stopPropagation();openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button>`:''}
   </div>`;

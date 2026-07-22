@@ -431,7 +431,6 @@ let currentListTab='temp'; // 'temp' | 'formal' | 'archive'
 let tabView={temp:'card',formal:'card'}; // 各 Tab 各自的視圖狀態：'card' or 'list'（封存 Tab 僅列表視圖，不記錄於此）
 let listSelection={temp:null,formal:null,archive:null}; // 列表視圖（左右分割）時，各 Tab 目前選中的個案 id
 let archiveTypeFilter=''; // 封存 Tab：封存類型篩選（空字串＝全部封存類型）
-let archiveRecordTypeFilter='all'; // 封存 Tab：病歷類型篩選 'all' | 'temp' | 'formal'
 let archiveDateFrom=''; // 封存 Tab：封存日期區間篩選（起，yyyy-mm-dd）
 let archiveDateTo=''; // 封存 Tab：封存日期區間篩選（訖，yyyy-mm-dd）
 let listSortOrder='dateDesc'; // 個案列表排序：'dateDesc'(收案日期新→舊，預設) | 'dateAsc' | 'nameAsc' | 'closeDateAsc'
@@ -462,10 +461,8 @@ function renderList(container){
   const tempActive=sortCases(applyRoleFilter(CASES.temp.filter(c=>c.status!=='封存')));
   const formalActive=sortCases(applyRoleFilter(CASES.formal.filter(c=>c.status!=='封存')));
   const archiveCasesAll=allCases.filter(c=>c.status==='封存');
-  // 封存 Tab：病歷類型／封存類型／封存日期區間篩選同時作用（AND），篩選後再依排序方式排列
+  // 封存 Tab：封存類型／封存日期區間篩選同時作用（AND），篩選後再依排序方式排列
   const archiveCases=sortCases(archiveCasesAll.filter(c=>{
-    if(archiveRecordTypeFilter==='temp'&&c.formal) return false;
-    if(archiveRecordTypeFilter==='formal'&&!c.formal) return false;
     if(archiveTypeFilter&&c.archiveType!==archiveTypeFilter) return false;
     if(archiveDateFrom||archiveDateTo){
       const d=c.archiveDate?new Date(c.archiveDate.replace(/\//g,'-')):null;
@@ -531,7 +528,7 @@ function renderList(container){
     </div>
 
     ${(!isDoc&&!isNur)?`
-    <!-- 統計卡：上排7個常態狀態（移除新轉介）；醫師／護理師視角改以任務導向佇列取代，見上方提示區塊 -->
+    <!-- 統計卡：上排8個常態狀態（移除新轉介）；醫師／護理師視角改以任務導向佇列取代，見上方提示區塊 -->
     <div class="stats-row">
       <div class="stat-card" onclick="filterByStatus('收案判斷中')">
         <div class="stat-label">收案判斷中</div>
@@ -548,15 +545,20 @@ function renderList(container){
         <div class="stat-value">${countBy('待排床')}</div>
         <div class="stat-sub">住院個案</div>
       </div>
+      <div class="stat-card" onclick="filterByStatus('待評估')">
+        <div class="stat-label">待評估</div>
+        <div class="stat-value">${countBy('待評估')}</div>
+        <div class="stat-sub">居家收治評估</div>
+      </div>
       <div class="stat-card" onclick="filterByStatus('待聯絡')">
         <div class="stat-label">待聯絡</div>
         <div class="stat-value">${countBy('待聯絡')}</div>
         <div class="stat-sub">待家屬確認</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('待評估')">
-        <div class="stat-label">待評估</div>
-        <div class="stat-value">${countBy('待評估')}</div>
-        <div class="stat-sub">居家收治評估</div>
+      <div class="stat-card" onclick="filterByStatus('待開案')">
+        <div class="stat-label">待開案</div>
+        <div class="stat-value">${countBy('待開案')}</div>
+        <div class="stat-sub">待轉正式病歷</div>
       </div>
       <div class="stat-card" onclick="filterByStatus('照護中')">
         <div class="stat-label">照護中</div>
@@ -753,11 +755,6 @@ function archiveFilterBar(){
       <span style="font-size:12px;color:var(--gray-400)">至</span>
       <input type="date" class="form-control" style="width:150px" value="${archiveDateTo}" onchange="onArchiveDateFilterChange('to',this.value)">
     </div>
-    <div style="display:flex;gap:4px;background:var(--gray-100);padding:3px;border-radius:8px">
-      <button class="btn ${archiveRecordTypeFilter==='all'?'btn-secondary':'btn-ghost'} btn-xs" onclick="setArchiveRecordTypeFilter('all')">全部</button>
-      <button class="btn ${archiveRecordTypeFilter==='temp'?'btn-secondary':'btn-ghost'} btn-xs" onclick="setArchiveRecordTypeFilter('temp')">臨時病歷</button>
-      <button class="btn ${archiveRecordTypeFilter==='formal'?'btn-secondary':'btn-ghost'} btn-xs" onclick="setArchiveRecordTypeFilter('formal')">正式病歷</button>
-    </div>
   </div>`;
 }
 function onArchiveTypeFilterChange(val){
@@ -767,10 +764,6 @@ function onArchiveTypeFilterChange(val){
 function onArchiveDateFilterChange(which,val){
   if(which==='from') archiveDateFrom=val;
   else archiveDateTo=val;
-  renderList(document.getElementById('main-content'));
-}
-function setArchiveRecordTypeFilter(val){
-  archiveRecordTypeFilter=val;
   renderList(document.getElementById('main-content'));
 }
 
@@ -955,14 +948,12 @@ function renderDetail(container,caseId){
   let actions='';
   if(isMgr){
     if(!isFormal) actions=`
-      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-translate')">📄 病摘翻譯</button>
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-judge')">🩺 轉交判斷</button>
       <button class="btn btn-ghost btn-sm" onclick="openConvertModeModal()">🔁 轉換模式</button>
       <button class="btn btn-amber btn-sm" onclick="openModal('modal-convert')">→ 轉正式病歷</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:false})">封存</button>
     `;
     else actions=`
-      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-translate')">📄 病摘翻譯</button>
       <button class="btn btn-ghost btn-sm" onclick="openConvertModeModal()">🔁 轉換模式</button>
       <button class="btn btn-ghost btn-sm" onclick="openExportExtendModal()">📤 匯出展延</button>
       <button class="btn btn-ghost btn-sm" onclick="openExportCloseModal()">📤 匯出結案</button>

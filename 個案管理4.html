@@ -455,34 +455,6 @@
   </div>
 </div>
 
-<!-- 居家收案流程 步驟④：醫師電話告知結果，個管師代為登記 -->
-<div id="modal-doctor-report-mgr" class="modal-overlay hidden">
-  <div class="modal modal-sm">
-    <div class="modal-header">
-      <div class="modal-title">📞 代為登記醫師回報結果</div>
-      <button class="modal-close" onclick="closeModal('modal-doctor-report-mgr')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="info-note blue">請確認醫師本人已完成居家評估判斷，再代為登記結果。</div>
-      <div class="form-group" style="margin-top:12px">
-        <label>判斷結果 <span class="required">*</span></label>
-        <div style="display:flex;gap:16px;margin-top:6px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="doc-report-mgr-result" value="pac" checked style="accent-color:var(--blue)"> 符合 PAC 資格</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="radio" name="doc-report-mgr-result" value="nonpac" style="accent-color:var(--blue)"> 不符合 PAC 資格</label>
-        </div>
-      </div>
-      <div class="form-group" style="margin-top:12px">
-        <label>確認方式 <span class="required">*</span></label>
-        <input class="form-control" id="doc-report-mgr-note" placeholder="醫師電話口頭告知">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-doctor-report-mgr')">取消</button>
-      <button class="btn btn-primary" onclick="confirmDoctorReportByMgr()">確認送出</button>
-    </div>
-  </div>
-</div>
-
 <!-- 匯出展延資料 -->
 <div id="modal-export-extend" class="modal-overlay hidden">
   <div class="modal">

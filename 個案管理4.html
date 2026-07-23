@@ -322,6 +322,23 @@
   </div>
 </div>
 
+<!-- 家屬聯繫紀錄：新增 -->
+<div id="modal-add-contact" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">📞 新增聯繫紀錄</div>
+      <button class="modal-close" onclick="closeModal('modal-add-contact')">✕</button>
+    </div>
+    <div class="modal-body" id="add-contact-body">
+      <!-- 由 JS 動態渲染（見 openAddContactModal，依既有聯繫紀錄筆數決定「本次聯繫結果」可選項）-->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-contact')">取消</button>
+      <button class="btn btn-primary" onclick="confirmAddContact()">儲存紀錄</button>
+    </div>
+  </div>
+</div>
+
 <!-- 轉正式病歷確認 checklist -->
 <div id="modal-convert" class="modal-overlay hidden">
   <div class="modal">
@@ -347,7 +364,7 @@
   </div>
 </div>
 
-<!-- 轉換照護模式（兩步驟） -->
+<!-- 轉換照護模式：臨時病歷單步驟重置進度；正式病歷依目標模式分為轉住院／轉居家（兩步驟或三步驟，見 個案管理4.js 轉換照護模式區塊）與轉日照（單步驟）-->
 <div id="modal-convert-mode" class="modal-overlay hidden">
   <div class="modal modal-sm">
     <div class="modal-header">

@@ -14,7 +14,7 @@ let currentRole='mgr';
 let currentPage='list';
 let currentCase=null;
 let currentForm=null;
-let roleFilterStatus=null; // 醫師／護理師視角的狀態篩選（預設進入時鎖定「收案判斷中」，可自行切換查閱其他狀態）
+let statusFilter=null; // 個案列表狀態篩選：統計卡與醫師／護理師視角佇列按鈕共用同一變數（預設進入時醫師／護理師鎖定「收案判斷中」，可自行切換查閱其他狀態）
 let summaryEditMode=false; // 病摘卡片（住院診斷／出院診斷／病史）是否處於編輯狀態，僅臨時病歷階段個管師可切換
 let summaryEditCaseId=null; // 記錄目前編輯狀態對應的個案 id，切換個案時自動重置編輯狀態
 let detailActiveTab='overview'; // 個案詳情頁目前開啟的 Tab，預設「總覽」
@@ -44,6 +44,21 @@ function calcAge(birthDateStr){
   const m=today.getMonth()-d.getMonth();
   if(m<0||(m===0&&today.getDate()<d.getDate())) age--;
   return age;
+}
+// 個案是否曾經處於某照護模式（含目前模式），依 c.modeHistory 的 from／to 判斷，供轉換模式後「舊模式資料保留、唯讀顯示」使用
+function wasEverMode(c,modeLabel){
+  if(c.mode===modeLabel) return true;
+  return (c.modeHistory||[]).some(h=>h.from===modeLabel||h.to===modeLabel);
+}
+// 轉換模式時若原本是居家：尚未發生（日期晚於或等於今日）的居家復健班次一律標記取消，已發生的班次維持原樣（比照轉居家醫療封存時的做法）
+function cancelFutureHomeRehab(c){
+  if(!c.homeRehabSchedule||!c.homeRehabSchedule.length) return;
+  const today=new Date('2026-07-09');
+  c.homeRehabSchedule.forEach(item=>{
+    if(!item.date) return;
+    const itemDate=new Date(item.date.replace(/\//g,'-'));
+    if(!isNaN(itemDate)&&itemDate>=today) item.cancelled=true;
+  });
 }
 function calcCloseDate(openDateStr,disease){
   // 依疾病別取週數下限，預設值，個管師可手動調整
@@ -117,34 +132,34 @@ const CASES={
     {id:'t17',name:'日照測試',birthDate:'1957/11/20',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'彰化基督教醫院',date:'2026/06/25',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',familyPhone:'0933-123-456',roomPref:null,address:'彰化縣鹿港鎮中山路80號',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall at home',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、退化性關節炎病史，長期服用鈣片補充劑',referralDoc:{name:'轉診單.pdf',size:'0.9 MB',date:'2026/06/25'}},
     // 測試個案：居家／衰弱高齡，收案判斷中初始狀態
     {id:'t18',name:'居家測試',birthDate:'1950/08/15',mode:'居家',modeType:'home',disease:'衰弱高齡',source:'彰化秀傳醫院',date:'2026/06/25',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'配偶',familyPhone:'0987-654-321',roomPref:null,address:'彰化縣田尾鄉民族路15號',admissionDiagnosis:'General frailty syndrome with recurrent falls and progressive decline in mobility',dischargeDiagnosis:'Frailty syndrome, stable, discharged home with PAC rehabilitation plan',medicalHistory:'高血壓病史20年、輕度肌少症，近半年跌倒2次病史',referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/25'},homeRehabSchedule:[
-      {dow:0,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null},
-      {dow:1,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
-      {dow:2,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null},
-      {dow:3,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null},
-      {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
-      {dow:6,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null},
+      {dow:0,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null,signStatus:null},
+      {dow:1,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:null},
+      {dow:2,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null,signStatus:null},
+      {dow:3,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null,signStatus:null},
+      {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:null},
+      {dow:6,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null,signStatus:null},
     ]},
   ],
   formal:[
     {id:'f1',name:'陳建國',birthDate:'1954/02/10',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/10',status:'展延中',mgr:'林美惠',formal:true,countdown:2,week:2,timelineStep:'展延中',timelineSub:'待展延申請',referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/06/10',closeDate:'2026/07/22',roomPref:'double',address:'彰化縣社頭鄉中山路33號',department:'神經內科',admissionDiagnosis:'Acute left MCA territory infarction with right hemiparesis and aphasia',dischargeDiagnosis:'Left MCA infarction, post-thrombolysis, neurologically stable for PAC rehabilitation',medicalHistory:'高血壓病史10年、第二型糖尿病病史5年',referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/10'}},
     {id:'f2',name:'王淑芬',birthDate:'1958/08/03',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰基醫院',date:'2026/05/28',status:'展延中',mgr:'林美惠',formal:true,countdown:3,week:4,timelineStep:'展延中',timelineSub:'審核中',referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',openDate:'2026/05/28',closeDate:'2026/06/11',roomPref:null,address:'彰化縣永靖鄉中山路77號',department:'骨科',admissionDiagnosis:'Closed fracture, left femoral neck, s/p fall',dischargeDiagnosis:'S/p left hip hemiarthroplasty, fracture healing well, ambulatory with walker',medicalHistory:'骨質疏鬆症病史，服用抗骨鬆藥物'},
     {id:'f3',name:'劉家豪',birthDate:'1949/05/22',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/05',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',openDate:'2026/06/05',closeDate:'2026/07/17',roomPref:null,address:'彰化縣埔心鄉義民路22號',department:'神經內科',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'Right MCA infarction, stable, left hemiparesis, ambulatory with assistance',medicalHistory:'高血壓病史8年，無其他重大病史',homeRehabSchedule:[
-      {dow:0,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null},
-      {dow:1,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
-      {dow:2,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:'複評'},
-      {dow:3,period:'晚上',timeRange:'約 18:00-20:00',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null},
-      {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
-      {dow:6,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null},
+      {dow:0,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null,signStatus:'已簽到'},
+      {dow:1,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:'已簽到'},
+      {dow:2,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:'複評',signStatus:'未簽到'},
+      {dow:3,period:'晚上',timeRange:'約 18:00-20:00',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null,signStatus:'已簽到'},
+      {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:null},
+      {dow:6,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null,signStatus:null},
     ]},
     {id:'f4',name:'林翠娟',birthDate:'1946/10/11',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'台中榮總',date:'2026/04/15',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:11,timelineStep:'即將結案',referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',openDate:'2026/04/15',closeDate:'2026/04/29',roomPref:'single',address:'彰化縣溪州鄉中央路45號',department:'骨科',admissionDiagnosis:'Closed fracture, right intertrochanteric femur, s/p fall',dischargeDiagnosis:'S/p right proximal femoral nailing, fracture stable, weight-bearing as tolerated',medicalHistory:'骨質疏鬆症病史、高血壓病史7年',dischargeDest:'返家＋居家照護服務'},
     {id:'f5',name:'張明輝',birthDate:'1951/03/28',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/01',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:10,timelineStep:'即將結案',referral:{status:'待轉介',note:'轉介長照服務，已聯繫長照管理中心'},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/05/01',closeDate:'2026/06/12',roomPref:null,address:'彰化縣大村鄉村上路18號',department:'神經內科',admissionDiagnosis:'Acute left basal ganglia hemorrhage with right hemiparesis',dischargeDiagnosis:'Left basal ganglia ICH, stable post-conservative management, right hemiparesis improving',medicalHistory:'高血壓病史20年、心房顫動病史3年',dischargeDest:'轉長照機構'},
     {id:'f6',name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null,address:'彰化縣埔鹽鄉南新路9號',department:'神經內科',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis and dysphagia',dischargeDiagnosis:'Right MCA infarction, stable, dysphagia improved, NG tube removed',medicalHistory:'糖尿病史15年、高血壓病史10年',homeRehabSchedule:[
-      {dow:0,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null},
-      {dow:1,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null},
-      {dow:2,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
-      {dow:3,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null},
-      {dow:5,period:'晚上',timeRange:'約 18:00-20:00',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:'結案評估'},
-      {dow:6,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
+      {dow:0,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null,signStatus:'已簽到'},
+      {dow:1,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null,signStatus:'已簽到'},
+      {dow:2,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:'已簽到'},
+      {dow:3,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null,signStatus:'未簽到'},
+      {dow:5,period:'晚上',timeRange:'約 18:00-20:00',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:'結案評估',signStatus:'已簽到'},
+      {dow:6,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:'已簽到'},
     ]},
     {id:'f7',name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:null,archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double',address:'彰化縣秀水鄉安東路60號',department:'神經內科',admissionDiagnosis:'Acute left MCA infarction with right hemiparesis',dischargeDiagnosis:'Left MCA infarction, stable, ambulatory with quad cane, discharged home',medicalHistory:'高血壓病史18年、陳舊性腦梗塞病史'},
     {id:'f8',name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'轉居家醫療',archiveDate:'2026/07/09',archiveOperator:'林美惠',archiveReason:'醫師電話通知個管師，個案已轉為居家醫療計畫接續復健，PAC 系統追蹤至此結束。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null,address:'彰化縣花壇鄉中山路150號',department:'骨科',admissionDiagnosis:'Closed fracture, left femoral neck, s/p fall at home',dischargeDiagnosis:'S/p left hip hemiarthroplasty, fracture healing well, discharged for home PAC rehabilitation',medicalHistory:'骨質疏鬆症病史、退化性關節炎',referral:{status:'已轉介',note:'已轉介居家醫療團隊接續照護，聯絡窗口：陳個管師 04-XXXX-XXXX。'},homeRehabSchedule:[
@@ -157,6 +172,16 @@ const CASES={
     ]},
     // 封存：正式病歷非PAC個案（PAC判斷後確認為非PAC，移交病床管理並封存於此模組）
     {id:'f9',name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'一般復健（中風/脊椎損傷，非PAC專案）',source:'門診',date:'2026/06/01',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null,address:'彰化縣芬園鄉彰南路5號',department:'復健科',admissionDiagnosis:'Post-surgical status, lumbar spine decompression, non-PAC rehabilitation',dischargeDiagnosis:'S/p lumbar spine surgery, stable, general rehabilitation continuing',medicalHistory:'退化性脊椎病史多年，長期下背痛'},
+    // 測試個案：正式病歷／住院，專門用於測試「轉換模式」功能，與臨時病歷的「住院測試」無關
+    {id:'f10',name:'住院轉模式',birthDate:'1955/03/12',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/05/28',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:2,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',familyPhone:'0922-111-222',openDate:'2026/06/01',closeDate:'2026/06/22',roomPref:'single',address:'彰化縣彰化市中正路50號',department:'骨科',admissionDiagnosis:'Closed fracture, right femoral neck, s/p fall at home',dischargeDiagnosis:'S/p right hip hemiarthroplasty, fracture healing well, weight-bearing as tolerated',medicalHistory:'骨質疏鬆症病史、高血壓病史8年'},
+    // 測試個案：正式病歷／日照，專門用於測試「轉換模式」功能，與臨時病歷的「日照測試」無關
+    {id:'f11',name:'日照轉模式',birthDate:'1953/08/20',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/03',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',familyPhone:'0933-222-333',openDate:'2026/05/10',closeDate:'2026/08/02',roomPref:null,address:'彰化縣員林市中山路一段66號',department:'神經內科',admissionDiagnosis:'Acute right MCA territory infarction with left hemiparesis',dischargeDiagnosis:'Right MCA infarction, stable, left hemiparesis improving, ambulatory with assistance',medicalHistory:'高血壓病史15年、心房顫動病史2年'},
+    // 測試個案：正式病歷／居家，專門用於測試「轉換模式」功能，與臨時病歷的「居家測試」無關
+    {id:'f12',name:'居家轉模式',birthDate:'1948/11/05',mode:'居家',modeType:'home',disease:'衰弱高齡',source:'彰基醫院',date:'2026/06/08',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:2,timelineStep:'照護中',referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',familyPhone:'0955-333-444',openDate:'2026/06/15',closeDate:'2026/07/13',roomPref:null,address:'彰化縣和美鎮彰美路20號',department:'復健科',admissionDiagnosis:'General frailty syndrome with recurrent falls and decreased functional mobility',dischargeDiagnosis:'Frailty syndrome, stable, discharged home with PAC rehabilitation plan',medicalHistory:'高血壓病史18年、輕度肌少症',homeRehabSchedule:[
+      {dow:1,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null},
+      {dow:3,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
+      {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null},
+    ]},
   ]
 };
 
@@ -428,7 +453,7 @@ function renderPage(page,caseId,formName){
 }
 
 let currentListTab='temp'; // 'temp' | 'formal' | 'archive'
-let tabView={temp:'card',formal:'card'}; // 各 Tab 各自的視圖狀態：'card' or 'list'（封存 Tab 僅列表視圖，不記錄於此）
+let tabView={temp:'card',formal:'card',archive:'list'}; // 各 Tab 各自的視圖狀態：'card' or 'list'
 let listSelection={temp:null,formal:null,archive:null}; // 列表視圖（左右分割）時，各 Tab 目前選中的個案 id
 let archiveTypeFilter=''; // 封存 Tab：封存類型篩選（空字串＝全部封存類型）
 let archiveDateFrom=''; // 封存 Tab：封存日期區間篩選（起，yyyy-mm-dd）
@@ -452,11 +477,12 @@ function renderList(container){
   allCases.forEach(c=>{if(c.modeType)modeCount[c.modeType]++});
   const nurseNotifiedCases=allCases.filter(c=>c.nurseNotified);
 
-  // 醫師／護理師視角：套用狀態篩選（唯讀查閱）
+  // 狀態篩選：統計卡與醫師／護理師視角佇列按鈕共用同一個變數 statusFilter，所有角色一致套用
   const applyRoleFilter=(arr)=>{
-    if(isJudgeRole&&roleFilterStatus) return arr.filter(c=>c.status===roleFilterStatus);
+    if(statusFilter) return arr.filter(c=>c.status===statusFilter);
     return arr;
   };
+  const statFilterClass=(status)=>`stat-card${statusFilter===status?' active-filter':''}`;
 
   const tempActive=sortCases(applyRoleFilter(CASES.temp.filter(c=>c.status!=='封存')));
   const formalActive=sortCases(applyRoleFilter(CASES.formal.filter(c=>c.status!=='封存')));
@@ -474,7 +500,7 @@ function renderList(container){
   }));
   const tabCaseMap={temp:tempActive,formal:formalActive,archive:archiveCases};
   const currentTabCases=tabCaseMap[currentListTab];
-  const isSplitView=currentListTab==='archive'||tabView[currentListTab]==='list';
+  const isSplitView=tabView[currentListTab]==='list';
 
   // 列表（左右分割）視圖：先確定選中個案，讓側邊欄 highlight 與右側詳情頁一致
   if(isSplitView){
@@ -484,7 +510,12 @@ function renderList(container){
   }
 
   let tabBodyHtml='';
-  if(currentListTab==='archive'){
+  if(currentListTab==='archive'&&tabView.archive==='card'){
+    tabBodyHtml=`
+      ${archiveFilterBar()}
+      <div class="case-grid">${archiveCases.length?archiveCases.map(c=>caseCard(c)).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">${archiveCasesAll.length?'沒有符合條件的封存個案':'目前沒有封存個案'}</div>`}</div>
+    `;
+  } else if(currentListTab==='archive'){
     const archiveEmptyMsg=archiveCasesAll.length?'沒有符合條件的封存個案':'目前沒有封存個案';
     tabBodyHtml=`
       ${archiveFilterBar()}
@@ -527,52 +558,65 @@ function renderList(container){
       </div>
     </div>
 
-    ${(!isDoc&&!isNur)?`
-    <!-- 統計卡：上排8個常態狀態（移除新轉介）；醫師／護理師視角改以任務導向佇列取代，見上方提示區塊 -->
+    <!-- Tabs：臨時病歷 / 正式病歷 / 封存 -->
+    <div class="tabs">
+      <div class="tab ${currentListTab==='temp'?'active':''}" onclick="switchTab('temp')">臨時病歷 <span class="badge badge-amber" style="margin-left:4px">${tempActive.length}</span></div>
+      <div class="tab ${currentListTab==='formal'?'active':''}" onclick="switchTab('formal')">正式病歷 <span class="badge badge-blue" style="margin-left:4px">${formalActive.length}</span></div>
+      <div class="tab ${currentListTab==='archive'?'active':''}" onclick="switchTab('archive')" style="color:var(--gray-400)">封存 <span class="badge badge-gray" style="margin-left:4px">${archiveCasesAll.length}</span></div>
+    </div>
+
+    ${(!isDoc&&!isNur&&currentListTab==='temp')?`
+    <!-- 統計卡：臨時病歷 Tab 專屬狀態（收案判斷中～待開案） -->
     <div class="stats-row">
-      <div class="stat-card" onclick="filterByStatus('收案判斷中')">
+      <div class="${statFilterClass('收案判斷中')}" onclick="filterByStatus('收案判斷中')">
         <div class="stat-label">收案判斷中</div>
         <div class="stat-value">${countBy('收案判斷中')}</div>
         <div class="stat-sub">個管師/醫師判斷</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('待補件')">
+      <div class="${statFilterClass('待補件')}" onclick="filterByStatus('待補件')">
         <div class="stat-label">待補件</div>
         <div class="stat-value">${countBy('待補件')}</div>
         <div class="stat-sub">待上游補件</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('待排床')">
+      <div class="${statFilterClass('待排床')}" onclick="filterByStatus('待排床')">
         <div class="stat-label">待排床</div>
         <div class="stat-value">${countBy('待排床')}</div>
         <div class="stat-sub">住院個案</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('待評估')">
+      <div class="${statFilterClass('待評估')}" onclick="filterByStatus('待評估')">
         <div class="stat-label">待評估</div>
         <div class="stat-value">${countBy('待評估')}</div>
         <div class="stat-sub">居家收治評估</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('待聯絡')">
+      <div class="${statFilterClass('待聯絡')}" onclick="filterByStatus('待聯絡')">
         <div class="stat-label">待聯絡</div>
         <div class="stat-value">${countBy('待聯絡')}</div>
         <div class="stat-sub">待家屬確認</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('待開案')">
+      <div class="${statFilterClass('待開案')}" onclick="filterByStatus('待開案')">
         <div class="stat-label">待開案</div>
         <div class="stat-value">${countBy('待開案')}</div>
         <div class="stat-sub">待轉正式病歷</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('照護中')">
+    </div>
+    `:''}
+
+    ${(!isDoc&&!isNur&&currentListTab==='formal')?`
+    <!-- 統計卡：正式病歷 Tab 專屬狀態（照護中／展延中） -->
+    <div class="stats-row">
+      <div class="${statFilterClass('照護中')}" onclick="filterByStatus('照護中')">
         <div class="stat-label">照護中</div>
         <div class="stat-value">${countBy('照護中')}</div>
         <div class="stat-sub">PAC 進行中</div>
       </div>
-      <div class="stat-card" onclick="filterByStatus('展延中')">
+      <div class="${statFilterClass('展延中')}" onclick="filterByStatus('展延中')">
         <div class="stat-label">展延中</div>
         <div class="stat-value">${countBy('展延中')}</div>
         <div class="stat-sub">展延申請中</div>
       </div>
     </div>
 
-    <!-- 提醒卡：展延倒數（獨立雙階段）＋ 即將結案提醒（整合原本卡片與文字列） -->
+    <!-- 提醒卡：展延倒數（獨立雙階段）＋ 即將結案提醒（整合原本卡片與文字列），僅正式病歷 Tab 顯示 -->
     <div class="stats-row">
       <div class="stat-card ${urgentExtend>0?'urgent':''}" style="${urgentExtend===0&&warnExtend>0?'border-color:#FDE68A;background:var(--amber-light)':''}" onclick="filterByStatus('展延中')">
         <div class="stat-label" style="${urgentExtend===0&&warnExtend>0?'color:var(--amber)':''}">⚠ 展延倒數 ≤3天（紅）／≤7天（黃）</div>
@@ -600,40 +644,25 @@ function renderList(container){
         <input type="text" placeholder="搜尋姓名、病歷號…">
       </div>
       <select class="filter-sel"><option>全部類型</option><option>住院PAC</option><option>日照PAC</option><option>居家PAC</option><option>一般</option></select>
-      <select class="filter-sel" id="status-filter" onchange="onStatusFilterChange(this.value)">
-        <option value="" ${isJudgeRole&&!roleFilterStatus?'selected':''}>全部狀態</option>
-        <option ${isJudgeRole&&roleFilterStatus==='收案判斷中'?'selected':''}>收案判斷中</option><option ${isJudgeRole&&roleFilterStatus==='待補件'?'selected':''}>待補件</option>
-        <option ${isJudgeRole&&roleFilterStatus==='待排床'?'selected':''}>待排床</option><option ${isJudgeRole&&roleFilterStatus==='待評估'?'selected':''}>待評估</option><option ${isJudgeRole&&roleFilterStatus==='待聯絡'?'selected':''}>待聯絡</option>
-        <option ${isJudgeRole&&roleFilterStatus==='待開案'?'selected':''}>待開案</option><option ${isJudgeRole&&roleFilterStatus==='照護中'?'selected':''}>照護中</option><option ${isJudgeRole&&roleFilterStatus==='展延中'?'selected':''}>展延中</option>
-        <option ${isJudgeRole&&roleFilterStatus==='即將結案'?'selected':''}>即將結案</option><option ${isJudgeRole&&roleFilterStatus==='封存'?'selected':''}>封存</option>
-      </select>
       <select class="filter-sel">
         <option>全部疾病別</option>
         <option>腦中風</option><option>創傷性神經損傷</option><option>脆弱性骨折</option><option>衰弱高齡</option><option>一般（非PAC）</option>
       </select>
     </div>
 
-    <!-- Tabs：臨時病歷 / 正式病歷 / 封存，右側為該 Tab 專屬的視圖切換 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div class="tabs" style="margin-bottom:0">
-        <div class="tab ${currentListTab==='temp'?'active':''}" onclick="switchTab('temp')">臨時病歷 <span class="badge badge-amber" style="margin-left:4px">${tempActive.length}</span></div>
-        <div class="tab ${currentListTab==='formal'?'active':''}" onclick="switchTab('formal')">正式病歷 <span class="badge badge-blue" style="margin-left:4px">${formalActive.length}</span></div>
-        <div class="tab ${currentListTab==='archive'?'active':''}" onclick="switchTab('archive')" style="color:var(--gray-400)">封存 <span class="badge badge-gray" style="margin-left:4px">${archiveCasesAll.length}</span></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <select class="filter-sel" id="sort-order-select" onchange="onSortOrderChange(this.value)">
-          <option value="dateDesc" ${listSortOrder==='dateDesc'?'selected':''}>收案日期（新→舊）</option>
-          <option value="dateAsc" ${listSortOrder==='dateAsc'?'selected':''}>收案日期（舊→新）</option>
-          <option value="nameAsc" ${listSortOrder==='nameAsc'?'selected':''}>姓名筆畫排序</option>
-          <option value="closeDateAsc" ${listSortOrder==='closeDateAsc'?'selected':''}>預估出院日期（近→遠）</option>
-        </select>
-        ${currentListTab!=='archive'?`<div class="view-toggle">
-          <button class="view-toggle-btn ${tabView[currentListTab]==='card'?'active':''}" onclick="switchView('card')">▦ 卡片</button>
-          <button class="view-toggle-btn ${tabView[currentListTab]==='list'?'active':''}" onclick="switchView('list')">☰ 列表</button>
-        </div>`:''}
+    <!-- 排序／檢視切換（該 Tab 專屬的視圖切換） -->
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <select class="filter-sel" id="sort-order-select" onchange="onSortOrderChange(this.value)">
+        <option value="dateDesc" ${listSortOrder==='dateDesc'?'selected':''}>收案日期（新→舊）</option>
+        <option value="dateAsc" ${listSortOrder==='dateAsc'?'selected':''}>收案日期（舊→新）</option>
+        <option value="nameAsc" ${listSortOrder==='nameAsc'?'selected':''}>姓名筆畫排序</option>
+        <option value="closeDateAsc" ${listSortOrder==='closeDateAsc'?'selected':''}>預估出院日期（近→遠）</option>
+      </select>
+      <div class="view-toggle">
+        <button class="view-toggle-btn ${tabView[currentListTab]==='card'?'active':''}" onclick="switchView('card')">▦ 卡片</button>
+        <button class="view-toggle-btn ${tabView[currentListTab]==='list'?'active':''}" onclick="switchView('list')">☰ 列表</button>
       </div>
     </div>
-    <div style="border-bottom:2px solid var(--gray-200);margin-bottom:16px"></div>
 
     ${tabBodyHtml}
   `;
@@ -724,7 +753,6 @@ function onSortOrderChange(val){
   renderList(document.getElementById('main-content'));
 }
 function switchView(view){
-  if(currentListTab==='archive') return; // 封存 Tab 僅列表視圖，無切換
   tabView[currentListTab]=view;
   renderList(document.getElementById('main-content'));
 }
@@ -767,35 +795,30 @@ function onArchiveDateFilterChange(which,val){
   renderList(document.getElementById('main-content'));
 }
 
+// 狀態篩選：統計卡與（醫師／護理師視角的）佇列按鈕共用同一個 statusFilter 變數。
+// 再次點擊目前已套用的同一狀態會清除篩選；個管師／行政額外會自動切到含該狀態個案的 tab，方便立即看到結果。
 function filterByStatus(status){
-  document.getElementById('status-filter').value=status;
-  onStatusFilterChange(status);
-}
-function onStatusFilterChange(status){
-  if(currentRole==='doc'||currentRole==='nur'){
-    // 醫師／護理師視角：篩選僅限縮目前 Tab 內容（唯讀查閱），不切換 Tab
-    roleFilterStatus=status||null;
-    renderList(document.getElementById('main-content'));
-    return;
+  statusFilter=(statusFilter===status)?null:status;
+  if(statusFilter&&currentRole!=='doc'&&currentRole!=='nur'){
+    const inFormal=CASES.formal.some(c=>c.status===statusFilter);
+    const inTemp=CASES.temp.some(c=>c.status===statusFilter);
+    if(inFormal&&!inTemp){ switchTab('formal'); return; }
+    if(inTemp&&!inFormal){ switchTab('temp'); return; }
   }
-  // 個管師／行政：維持現有行為，切到含目標狀態個案較多的 tab（prototype 簡化處理）
-  const inFormal=CASES.formal.some(c=>c.status===status);
-  const inTemp=CASES.temp.some(c=>c.status===status);
-  if(inFormal&&!inTemp) switchTab('formal');
-  else if(inTemp&&!inFormal) switchTab('temp');
+  renderList(document.getElementById('main-content'));
 }
 
 // 醫師／護理師共用：「待PAC判斷」佇列
 function filterByJudgeQueue(){
   if(currentRole!=='doc'&&currentRole!=='nur') return;
-  roleFilterStatus='收案判斷中';
+  statusFilter='收案判斷中';
   currentListTab='temp';
   renderList(document.getElementById('main-content'));
 }
 // 醫師／護理師：清空所有佇列篩選，恢復顯示完整個案清單
 function resetRoleFilters(){
   if(currentRole!=='doc'&&currentRole!=='nur') return;
-  roleFilterStatus=null;
+  statusFilter=null;
   renderList(document.getElementById('main-content'));
 }
 
@@ -822,7 +845,7 @@ function goToCaseTab(caseId,tabKey){
 // 依目前作用中的醫師／護理師佇列篩選，判斷點擊個案後應開啟的 Tab；無特定佇列時回傳 null（維持預設「總覽」）
 function resolveQueueDetailTab(){
   if(currentRole==='doc'||currentRole==='nur'){
-    if(roleFilterStatus==='收案判斷中') return 'judge';
+    if(statusFilter==='收案判斷中') return 'summary';
   }
   return null;
 }
@@ -902,6 +925,10 @@ function caseCard(c){
       <div class="case-field"><label>轉介日期</label><span>${c.date}</span></div>
       <div class="case-field"><label>疾病別</label><span>${c.disease}</span></div>
       `}
+      ${c.status==='封存'?`
+      <div class="case-field"><label>封存類型</label><span>${c.archiveType||'—'}</span></div>
+      <div class="case-field"><label>封存日期</label><span>${c.archiveDate||'—'}</span></div>
+      `:''}
     </div>
     <div class="case-card-footer">
       <div class="case-manager"><div class="mini-av">林</div>${c.mgr}</div>
@@ -955,8 +982,6 @@ function renderDetail(container,caseId){
     `;
     else actions=`
       <button class="btn btn-ghost btn-sm" onclick="openConvertModeModal()">🔁 轉換模式</button>
-      <button class="btn btn-ghost btn-sm" onclick="openExportExtendModal()">📤 匯出展延</button>
-      <button class="btn btn-ghost btn-sm" onclick="openExportCloseModal()">📤 匯出結案</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:true})">封存</button>
       <button class="btn btn-green btn-sm" onclick="openArchiveModal({formal:true,presetType:'正常結案',locked:true,showCloseDate:true,showDischargeDest:true,successMsg:()=>'已成功結案，個案移至封存'})">✓ 成功結案</button>
       <button class="btn btn-danger btn-sm" onclick="openArchiveModal({formal:true,presetType:'結案失敗',locked:true,showCloseDate:true,showDischargeDest:true,successMsg:()=>'已標記結案失敗，個案移至封存'})">不成功結案</button>
@@ -1045,34 +1070,48 @@ function renderDetail(container,caseId){
     </div>
   `;
 
-  // Tab 分組（總覽／聯繫紀錄／收案流程（僅臨時）／病摘／PAC收案判斷／居家復健排班查看（僅正式居家）／文件查看（臨時與正式皆顯示）／轉介（僅正式））
+  // Tab 分組：「總覽」固定最前、不屬於任何分區；其後依序為「流程面」（病摘與PAC判斷／居家收案流程（僅臨時居家）／聯繫紀錄）與「資料面」
+  // （文件查看／居家復健排班查看（僅正式居家）／轉介（僅正式）／筆記）。分區歸屬固定，臨時／正式病歷階段只影響該 Tab 是否存在。
   const flowTabLabel='居家收案流程';
-  const detailTabs=[{key:'overview',label:'總覽'},{key:'contact',label:'聯繫紀錄'}];
-  if(!isFormal&&c.modeType==='home') detailTabs.push({key:'flow',label:flowTabLabel});
-  detailTabs.push({key:'summary',label:'病摘'},{key:'judge',label:'PAC收案判斷'});
-  if(isFormal&&c.modeType==='home') detailTabs.push({key:'rehab',label:'居家復健排班查看'});
-  detailTabs.push({key:'docs',label:'文件查看'});
-  if(isFormal) detailTabs.push({key:'referral',label:'轉介'});
-  detailTabs.push({key:'notes',label:'筆記'});
+  const detailTabs=[{key:'overview',label:'總覽'}];
+  detailTabs.push({key:'summary',label:'病摘與PAC判斷',group:'flow'});
+  if(!isFormal&&c.modeType==='home') detailTabs.push({key:'flow',label:flowTabLabel,group:'flow'});
+  detailTabs.push({key:'contact',label:'聯繫紀錄',group:'flow'});
+  detailTabs.push({key:'docs',label:'文件查看',group:'data'});
+  if(isFormal&&wasEverMode(c,'居家')) detailTabs.push({key:'rehab',label:'居家復健排班查看',group:'data'});
+  if(isFormal) detailTabs.push({key:'referral',label:'轉介',group:'data'});
+  detailTabs.push({key:'notes',label:'筆記',group:'data'});
   if(!detailTabs.find(t=>t.key===detailActiveTab)) detailActiveTab='overview';
   const tabPanelStyle=(key)=>`display:${detailActiveTab===key?'':'none'}`;
 
-  // Tab 標籤下方小字狀態提示：總覽／病摘／文件查看不需提示，但保留同樣高度的佔位空間，避免整排 Tab 高度參差不齊
+  // Tab 標籤下方小字狀態提示：統一樣式——未完成＝🔴（灰階文字），已完成＝✓（綠色文字），不加其他強調樣式
+  // 總覽／文件查看／居家復健排班查看／筆記不需提示，但保留同樣高度的佔位空間，避免整排 Tab 高度參差不齊
   const tabHint=(key)=>{
     if(key==='contact'){
-      return c.upstreamStatus==='已回報收案'
-        ?{text:'✓ 已回報上游',color:'var(--green)'}
-        :{text:'尚未回報上游',color:'var(--gray-400)'};
+      // 不分臨時／正式病歷階段皆存在此 Tab；純依 c.familyContacts 陣列最新一筆聯繫結果判斷，不再檢查上游回報狀態
+      const lastResult=(c.familyContacts&&c.familyContacts.length)?c.familyContacts[c.familyContacts.length-1].result:null;
+      return (!lastResult||lastResult==='尚未確定')
+        ?{text:'🔴 待聯絡家屬',color:'var(--gray-400)'}
+        :{text:'✓ 已聯絡家屬',color:'var(--green)'};
     }
-    if(key==='judge'){
+    if(key==='summary'){
       return c.diseaseCategory
         ?{text:'✓ 已判斷',color:'var(--green)'}
-        :{text:'待判斷',color:'var(--gray-400)'};
+        :{text:'🔴 待收案判斷',color:'var(--gray-400)'};
     }
     if(key==='referral'){
-      return (c.referral&&c.referral.status==='已轉介')
-        ?{text:'✓ 已轉介',color:'var(--green)'}
-        :{text:'待轉介',color:'var(--gray-400)'};
+      // 三態：無需轉介／待轉介／已轉介。僅「待轉介」視為未完成，其餘一律顯示「已完成」
+      const status=c.referral?c.referral.status:'待轉介';
+      return status==='待轉介'
+        ?{text:'🔴 待轉介',color:'var(--gray-400)'}
+        :{text:'✓ 已完成',color:'var(--green)'};
+    }
+    if(key==='flow'){
+      // 是否已推進到「確定收案」（timelineStep 為待聯絡或更後面），不再處於「待評估」的任一子階段
+      const progressed=c.timelineStep==='待聯絡'||c.timelineStep==='待開案';
+      return progressed
+        ?{text:'✓ 已完成',color:'var(--green)'}
+        :{text:'🔴 待評估',color:'var(--gray-400)'};
     }
     return null;
   };
@@ -1088,6 +1127,7 @@ function renderDetail(container,caseId){
           <span class="badge ${STATUS_COLOR[c.status]||'badge-gray'}">${c.status}</span>
           <span class="badge badge-blue">${c.mode}</span>
           <span class="badge badge-gray">${c.disease}</span>
+          ${(c.modeHistory&&c.modeHistory.length)?`<span class="badge badge-purple">${c.modeHistory[c.modeHistory.length-1].from}轉${c.modeHistory[c.modeHistory.length-1].to}</span>`:''}
         </div>
         <div class="detail-actions">
           ${actions}
@@ -1140,6 +1180,9 @@ function renderDetail(container,caseId){
     </div>
     `:''}
 
+    <!-- 轉換申請中：固定顯示於個案基本資訊列下方、個案進度時間軸之上，不隨 Tab 切換而隱藏 -->
+    ${c.modeConvertPending?renderModeConvertPendingCard(c):''}
+
     <!-- 個案進度（時間軸）：固定顯示，不隨 Tab 切換而隱藏 -->
     <div class="timeline-card">
       <div class="tc-header">
@@ -1160,39 +1203,41 @@ function renderDetail(container,caseId){
       </div>
     </div>
 
+    <!-- 展延狀態人工切換器：固定釘在個案進度時間軸下方，不隨 Tab 切換而消失（健保署審核為紙本流程，需個管師手動切換；僅正式病歷有展延機制）-->
+    ${isFormal&&(c.status==='照護中'||c.status==='展延中')?`
+    <div class="section-card">
+      <div class="sc-header">
+        <div class="sc-title">📨 展延狀態</div>
+        <span style="font-size:10px;color:var(--gray-400)">人工紙本流程，請依實際進度手動更新</span>
+      </div>
+      <div class="sc-body">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="markNoExtension('${c.id}')">① 不展延</button>
+          <button class="btn ${c.status==='照護中'?'btn-secondary':'btn-ghost'} btn-sm" onclick="markExtensionPending('${c.id}')">② 待送出展延</button>
+          <button class="btn ${c.status==='展延中'?'btn-amber':'btn-ghost'} btn-sm" onclick="markExtensionSubmitted('${c.id}')">③ 已送出展延（審核中）</button>
+          <button class="btn btn-green btn-sm" onclick="openExtensionSuccessModal('${c.id}')">④ 展延成功</button>
+          <button class="btn btn-danger btn-sm" onclick="markExtensionFailed('${c.id}')">⑤ 展延失敗</button>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--gray-400)">目前狀態：<strong style="color:var(--gray-700)">${c.status}${c.timelineSub?'・'+c.timelineSub:''}</strong></div>
+      </div>
+    </div>
+    `:''}
+
     <!-- Tab 導覽列 -->
     <div class="tabs detail-tabs">
-      ${detailTabs.map(t=>{
+      ${detailTabs.map((t,i)=>{
         const hint=tabHint(t.key);
-        return `<div class="tab ${detailActiveTab===t.key?'active':''}" data-tab-key="${t.key}" onclick="switchDetailTab('${t.key}')">
+        const prevGroup=i>0?detailTabs[i-1].group:null;
+        const isGroupStart=!!t.group&&t.group!==prevGroup;
+        return `<div class="tab ${detailActiveTab===t.key?'active':''}" data-tab-key="${t.key}" style="${isGroupStart?'margin-left:10px;padding-left:14px;border-left:1px solid var(--gray-200)':''}" onclick="switchDetailTab('${t.key}')">
           <div>${t.label}</div>
           <div style="font-size:10px;margin-top:2px;${hint?`color:${hint.color}`:'visibility:hidden'}">${hint?hint.text:'—'}</div>
         </div>`;
       }).join('')}
     </div>
 
-    <!-- 總覽：（正式）展延狀態＋個案基本資料 -->
+    <!-- 總覽：個案基本資料 -->
     <div class="detail-tab-panel" data-tab-key="overview" style="${tabPanelStyle('overview')}">
-      <!-- 展延狀態人工切換器（健保署審核為紙本流程，需個管師手動切換）-->
-      ${isFormal&&(c.status==='照護中'||c.status==='展延中')?`
-      <div class="section-card">
-        <div class="sc-header">
-          <div class="sc-title">📨 展延狀態</div>
-          <span style="font-size:10px;color:var(--gray-400)">人工紙本流程，請依實際進度手動更新</span>
-        </div>
-        <div class="sc-body">
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" onclick="markNoExtension('${c.id}')">① 不展延</button>
-            <button class="btn ${c.status==='照護中'?'btn-secondary':'btn-ghost'} btn-sm" onclick="markExtensionPending('${c.id}')">② 待送出展延</button>
-            <button class="btn ${c.status==='展延中'?'btn-amber':'btn-ghost'} btn-sm" onclick="markExtensionSubmitted('${c.id}')">③ 已送出展延（審核中）</button>
-            <button class="btn btn-green btn-sm" onclick="openExtensionSuccessModal('${c.id}')">④ 展延成功</button>
-            <button class="btn btn-danger btn-sm" onclick="markExtensionFailed('${c.id}')">⑤ 展延失敗</button>
-          </div>
-          <div style="margin-top:10px;font-size:11px;color:var(--gray-400)">目前狀態：<strong style="color:var(--gray-700)">${c.status}${c.timelineSub?'・'+c.timelineSub:''}</strong></div>
-        </div>
-      </div>
-      `:''}
-
       <!-- 個案基本資料 -->
       <div class="section-card">
         <div class="sc-header"><div class="sc-title">👤 個案基本資料</div>${isMgr?`<button class="btn btn-ghost btn-xs" onclick="alert('編輯個案資料')">✏️ 編輯</button>`:''}</div>
@@ -1223,6 +1268,12 @@ function renderDetail(container,caseId){
             <div class="info-item"><label>聯絡電話</label><span>${c.upstreamContact?.phone||'—'}</span></div>
             <div class="info-item"><label>Line ID</label><span>${c.upstreamContact?.line||'—'}</span></div>
           </div>
+          ${(c.modeHistory&&c.modeHistory.length)?`
+          <div class="divider"></div>
+          <div style="font-size:11px;color:var(--gray-400)">
+            ${c.modeHistory.map(h=>`曾為${h.from}個案，於 ${h.date} 轉換為${h.to}${h.note?`（備註：${h.note}）`:''}`).join('；')}
+          </div>
+          `:''}
         </div>
       </div>
 
@@ -1265,28 +1316,20 @@ function renderDetail(container,caseId){
     <div class="detail-tab-panel" data-tab-key="contact" style="${tabPanelStyle('contact')}">
       <!-- 家屬聯繫紀錄 -->
       <div class="section-card">
-        <div class="sc-header"><div class="sc-title">📞 家屬聯繫紀錄</div>${isMgr?`<button class="btn btn-ghost btn-xs" onclick="alert('新增聯繫紀錄')">＋ 新增</button>`:''}</div>
+        <div class="sc-header"><div class="sc-title">📞 家屬聯繫紀錄</div>${isMgr?`<button class="btn btn-ghost btn-xs" onclick="openAddContactModal('${c.id}')">＋ 新增</button>`:''}</div>
         <div class="sc-body">
+          ${c.familyContacts&&c.familyContacts.length?`
           <div class="contact-log">
-            <div class="contact-entry done">
-              <div>
-                <div class="contact-label">第一次聯繫</div>
-                <div class="contact-meta">2026/06/10 10:30・電話</div>
-                <div class="contact-note">告知注意事項、入院日期及床位，家屬表示了解並同意入院。</div>
-              </div>
-            </div>
-            <div class="contact-entry done">
-              <div style="flex:1">
-                <div class="contact-label">第二次聯繫（W4W5 確認）</div>
-                <div class="contact-meta">2026/06/17 14:00・電話</div>
-                <div class="contact-note">確認入院計畫，家屬已確認，無異動。</div>
-              </div>
-              ${isMgr&&!isFormal?`<div style="display:flex;gap:6px;flex-shrink:0;align-self:center">
-                <button class="btn btn-green btn-xs" onclick="confirmArrival('${c.id}')">✓ 個案確定報到</button>
-                <button class="btn btn-danger btn-xs" onclick="openNoShowArchive()">✕ 確定不報到</button>
-              </div>`:''}
-            </div>
+            ${[...c.familyContacts].reverse().map(log=>`
+              <div class="contact-entry ${log.result==='確定不報到'?'':'done'}">
+                <div>
+                  <div class="contact-label">${log.result}</div>
+                  <div class="contact-meta">${log.datetime}・${log.method}</div>
+                  ${log.note?`<div class="contact-note">${log.note}</div>`:''}
+                </div>
+              </div>`).join('')}
           </div>
+          `:`<div style="font-size:12px;color:var(--gray-400);padding:8px 0">尚無聯繫紀錄</div>`}
           ${c.modeType==='hosp'?`
           <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-100)">
             <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">住院房型偏好（與排床模組同步）</div>
@@ -1347,7 +1390,7 @@ function renderDetail(container,caseId){
     </div>
     `:''}
 
-    <!-- 病摘：病摘卡片（含住院診斷／出院診斷／病史欄位與附件） -->
+    <!-- 病摘與PAC判斷：病摘卡片（含住院診斷／出院診斷／病史欄位與附件）＋ PAC 收案判斷卡片 -->
     <div class="detail-tab-panel" data-tab-key="summary" style="${tabPanelStyle('summary')}">
       <!-- 病摘 -->
       <div class="section-card">
@@ -1382,28 +1425,32 @@ function renderDetail(container,caseId){
           ${isMgr?`<div class="upload-zone" style="padding:14px" onclick="alert('選擇檔案上傳（PDF / Word / JPG / 影片）')"><div style="font-size:12px">📎 點擊或拖曳上傳附件（PDF / Word / JPG / 影片）</div></div>`:''}
         </div>
       </div>
-    </div>
 
-    <!-- PAC 收案判斷 -->
-    <div class="detail-tab-panel" data-tab-key="judge" style="${tabPanelStyle('judge')}">
+      <!-- PAC 收案判斷 -->
       ${judgeBlock}
     </div>
 
-    <!-- 居家復健排班查看（正式病歷階段・僅居家個案；唯讀週視圖，同步自復健排班管理模組）-->
-    ${isFormal&&c.modeType==='home'?`
+    <!-- 居家復健排班查看（正式病歷階段・目前是居家或曾經是居家皆顯示；非目前模式時整體唯讀）-->
+    ${isFormal&&wasEverMode(c,'居家')?`
     <div class="detail-tab-panel" data-tab-key="rehab" style="${tabPanelStyle('rehab')}">
       <div class="section-card">
-        <div class="sc-header"><div class="sc-title">📅 居家復健排班</div><span style="font-size:10px;color:var(--gray-400)">本週</span></div>
-        <div class="sc-body">
-          <div class="info-note blue" style="margin-bottom:12px">排班資料同步自復健排班管理模組，如需異動請至該模組操作</div>
+        <div class="sc-header"><div class="sc-title">📅 居家復健排班</div><span style="font-size:10px;color:var(--gray-400)">${c.modeType==='home'?'本週':'僅居家期間資料，唯讀'}</span></div>
+        <div class="sc-body" style="${c.modeType!=='home'?'opacity:.65':''}">
+          <div class="info-note blue" style="margin-bottom:12px">${c.modeType==='home'?'排班資料同步自復健排班管理模組，如需異動請至該模組操作':'個案目前非居家模式，以下為居家期間留存的排班資料，僅供查看'}</div>
           ${renderHomeRehabSchedule(c)}
         </div>
       </div>
     </div>
     `:''}
 
-    <!-- 文件查看：轉診單（臨時與正式皆顯示）＋醫療紀錄查看＋相關表單（僅正式病歷階段）-->
+    <!-- 文件查看：匯出展延/結案（僅正式病歷）＋轉診單（臨時與正式皆顯示）＋醫療紀錄查看＋相關表單（僅正式病歷階段）-->
     <div class="detail-tab-panel" data-tab-key="docs" style="${tabPanelStyle('docs')}">
+      ${isFormal&&isMgr?`
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-ghost btn-sm" onclick="openExportExtendModal()">📤 匯出展延</button>
+        <button class="btn btn-ghost btn-sm" onclick="openExportCloseModal()">📤 匯出結案</button>
+      </div>
+      `:''}
       <!-- 轉診單（選填附件；臨時病歷階段可上傳，正式病歷階段唯讀查看） -->
       <div class="section-card">
         <div class="sc-header">
@@ -1428,11 +1475,11 @@ function renderDetail(container,caseId){
       </div>
 
       ${isFormal?`
-      <!-- 醫療紀錄查看（僅住院個案）-->
-      ${c.modeType==='hosp'?`
+      <!-- 醫療紀錄查看（目前是住院，或曾經是住院皆顯示；非目前模式時整體唯讀）-->
+      ${wasEverMode(c,'住院')?`
       <div class="section-card">
-        <div class="sc-header"><div class="sc-title">🩺 醫療紀錄查看</div><span style="font-size:10px;color:var(--gray-400)">僅限住院個案</span></div>
-        <div class="sc-body">
+        <div class="sc-header"><div class="sc-title">🩺 醫療紀錄查看</div><span style="font-size:10px;color:var(--gray-400)">${c.modeType==='hosp'?'僅限住院個案':'僅住院期間資料，唯讀'}</span></div>
+        <div class="sc-body" style="${c.modeType!=='hosp'?'opacity:.65':''}">
           <div class="forms-grid">
             <div class="form-item" onclick="alert('將串接杏翔系統查看護理紀錄')">
               <div class="form-item-left"><div class="form-icon">📋</div><div><div class="form-name">護理紀錄</div><div class="form-meta">*杏翔</div></div></div>
@@ -1486,11 +1533,13 @@ function renderDetail(container,caseId){
     <div class="detail-tab-panel" data-tab-key="referral" style="${tabPanelStyle('referral')}">
       ${c.referral?(()=>{
         const referralReadonly=(!isMgr)||c.status==='封存';
+        const referralTarget=c.referral.target||'無需轉介';
+        const referralBadgeClass=c.referral.status==='待轉介'?'badge-amber':'badge-green';
         return `
       <div class="section-card">
         <div class="sc-header">
           <div class="sc-title">🔄 轉介安排</div>
-          <span class="badge ${c.referral.status==='已轉介'?'badge-green':'badge-gray'}">${c.referral.status}</span>
+          <span class="badge ${referralBadgeClass}">${c.referral.status}</span>
         </div>
         <div class="sc-body">
           <div style="font-size:11px;color:var(--gray-400);margin-bottom:10px">個管師可隨時安排轉介，不限結案前才處理。常見轉介去向：居家醫療／長照／社工。</div>
@@ -1498,12 +1547,13 @@ function renderDetail(container,caseId){
             <label>轉介去向</label>
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
               <select class="form-control" id="referral-target-select" style="flex:1;min-width:160px" ${referralReadonly?'disabled':''} onchange="updateReferralConfirmedAvailability()">
-                <option ${c.referral.status!=='已轉介'?'selected':''}>無需轉介</option>
-                <option ${c.referral.status==='已轉介'?'selected':''}>轉介居家醫療</option>
-                <option>轉介長照服務</option><option>轉介社工服務</option>
+                <option ${referralTarget==='無需轉介'?'selected':''}>無需轉介</option>
+                <option ${referralTarget==='轉介居家醫療'?'selected':''}>轉介居家醫療</option>
+                <option ${referralTarget==='轉介長照服務'?'selected':''}>轉介長照服務</option>
+                <option ${referralTarget==='轉介社工服務'?'selected':''}>轉介社工服務</option>
               </select>
               <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap">
-                <input type="checkbox" id="referral-confirmed" style="accent-color:var(--blue)" ${(referralReadonly||c.referral.status!=='已轉介')?'disabled':''} ${c.referral.status==='已轉介'?'checked':''}>
+                <input type="checkbox" id="referral-confirmed" style="accent-color:var(--blue)" ${(referralReadonly||referralTarget==='無需轉介')?'disabled':''} ${c.referral.status==='已轉介'?'checked':''}>
                 ✓ 已完成轉介
               </label>
             </div>
@@ -1675,7 +1725,7 @@ function switchRehabWeek(caseId,weekIndex){
 function renderHomeRehabSchedule(c){
   const schedule=c.homeRehabSchedule;
   if(!schedule||!schedule.length){
-    return `<div style="text-align:center;padding:30px 16px;color:var(--gray-400);font-size:12px">尚無排班資料</div>`;
+    return `<div style="text-align:center;padding:30px 16px;color:var(--gray-400);font-size:12px">尚未安排班表，請至居家排班管理模組安排</div>`;
   }
   const totalWeeks=getHomeRehabTotalWeeks(c);
   if(rehabWeekCaseId!==c.id){ rehabWeekIndex=1; rehabWeekCaseId=c.id; }
@@ -1719,6 +1769,11 @@ function renderHomeRehabSchedule(c){
         (item.tag==='結案評估'&&rehabWeekIndex===totalWeeks)
       );
       const ps=profStyle[item.profession]||profStyle.PT;
+      const signBadge=item.signStatus==='已簽到'
+        ?`<span class="badge badge-green" style="font-size:9px;padding:1px 5px">✓ 已簽到</span>`
+        :item.signStatus==='未簽到'
+          ?`<span class="badge badge-red" style="font-size:9px;padding:1px 5px">✕ 未簽到</span>`
+          :'';
       return `
       <div style="padding:6px 7px;border-radius:6px;background:${showTag?'var(--purple-light)':ps.bg};border:1px solid ${showTag?'#DDD6FE':'transparent'}">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:3px">
@@ -1728,6 +1783,7 @@ function renderHomeRehabSchedule(c){
         <div style="font-size:10px;font-weight:600;color:var(--gray-700)">${item.period}</div>
         <div style="font-size:9px;color:var(--gray-400)">${item.timeRange}</div>
         <div style="font-size:10px;color:var(--gray-600);margin-top:3px">${item.therapist}・${item.duration}</div>
+        ${signBadge?`<div style="margin-top:4px">${signBadge}</div>`:''}
       </div>`;
     }).join('');
     return `
@@ -2448,7 +2504,11 @@ function saveReferral(caseId){
   const noteVal=document.getElementById('referral-note')?.value||'';
   const confirmedCheckbox=document.getElementById('referral-confirmed');
   const target=targetSel?targetSel.value:'無需轉介';
-  c.referral.status=(target!=='無需轉介'&&confirmedCheckbox&&confirmedCheckbox.checked)?'已轉介':'待轉介';
+  // 三態：無需轉介＝獨立狀態；有實際轉介目標時，依「已完成轉介」勾選框決定待轉介／已轉介
+  if(target==='無需轉介') c.referral.status='無需轉介';
+  else if(confirmedCheckbox&&confirmedCheckbox.checked) c.referral.status='已轉介';
+  else c.referral.status='待轉介';
+  c.referral.target=target;
   c.referral.note=noteVal;
   alert('轉介安排已儲存');
   renderPage('detail',currentCase);
@@ -2587,10 +2647,13 @@ function confirmNonPacImport(){
   if(c) renderPage('detail',currentCase);
 }
 
-// ── 轉換照護模式（兩步驟）──
+// ── 轉換照護模式 ──
+// 臨時病歷：選模式→填日期備註→送出即重置為新模式的起始進度，其餘資料保留。
+// 正式病歷三條路徑：轉住院＝送出申請→登記已排床才真正轉換；轉日照＝單步驟送出即完成；轉居家＝送出通知→登記復健主管回覆→確定轉換才真正轉換。
+const MODE_TYPE_MAP={'住院':'hosp','日照':'day','居家':'home'};
 let convertModeCtx=null;
 function openConvertModeModal(){
-  convertModeCtx={step:1,newMode:null};
+  convertModeCtx={step:'pick',newMode:null};
   renderConvertModeModal();
   openModal('modal-convert-mode');
 }
@@ -2598,23 +2661,30 @@ function convertModeNext(){
   const checked=document.querySelector('input[name="convert-mode-radio"]:checked');
   if(!checked){alert('請選擇要轉換的照護模式');return;}
   convertModeCtx.newMode=checked.value;
-  convertModeCtx.step=2;
+  convertModeCtx.step='details';
   renderConvertModeModal();
 }
 function convertModeBack(){
-  convertModeCtx.step=1;
+  convertModeCtx.step='pick';
   renderConvertModeModal();
 }
+// 正式病歷・轉住院 第二步：登記已排床（沿用同一個 modal 容器，另開一個步驟狀態）
+function openBedAssignForConvert(){
+  convertModeCtx={step:'bed'};
+  renderConvertModeModal();
+  openModal('modal-convert-mode');
+}
 function renderConvertModeModal(){
-  const {step,newMode}=convertModeCtx;
-  document.getElementById('convert-mode-title').textContent='轉換照護模式';
-  if(step===1){
+  const c=getCurrentCaseObj();
+  document.getElementById('convert-mode-title').textContent=convertModeCtx.step==='bed'?'登記已排床':'轉換照護模式';
+  if(convertModeCtx.step==='pick'){
+    const options=['住院','日照','居家'].filter(m=>!c||m!==c.mode);
     document.getElementById('convert-mode-body').innerHTML=`
       <div class="info-note blue" style="margin-bottom:12px">轉換後將保留現有所有紀錄，療程週數不重新計算。</div>
       <div class="retire-list">
-        ${['住院','日照','居家'].map(m=>`
+        ${options.map(m=>`
           <label class="retire-opt">
-            <input type="radio" name="convert-mode-radio" value="${m}" ${newMode===m?'checked':''}>
+            <input type="radio" name="convert-mode-radio" value="${m}" ${convertModeCtx.newMode===m?'checked':''}>
             <span style="font-size:13px">${m}</span>
           </label>`).join('')}
       </div>
@@ -2623,36 +2693,237 @@ function renderConvertModeModal(){
       <button class="btn btn-secondary" onclick="closeModal('modal-convert-mode')">取消</button>
       <button class="btn btn-primary" onclick="convertModeNext()">下一步</button>
     `;
-  } else {
-    const isHomeOrDay=newMode==='居家'||newMode==='日照';
-    const infoText=isHomeOrDay?'請填寫轉換後的相關資訊，轉換完成後需至排床模組更新床位狀態。':'轉換為住院後，需至排床模組重新安排床位。';
-    const homeHint=newMode==='居家'?`<div class="info-note amber" style="margin-top:10px">轉換為居家後，需重新交付復健主管進行居家報名流程。</div>`:'';
+    return;
+  }
+  if(convertModeCtx.step==='bed'){
     document.getElementById('convert-mode-body').innerHTML=`
-      <div class="info-note blue" style="margin-bottom:12px">${infoText}</div>
+      <div class="info-note blue" style="margin-bottom:12px">請登記床位資訊，確認後將正式完成轉換為住院。</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>房型 <span class="required">*</span></label>
+        <select class="form-control" id="convert-mode-roomtype">
+          <option value="">請選擇</option>
+          <option value="single">單人房</option>
+          <option value="double">雙人房</option>
+          <option value="multi">多人房（3人以上）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>床位資訊 <span class="required">*</span></label>
+        <input class="form-control" id="convert-mode-bedinfo" placeholder="例如：A301">
+      </div>
+    `;
+    document.getElementById('convert-mode-footer').innerHTML=`
+      <button class="btn btn-secondary" onclick="closeModal('modal-convert-mode')">取消</button>
+      <button class="btn btn-primary" onclick="confirmConvertToHospFinal()">確認轉換</button>
+    `;
+    return;
+  }
+  renderConvertModeDetailsStep(c);
+}
+function renderConvertModeDetailsStep(c){
+  const {newMode}=convertModeCtx;
+  const isFormal=!!(c&&c.formal);
+  const fromMode=c?c.mode:null;
+  if(!isFormal){
+    document.getElementById('convert-mode-body').innerHTML=`
+      <div class="info-note blue" style="margin-bottom:12px">轉換後將重置為新模式時間軸的起始進度，其餘個案資料（病摘、家屬聯絡等）維持不變。</div>
       <div class="form-group" style="margin-bottom:10px"><label>轉換日期</label><input class="form-control" type="date" id="convert-mode-date" value="2026-07-09"></div>
-      <div class="form-group" style="margin-bottom:10px"><label>新的預計結案日期</label><input class="form-control" type="date" id="convert-mode-closedate"></div>
       <div class="form-group"><label>備註（選填）</label><textarea class="form-control" rows="2" id="convert-mode-note" placeholder="補充說明..."></textarea></div>
-      ${homeHint}
     `;
     document.getElementById('convert-mode-footer').innerHTML=`
       <button class="btn btn-secondary" onclick="convertModeBack()">上一步</button>
       <button class="btn btn-primary" onclick="confirmConvertMode()">確認轉換</button>
     `;
+    return;
   }
+  let extraNote='',dischargeDateField='',submitLabel='確認轉換';
+  if(newMode==='住院'){
+    submitLabel='送出轉換申請';
+    if(fromMode==='居家') extraNote=`<div class="info-note amber" style="margin-top:10px">將通知復健主管取消居家排班</div>`;
+    else if(fromMode==='日照') extraNote=`<div class="info-note blue" style="margin-top:10px">日照個案排班本來就在院內，轉住院不影響</div>`;
+  } else if(newMode==='日照'){
+    submitLabel='確認轉換';
+    if(fromMode==='住院') dischargeDateField=`<div class="form-group" style="margin-bottom:10px"><label>更新的出院日期 <span class="required">*</span></label><input class="form-control" type="date" id="convert-mode-dischargedate"><div style="font-size:11px;color:var(--gray-400);margin-top:2px">排班不受影響</div></div>`;
+    else if(fromMode==='居家') extraNote=`<div class="info-note amber" style="margin-top:10px">將通知復健主管取消居家排班</div>`;
+  } else if(newMode==='居家'){
+    submitLabel='通知復健主管';
+    if(fromMode==='住院') dischargeDateField=`<div class="form-group" style="margin-bottom:10px"><label>更新的出院日期 <span class="required">*</span></label><input class="form-control" type="date" id="convert-mode-dischargedate"></div>`;
+    extraNote=`<div class="info-note amber" style="margin-top:10px">將通知復健主管取消院內排班</div>`;
+  }
+  const defaultClose=c.closeDate?c.closeDate.replace(/\//g,'-'):'';
+  document.getElementById('convert-mode-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:10px"><label>轉換日期</label><input class="form-control" type="date" id="convert-mode-date" value="2026-07-09"></div>
+    <div class="form-group" style="margin-bottom:10px"><label>新的預計結案日期</label><input class="form-control" type="date" id="convert-mode-closedate" value="${defaultClose}"></div>
+    ${dischargeDateField}
+    <div class="form-group"><label>備註（選填）</label><textarea class="form-control" rows="2" id="convert-mode-note" placeholder="補充說明..."></textarea></div>
+    ${extraNote}
+  `;
+  document.getElementById('convert-mode-footer').innerHTML=`
+    <button class="btn btn-secondary" onclick="convertModeBack()">上一步</button>
+    <button class="btn btn-primary" onclick="confirmConvertMode()">${submitLabel}</button>
+  `;
 }
+// 統一送出入口：依臨時／正式病歷 + 目標模式分派到對應處理函式
 function confirmConvertMode(){
-  const {newMode}=convertModeCtx;
-  const modeTypeMap={'住院':'hosp','日照':'day','居家':'home'};
   const c=getCurrentCaseObj();
-  if(c){
-    c.mode=newMode;
-    c.modeType=modeTypeMap[newMode];
-    const closeDateVal=document.getElementById('convert-mode-closedate')?.value;
-    if(closeDateVal) c.closeDate=closeDateVal.replace(/-/g,'/');
-  }
+  if(!c){ closeModal('modal-convert-mode'); return; }
+  if(!c.formal){ confirmConvertModeTemp(c); return; }
+  const {newMode}=convertModeCtx;
+  if(newMode==='住院') submitConvertToHosp(c);
+  else if(newMode==='日照') confirmConvertToDay(c);
+  else if(newMode==='居家') submitConvertToHome(c);
+}
+// 一、臨時病歷：直接重置為新模式時間軸的第一個節點，其餘欄位不清空
+function confirmConvertModeTemp(c){
+  const {newMode}=convertModeCtx;
+  const dateVal=document.getElementById('convert-mode-date')?.value;
+  const noteVal=(document.getElementById('convert-mode-note')?.value||'').trim();
+  const dateStr=dateVal?dateVal.replace(/-/g,'/'):'2026/07/09';
+  if(!c.modeHistory) c.modeHistory=[];
+  c.modeHistory.push({from:c.mode,to:newMode,date:dateStr,note:noteVal});
+  c.mode=newMode;
+  c.modeType=MODE_TYPE_MAP[newMode];
+  const firstNode=TIMELINE_TEMP_BY_MODE[c.modeType][0];
+  c.timelineStep=firstNode.label;
+  c.status=firstNode.label;
+  if(firstNode.sub) c.timelineSub=firstNode.sub; else delete c.timelineSub;
   closeModal('modal-convert-mode');
-  alert(`照護模式已轉換為 ${newMode}，請至排床模組更新相關資訊。`);
-  if(c) renderPage('detail',currentCase);
+  alert(`照護模式已轉換為 ${newMode}`);
+  renderPage('detail',currentCase);
+}
+// 二-1、正式病歷・轉住院 第一步送出：尚未真正轉換，建立 modeConvertPending 等待排床
+function submitConvertToHosp(c){
+  const fromMode=c.mode;
+  const dateVal=document.getElementById('convert-mode-date')?.value;
+  const closeVal=document.getElementById('convert-mode-closedate')?.value;
+  const noteVal=(document.getElementById('convert-mode-note')?.value||'').trim();
+  const dateStr=dateVal?dateVal.replace(/-/g,'/'):'2026/07/09';
+  const closeStr=closeVal?closeVal.replace(/-/g,'/'):c.closeDate;
+  if(fromMode==='居家') cancelFutureHomeRehab(c);
+  c.modeConvertPending={targetMode:'住院',requestDate:dateStr,closeDate:closeStr,note:noteVal};
+  closeModal('modal-convert-mode');
+  alert('已送出轉換申請，請至排床模組安排床位後回來登記已排床。');
+  renderPage('detail',currentCase);
+}
+// 二-1、正式病歷・轉住院 第二步：登記已排床後才真正執行轉換
+function confirmConvertToHospFinal(){
+  const c=getCurrentCaseObj();
+  if(!c||!c.modeConvertPending){ closeModal('modal-convert-mode'); return; }
+  const roomTypeVal=document.getElementById('convert-mode-roomtype')?.value||'';
+  const bedInfoVal=(document.getElementById('convert-mode-bedinfo')?.value||'').trim();
+  if(!roomTypeVal||!bedInfoVal){ alert('請填寫房型與床位資訊'); return; }
+  const pending=c.modeConvertPending;
+  if(!c.modeHistory) c.modeHistory=[];
+  c.modeHistory.push({from:c.mode,to:'住院',date:pending.requestDate,note:pending.note});
+  c.mode='住院';
+  c.modeType='hosp';
+  c.closeDate=pending.closeDate;
+  c.roomPref=roomTypeVal;
+  c.bedInfo=bedInfoVal;
+  delete c.modeConvertPending;
+  closeModal('modal-convert-mode');
+  alert('已登記床位資訊，個案已正式轉換為住院模式。');
+  renderPage('detail',currentCase);
+}
+// 二-2、正式病歷・轉日照：單步驟，送出即直接完成轉換
+function confirmConvertToDay(c){
+  const fromMode=c.mode;
+  const dateVal=document.getElementById('convert-mode-date')?.value;
+  const closeVal=document.getElementById('convert-mode-closedate')?.value;
+  const noteVal=(document.getElementById('convert-mode-note')?.value||'').trim();
+  const dateStr=dateVal?dateVal.replace(/-/g,'/'):'2026/07/09';
+  const closeStr=closeVal?closeVal.replace(/-/g,'/'):c.closeDate;
+  if(fromMode==='住院'){
+    const dischargeVal=document.getElementById('convert-mode-dischargedate')?.value;
+    if(!dischargeVal){ alert('請填寫更新的出院日期'); return; }
+    c.dischargeDate=dischargeVal.replace(/-/g,'/');
+  }
+  if(fromMode==='居家') cancelFutureHomeRehab(c);
+  if(!c.modeHistory) c.modeHistory=[];
+  c.modeHistory.push({from:fromMode,to:'日照',date:dateStr,note:noteVal});
+  c.mode='日照';
+  c.modeType='day';
+  c.closeDate=closeStr;
+  closeModal('modal-convert-mode');
+  alert('照護模式已轉換為日照。');
+  renderPage('detail',currentCase);
+}
+// 二-3、正式病歷・轉居家 第一步送出：尚未真正轉換，建立 modeConvertPending 等待復健主管回覆
+function submitConvertToHome(c){
+  const fromMode=c.mode;
+  const dateVal=document.getElementById('convert-mode-date')?.value;
+  const closeVal=document.getElementById('convert-mode-closedate')?.value;
+  const noteVal=(document.getElementById('convert-mode-note')?.value||'').trim();
+  const dateStr=dateVal?dateVal.replace(/-/g,'/'):'2026/07/09';
+  const closeStr=closeVal?closeVal.replace(/-/g,'/'):c.closeDate;
+  let dischargeDateVal='';
+  if(fromMode==='住院'){
+    const dv=document.getElementById('convert-mode-dischargedate')?.value;
+    if(!dv){ alert('請填寫更新的出院日期'); return; }
+    dischargeDateVal=dv.replace(/-/g,'/');
+  }
+  c.modeConvertPending={targetMode:'居家',requestDate:dateStr,closeDate:closeStr,note:noteVal,rehabReplied:false};
+  if(dischargeDateVal) c.modeConvertPending.dischargeDate=dischargeDateVal;
+  closeModal('modal-convert-mode');
+  alert('已通知復健主管，待回覆是否可承接。');
+  renderPage('detail',currentCase);
+}
+// 二-3、正式病歷・轉居家 第二步：登記復健主管回覆結果
+function registerModeConvertReply(caseId,result){
+  const c=getCurrentCaseObj();
+  if(!c||!c.modeConvertPending) return;
+  if(result==='可承接'){
+    c.modeConvertPending.rehabReplied=true;
+    alert('已登記復健主管回覆：可承接，請確認完成轉換。');
+  } else {
+    delete c.modeConvertPending;
+    alert('復健主管回覆無法承接，轉換申請已取消');
+  }
+  renderPage('detail',currentCase);
+}
+// 二-3、正式病歷・轉居家 第三步：個管師點擊「確定轉換」才真正執行轉換
+function confirmConvertToHomeFinal(caseId){
+  const c=getCurrentCaseObj();
+  if(!c||!c.modeConvertPending) return;
+  const pending=c.modeConvertPending;
+  const fromMode=c.mode;
+  if(!c.modeHistory) c.modeHistory=[];
+  c.modeHistory.push({from:fromMode,to:'居家',date:pending.requestDate,note:pending.note});
+  c.mode='居家';
+  c.modeType='home';
+  c.closeDate=pending.closeDate;
+  if(pending.dischargeDate) c.dischargeDate=pending.dischargeDate;
+  c.homeRehabSchedule=[];
+  delete c.modeConvertPending;
+  alert('已完成轉換為居家模式，請至居家排班管理模組安排班表。');
+  renderPage('detail',currentCase);
+}
+// 轉換申請中提示卡片：依 targetMode／rehabReplied 決定文字與可操作按鈕
+function renderModeConvertPendingCard(c){
+  const isMgr=currentRole==='mgr';
+  const p=c.modeConvertPending;
+  let title='',buttons='';
+  if(p.targetMode==='住院'){
+    title='🛏️ 轉換申請中：轉住院，排床中，待排床模組排床';
+    buttons=isMgr?`<button class="btn btn-secondary btn-xs" onclick="openBedAssignForConvert('${c.id}')">登記已排床</button>`:'';
+  } else if(p.targetMode==='居家'){
+    if(p.rehabReplied){
+      title='✓ 復健主管已回覆可承接，請確認完成轉換';
+      buttons=isMgr?`<button class="btn btn-primary btn-xs" onclick="confirmConvertToHomeFinal('${c.id}')">確定轉換</button>`:'';
+    } else {
+      title='🏠 轉換申請中：轉居家，待復健主管回覆';
+      buttons=isMgr?`<div style="display:flex;gap:6px;flex-shrink:0"><button class="btn btn-secondary btn-xs" onclick="registerModeConvertReply('${c.id}','可承接')">登記回覆：可承接</button><button class="btn btn-danger btn-xs" onclick="registerModeConvertReply('${c.id}','無法承接')">登記回覆：無法承接</button></div>`:'';
+    }
+  }
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid #FECACA;border-radius:7px;background:var(--red-light);margin-bottom:12px">
+      <div style="font-size:12px">
+        <strong>${title}</strong>
+        ${p.note?`<div style="font-size:11px;color:var(--gray-500);margin-top:2px">備註：${p.note}</div>`:''}
+      </div>
+      ${buttons}
+    </div>
+  `;
 }
 
 // ── 封存 Modal（統一入口，temp/formal 兩套清單 + 可鎖定單一類型）──
@@ -2762,6 +3033,66 @@ function confirmArchive(){
   if(c) renderPage('detail',currentCase);
 }
 
+// ── 家屬聯繫紀錄：新增（第一次聯繫僅能標記「尚未確定」，第二次起才開放報到結果選項）──
+function openAddContactModal(caseId){
+  const c=getCurrentCaseObj();
+  const isFirst=!c||!(c.familyContacts&&c.familyContacts.length);
+  document.getElementById('add-contact-body').innerHTML=`
+    <div class="form-group" style="margin-bottom:12px">
+      <label>聯繫日期與時間</label>
+      <input class="form-control" type="datetime-local" id="fc-datetime" value="2026-07-09T09:30">
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>聯繫方式</label>
+      <select class="form-control" id="fc-method">
+        <option>電話</option><option>其他</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>聯繫內容</label>
+      <textarea class="form-control" rows="3" id="fc-note" placeholder="記錄本次聯繫討論內容…"></textarea>
+    </div>
+    <div class="form-group">
+      <label>本次聯繫結果</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="radio" name="fc-result" value="尚未確定" checked style="accent-color:var(--blue)"> 尚未確定
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;${isFirst?'color:var(--gray-300)':'cursor:pointer'}">
+          <input type="radio" name="fc-result" value="確定報到" ${isFirst?'disabled':''} style="accent-color:var(--blue)"> 確定報到
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;${isFirst?'color:var(--gray-300)':'cursor:pointer'}">
+          <input type="radio" name="fc-result" value="確定不報到" ${isFirst?'disabled':''} style="accent-color:var(--blue)"> 確定不報到
+        </label>
+      </div>
+      ${isFirst?`<div style="font-size:11px;color:var(--gray-400);margin-top:6px">第一次聯繫僅能標記「尚未確定」，第二次聯繫起才可標記報到結果</div>`:''}
+    </div>
+  `;
+  openModal('modal-add-contact');
+}
+function confirmAddContact(){
+  const c=getCurrentCaseObj();
+  if(!c){ closeModal('modal-add-contact'); return; }
+  const datetimeVal=document.getElementById('fc-datetime').value;
+  const method=document.getElementById('fc-method').value;
+  const note=(document.getElementById('fc-note').value||'').trim();
+  const result=document.querySelector('input[name="fc-result"]:checked')?.value||'尚未確定';
+  if(!c.familyContacts) c.familyContacts=[];
+  c.familyContacts.push({
+    datetime:datetimeVal?datetimeVal.replace('T',' '):'2026-07-09 09:30',
+    method,
+    note,
+    result,
+  });
+  closeModal('modal-add-contact');
+  if(result==='確定報到') confirmArrival(c.id);
+  else if(result==='確定不報到') openNoShowArchive();
+  else {
+    alert('已新增聯繫紀錄');
+    renderPage('detail',currentCase);
+  }
+}
+
 // ── 上游聯繫紀錄：新增 ──
 function openUpstreamContactModal(){
   document.getElementById('uc-datetime').value='2026-07-09T09:30';
@@ -2819,7 +3150,7 @@ function switchRole(role){
     // 醫師／護理師：預設停在臨時病歷 Tab，並自動套用「收案判斷中」篩選，只顯示待判斷個案
     currentPage='list';
     currentListTab='temp';
-    roleFilterStatus='收案判斷中';
+    statusFilter='收案判斷中';
   }
   // 個管師（mgr）：維持現有行為，無變化
 

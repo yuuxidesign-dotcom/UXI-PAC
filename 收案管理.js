@@ -169,6 +169,33 @@ function stageDisplay(c){
   return {text:'－',cls:'',clickable:false};
 }
 
+// ── 下一步欄位：依優先順序回傳第一個尚未完成的步驟，不合併判斷，讓使用者不用自己推理該做什麼；封存個案已結束流程，不適用「下一步」概念 ──
+function nextStepText(c){
+  if(c.status==='封存') return '—';
+  if(!(c.chiefComplaint||c.admissionDiagnosis||c.dischargeDiagnosis||c.referralDoc)) return '📝 待病摘';
+  if(!c.diseaseCategory) return '🩺 待PAC判斷';
+  if(c.modeType==='hosp'&&c.bedAssigned!==true) return '🛏 待排床';
+  if(c.modeType==='home'&&c.rehabReport!=='可承接') return '🏠 待居家承接';
+  if(c.familyConfirmStatus==='尚未決定') return '👪 待家屬確認';
+  if(c.deliveredToAdmin!==true) return '📁 待建檔';
+  return '已交付建檔';
+}
+// 「下一步」徽章：依步驟類型點擊直接跳轉到對應動作彈窗，已完成／不適用時顯示純文字，不可點擊
+const NEXT_STEP_ONCLICK={
+  '📝 待病摘':c=>`openSummaryJudgeModal('${c.id}','summary')`,
+  '🩺 待PAC判斷':c=>`openSummaryJudgeModal('${c.id}','judge')`,
+  '🛏 待排床':c=>`openStageModal('${c.id}')`,
+  '🏠 待居家承接':c=>`openStageModal('${c.id}')`,
+  '👪 待家屬確認':c=>`openFamilyContactModal('${c.id}')`,
+  '📁 待建檔':c=>`openConvertModal('${c.id}')`,
+};
+function nextStepBadge(c){
+  const text=nextStepText(c);
+  const onclickBuilder=NEXT_STEP_ONCLICK[text];
+  if(!onclickBuilder) return `<span style="color:${text==='已交付建檔'?'var(--green)':'var(--gray-400)'};font-weight:${text==='已交付建檔'?'600':'400'}">${text}</span>`;
+  return `<span class="badge badge-clickable badge-amber" onclick="${onclickBuilder(c)}">${text} ›</span>`;
+}
+
 // ── PAC不收案紀錄（原「封存」）類型清單：本模組僅臨時病歷階段，只有這一套 ──
 // field：選擇該類型後顯示的必填文字欄位標籤；未設定表示不需額外說明
 const ARCHIVE_TYPES_TEMP=[
@@ -187,6 +214,14 @@ const ARCHIVE_TYPES_TEMP=[
   {type:'資料輸入錯誤'},
   {type:'重複建立個案'},
   {type:'其他',field:'原因說明'},
+];
+// PAC不收案紀錄 Modal 選擇原因的分組（僅影響 Modal 呈現方式，改為手風琴分組展開；篩選下拉選單維持 flat list，ARCHIVE_TYPES_TEMP 內容不變）
+const ARCHIVE_TYPE_GROUPS=[
+  {group:'轉其他服務',types:['轉復健病房','轉居家醫療','一般（復健）','一般（開刀）']},
+  {group:'院方不收治',types:['非PAC退案','住院不收治','日照不收治','居家不收治']},
+  {group:'家屬取消／未報到',types:['決定不報到／參加','住院當日未報到','日照當日未報到','居家未報到/未參加']},
+  {group:'資料錯誤／重複建立',types:['資料輸入錯誤','重複建立個案']},
+  {group:'其他',types:['其他']}
 ];
 
 // ── 時間軸節點定義（本模組不顯示時間軸 UI，但 TIMELINE_TEMP_BY_MODE 仍作為「轉換模式」重置起始狀態時的資料來源，予以保留）──
@@ -419,11 +454,11 @@ function renderCaseTable(cases,emptyMsg){
   }
   const isArchiveTab=currentListTab==='archive';
   const headers=isArchiveTab
-    ?['','姓名','來源','發病日','疾病別','預計模式','病摘','PAC判斷','回報上游','家屬確認','結束原因','負責人','建立日期','操作']
-    :['','姓名','來源','發病日','疾病別','預計模式','病摘','PAC判斷','階段','預計開始日','回報上游','家屬確認','負責人','建立日期','交付建檔','操作'];
+    ?['','姓名','下一步','來源','發病日','疾病別','預計模式','病摘','PAC判斷','回報上游','家屬確認','結束原因','負責人','建立日期','操作']
+    :['','姓名','下一步','來源','發病日','疾病別','預計模式','病摘','PAC判斷','階段','預計開始日','回報上游','家屬確認','負責人','建立日期','交付建檔','操作'];
   return `
   <div style="overflow-x:auto;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:${isArchiveTab?1180:1340}px">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:${isArchiveTab?1280:1440}px">
       <thead>
         <tr style="background:var(--gray-50)">
           ${headers.map(h=>`<th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:10px;color:var(--gray-500);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${h}</th>`).join('')}
@@ -536,6 +571,7 @@ function renderCaseRow(c){
     mainRow=`<tr>
     ${expandToggleCell}
     ${td(nameCell)}
+    ${td(nextStepBadge(c))}
     ${td(sourceCell)}
     ${td(onsetDateCell)}
     ${td(diseaseCell)}
@@ -568,6 +604,7 @@ function renderCaseRow(c){
     mainRow=`<tr>
     ${expandToggleCell}
     ${td(nameCell)}
+    ${td(nextStepBadge(c))}
     ${td(sourceCell)}
     ${td(onsetDateCell)}
     ${td(diseaseCell)}
@@ -585,7 +622,7 @@ function renderCaseRow(c){
   </tr>`;
   }
 
-  const colspan=isArchiveTab?14:16;
+  const colspan=isArchiveTab?15:17;
   const expandedRowHtml=isExpanded?`<tr><td colspan="${colspan}" style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)">${renderExpandedContent(c)}</td></tr>`:'';
 
   return mainRow+expandedRowHtml;
@@ -696,16 +733,16 @@ function openRestoreModal(caseId, caseName){
         <button class="modal-close" onclick="closeModal('modal-restore')">✕</button>
       </div>
       <div class="modal-body">
-        <div class="info-note amber" style="margin-bottom:14px">回復後個案將重新進入臨時病歷列表，請選擇回復後的初始狀態。</div>
+        <div class="info-note amber" style="margin-bottom:14px">回復後個案將重新進入臨時病歷列表，請選擇回復方式。</div>
         <div style="font-size:14px;font-weight:600;margin-bottom:12px" id="restore-name"></div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
-            <input type="radio" name="restore-status" value="收案判斷中" checked style="accent-color:var(--blue)">
-            <div><div style="font-size:13px;font-weight:600">收案判斷中</div><div style="font-size:11px;color:var(--gray-400)">資料齊全，需重新進行 PAC 收案判斷</div></div>
+            <input type="radio" name="restore-status" value="reset" checked style="accent-color:var(--blue)">
+            <div><div style="font-size:13px;font-weight:600">回復到初始狀態（待病摘）</div><div style="font-size:11px;color:var(--gray-400)">清空PAC判斷、照護模式、家屬確認、排床／居家承接、交付建檔等欄位，回到剛新增諮詢時的狀態</div></div>
           </label>
           <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
-            <input type="radio" name="restore-status" value="待補件" style="accent-color:var(--blue)">
-            <div><div style="font-size:13px;font-weight:600">待補件</div><div style="font-size:11px;color:var(--gray-400)">資料尚不完整，需等待上游補件後再判斷</div></div>
+            <input type="radio" name="restore-status" value="keep" style="accent-color:var(--blue)">
+            <div><div style="font-size:13px;font-weight:600">保留原有進度</div><div style="font-size:11px;color:var(--gray-400)">不清空任何欄位，只將狀態改回封存前記錄的狀態</div></div>
           </label>
         </div>
       </div>
@@ -726,9 +763,32 @@ function confirmRestore(){
   const m=document.getElementById('modal-restore');
   const caseId=m.dataset.caseId;
   const sel=m.querySelector('input[name="restore-status"]:checked');
-  const status=sel?sel.value:'收案判斷中';
+  const mode=sel?sel.value:'reset';
+  const c=CASES.find(x=>x.id===caseId);
+  if(c){
+    if(mode==='reset'){
+      delete c.diseaseCategory;
+      c.mode='';
+      c.modeType=null;
+      c.familyConfirmStatus='尚未決定';
+      delete c.bedAssigned;
+      delete c.rehabReport;
+      delete c.deliveredToAdmin;
+      c.status='收案判斷中';
+      c.timelineStep='收案判斷中';
+    } else {
+      c.status=c.statusBeforeArchive||'收案判斷中';
+      c.timelineStep=c.status;
+    }
+    delete c.archiveType;
+    delete c.archiveDate;
+    delete c.archiveReason;
+    delete c.statusBeforeArchive;
+    touchCase(c);
+  }
   closeModal('modal-restore');
-  alert(`個案已回復！狀態更新為「${status}」，已移回臨時病歷列表。`);
+  alert(`個案已回復！${mode==='reset'?'已清空收案判斷後的資料，回到初始狀態':'已保留原有進度'}，狀態更新為「${statusLabel(c?c.status:'收案判斷中')}」，已移回臨時病歷列表。`);
+  renderList(document.getElementById('main-content'));
 }
 
 // ── 已結束紀錄：永久刪除此筆資料（不可復原），僅個管師可操作 ──
@@ -1236,6 +1296,7 @@ function renderFamilyContactModalBody(c){
   return `
   <div class="section-card">
     <div class="sc-body">
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">預計開案日期：${c.openDate||'尚未安排'}</div>
       ${isMgr?`
       <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
         ${infoEditing
@@ -1329,6 +1390,7 @@ function renderUpstreamInfoModalBody(c){
   return `
   <div class="section-card">
     <div class="sc-body">
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">預計開案日期：${c.openDate||'尚未安排'}</div>
       ${isMgr?`
       <div class="form-group" style="margin-bottom:12px">
         <label>從常用聯絡人選擇</label>
@@ -1476,9 +1538,11 @@ function renderHospBedModalBody(c){
   </div>`;
   const importSectionHtml=isMgr?((bedImportFormOpen&&bedImportFormCaseId===caseId)?(()=>{
     const defaultImportOpen=c.openDate?c.openDate.replace(/\//g,'-'):'2026-07-09';
+    const defaultImportClose=c.closeDate?c.closeDate.replace(/\//g,'-'):calcCloseDateFromOpen(defaultImportOpen,c.diseaseCategory||c.disease);
     return `
     <div style="margin-top:8px">
-      <div class="form-group" style="margin-bottom:8px"><label>預計開案日期</label><input class="form-control" type="date" id="bed-import-opendate-${caseId}" value="${defaultImportOpen}"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>預計開案日期</label><input class="form-control" type="date" id="bed-import-opendate-${caseId}" value="${defaultImportOpen}" onchange="updateBedImportCloseDate('${caseId}')"></div>
+      <div class="form-group" style="margin-bottom:8px"><label>預計出院日期</label><input class="form-control" type="date" id="bed-import-closedate-${caseId}" value="${defaultImportClose}"></div>
       <div style="display:flex;gap:6px">
         <button class="btn btn-primary btn-xs" onclick="confirmBedImport('${caseId}')">確認匯入</button>
         <button class="btn btn-ghost btn-xs" onclick="cancelBedImportForm()">取消</button>
@@ -1510,17 +1574,25 @@ function cancelBedImportForm(){
   bedImportFormCaseId=null;
   refreshHospBedModal(currentCase);
 }
+function updateBedImportCloseDate(caseId){
+  const c=CASES.find(x=>x.id===caseId);
+  const openVal=document.getElementById('bed-import-opendate-'+caseId)?.value;
+  if(!openVal||!c) return;
+  document.getElementById('bed-import-closedate-'+caseId).value=calcCloseDateFromOpen(openVal,c.diseaseCategory||c.disease);
+}
 function confirmBedImport(caseId){
   const c=CASES.find(x=>x.id===caseId);
   const dateInput=document.getElementById('bed-import-opendate-'+caseId);
+  const closeDateInput=document.getElementById('bed-import-closedate-'+caseId);
   if(c){
     if(dateInput&&dateInput.value) c.openDate=dateInput.value.replace(/-/g,'/');
+    if(closeDateInput&&closeDateInput.value) c.closeDate=closeDateInput.value.replace(/-/g,'/');
     c.bedModuleImported=true;
     touchCase(c);
   }
   bedImportFormOpen=false;
   bedImportFormCaseId=null;
-  alert(`已匯入排床管理模組，預計開案日期：${dateInput?dateInput.value:''}。＊此 prototype 中「收案管理」與「排床管理」是兩個獨立檔案、資料不互通，實際串接後將自動把此個案資料匯入排床管理模組。`);
+  alert(`已匯入排床管理模組，預計開案日期：${dateInput?dateInput.value:''}，預計出院日期：${closeDateInput?closeDateInput.value:''}。＊此 prototype 中「收案管理」與「排床管理」是兩個獨立檔案、資料不互通，實際串接後將自動把此個案資料匯入排床管理模組。`);
   refreshHospBedModal(caseId);
 }
 function openHospBedModal(caseId){
@@ -1858,6 +1930,12 @@ function openHomeStep1DeliverModal(caseId){
   closeModal('modal-home-flow');
   document.getElementById('home-step1-opendate').value=defaultOpenDate;
   document.getElementById('home-step1-closedate').value=calcCloseDateFromOpen(defaultOpenDate,c?(c.diseaseCategory||c.disease):null);
+  const addrBlock=document.getElementById('home-step1-address-block');
+  if(addrBlock){
+    addrBlock.innerHTML=(c&&c.address)
+      ?`<div class="info-note blue">📍 送件地址：${c.address}（若有誤請至個案基本資料修改）</div>`
+      :`<label>居家地址 <span class="required">*</span></label><input class="form-control" id="home-step1-address" placeholder="請輸入居家地址">`;
+  }
   openModal('modal-home-step1');
 }
 function updateHomeStep1CloseDate(){
@@ -1870,6 +1948,12 @@ function confirmHomeStep1Deliver(){
   const c=getCurrentCaseObj();
   const openVal=document.getElementById('home-step1-opendate')?.value;
   const closeVal=document.getElementById('home-step1-closedate')?.value;
+  if(c&&!c.address){
+    const addressInput=document.getElementById('home-step1-address');
+    const addressVal=addressInput?addressInput.value.trim():'';
+    if(!addressVal){ alert('請先填寫居家地址才能交付居家排班'); return; }
+    c.address=addressVal;
+  }
   if(c){
     c.status='待評估';
     c.timelineStep='待評估';
@@ -2168,6 +2252,7 @@ function nonPacGoGeneral(type){
     c.modeType='general';
     c.mode='一般';
     c.disease=type;
+    c.statusBeforeArchive=c.status;
     c.status='封存';
     c.archiveType=type;
     c.archiveReason=`收案判斷確認為非PAC個案，選擇類型：${type}${importBed?'，個案資料已移交排床管理模組':''}。`;
@@ -2271,6 +2356,14 @@ function selectArchiveType(type){
   archiveCtx.presetType=type;
   renderArchiveModalBody();
 }
+// 手風琴群組標題：展開/收合該群組內的原因清單，點擊具體原因的行為（selectArchiveType）不受影響
+function toggleArchiveTypeGroup(headerEl){
+  const body=headerEl.nextElementSibling;
+  const arrow=headerEl.querySelector('span:last-child');
+  const isHidden=body.style.display==='none';
+  body.style.display=isHidden?'':'none';
+  if(arrow) arrow.textContent=isHidden?'▾':'▸';
+}
 
 function archiveTypeDef(type){
   return ARCHIVE_TYPES_TEMP.find(o=>o.type===type)||null;
@@ -2282,10 +2375,22 @@ function renderArchiveModalBody(){
 
   const optsHtml=locked
     ? `<div class="retire-list"><div class="retire-opt selected" style="cursor:default;opacity:.85"><input type="radio" checked disabled><span style="font-size:13px">${presetType}</span></div></div>`
-    : `<div class="retire-list">${ARCHIVE_TYPES_TEMP.map(o=>`
-        <div class="retire-opt ${o.type===presetType?'selected':''}" onclick="selectArchiveType('${o.type}')">
-          <input type="radio" name="archive-type" ${o.type===presetType?'checked':''}><span style="font-size:13px">${o.type}</span>
-        </div>`).join('')}</div>`;
+    : ARCHIVE_TYPE_GROUPS.map(g=>{
+        const isOpen=g.types.includes(presetType);
+        return `
+        <div style="border:1px solid var(--gray-200);border-radius:7px;margin-bottom:8px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;background:var(--gray-50)" onclick="toggleArchiveTypeGroup(this)">
+            <span style="font-size:12.5px;font-weight:600;color:var(--gray-700)">${g.group}</span>
+            <span style="font-size:10px;color:var(--gray-400)">${isOpen?'▾':'▸'}</span>
+          </div>
+          <div class="retire-list" style="margin:8px 12px 8px;${isOpen?'':'display:none'}">
+            ${g.types.map(type=>`
+              <div class="retire-opt ${type===presetType?'selected':''}" onclick="selectArchiveType('${type}')">
+                <input type="radio" name="archive-type" ${type===presetType?'checked':''}><span style="font-size:13px">${type}</span>
+              </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
 
   const def=presetType?archiveTypeDef(presetType):null;
   const fieldHtml=def&&def.field?`
@@ -2322,6 +2427,7 @@ function confirmArchive(){
     importBed=confirm(`已選擇「${type}」。是否將個案資料匯入排床管理模組？`);
   }
   if(c){
+    c.statusBeforeArchive=c.status;
     c.status='封存';
     c.archiveType=type;
     c.archiveReason=isGeneralType

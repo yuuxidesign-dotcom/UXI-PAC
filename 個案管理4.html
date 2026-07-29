@@ -151,6 +151,18 @@
     <div class="modal-body">
       <div class="info-note blue">請確認新的預計結案日期，系統已依疾病別法規規定自動帶入，可手動修正。</div>
       <div class="form-group" style="margin-top:12px;margin-bottom:12px">
+        <label>核定展延週數</label>
+        <select class="form-control" id="ext-success-weeks">
+          <option value="0">0 週</option>
+          <option value="1">1 週</option>
+          <option value="2">2 週</option>
+          <option value="3">3 週</option>
+          <option value="4">4 週</option>
+          <option value="5">5 週</option>
+          <option value="6">6 週</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
         <label>新的預計結案日期</label>
         <input class="form-control" type="date" id="ext-success-closedate">
       </div>
@@ -162,6 +174,24 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-extension-success')">取消</button>
       <button class="btn btn-primary" onclick="confirmExtensionSuccess()">確認並通知復健師</button>
+    </div>
+  </div>
+</div>
+
+<!-- 評估量表 Tab「送出提醒」：勾選提醒對象（復健主管＋該筆紀錄治療師）後送出 -->
+<div id="modal-assessment-reminder" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">送出填寫提醒</div>
+      <button class="modal-close" onclick="closeModal('modal-assessment-reminder')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-note blue">請勾選要提醒的對象</div>
+      <div id="assessment-reminder-targets" style="margin-top:10px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-assessment-reminder')">取消</button>
+      <button class="btn btn-primary" onclick="confirmSendAssessmentReminder()">送出提醒</button>
     </div>
   </div>
 </div>

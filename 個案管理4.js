@@ -18,6 +18,7 @@ let rehabWeekIndex=1; // 居家復健排班目前檢視的週次（1-based）
 let rehabWeekCaseId=null; // 記錄目前週次對應的個案 id，切換個案時自動重置為第1週
 let overviewNoteEditCaseId=null; // 總覽 Tab「備註」目前處於編輯狀態的個案 id
 let dispositionNoteEditCaseId=null; // 後續處置 Tab「備註」目前處於編輯狀態的個案 id
+let expandedAssessmentKey=null; // 評估量表 Tab 目前展開假表單的紀錄索引（0-based，對應 c.assessmentRecords 陣列），切換個案或收合時設回 null
 
 // ── 疾病別定義 ──
 // PAC 四大疾病別（依員郭醫院實際收案範圍）
@@ -104,7 +105,7 @@ const CASES={
   formal:[
     {id:'f1',medicalRecordNo:'00073450',idNumber:'A123456789',archiveOutcome:'',hospitalDays:18,name:'陳建國',birthDate:'1954/02/10',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/10',updatedAt:'2026/06/24',status:'展延中',mgr:'林美惠',formal:true,countdown:2,week:2,timelineStep:'展延中',timelineSub:'待展延申請',assessmentStatus:'待填寫',assessments:{initial:{done:true,date:'2026/06/13'},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/06/10',closeDate:'2026/07/22',roomPref:'double',address:'彰化縣社頭鄉中山路33號',department:'神經內科',admissionDiagnosis:'Acute left MCA territory infarction with right hemiparesis and aphasia',dischargeDiagnosis:'Left MCA infarction, post-thrombolysis, neurologically stable for PAC rehabilitation',medicalHistory:'高血壓病史10年、第二型糖尿病病史5年',admissionTubes:'NG, Foley',onsetDate:'2026/06/08',icdCode:'I639',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/06/12',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/26',week:'第3週',stage:'複評',status:'已逾期',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/07/20',week:'第6週',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/10'}},
     {id:'f2',medicalRecordNo:'00073521',idNumber:'B234567891',archiveOutcome:'',hospitalDays:15,name:'王淑芬',birthDate:'1958/08/03',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰基醫院',date:'2026/05/28',updatedAt:'2026/07/05',status:'展延中',mgr:'林美惠',formal:true,countdown:3,week:4,timelineStep:'展延中',timelineSub:'審核中',assessmentStatus:'待填寫',assessments:{initial:{done:true,date:'2026/05/29'},f1:{done:true,date:'2026/06/01'},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',openDate:'2026/05/28',closeDate:'2026/06/11',roomPref:null,address:'彰化縣永靖鄉中山路77號',department:'骨科',admissionDiagnosis:'Closed fracture, left femoral neck, s/p fall',dischargeDiagnosis:'S/p left hip hemiarthroplasty, fracture healing well, ambulatory with walker',medicalHistory:'骨質疏鬆症病史，服用抗骨鬆藥物',admissionTubes:'Foley',onsetDate:'2026/05/26',icdCode:'S72002',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/05/30',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/13',week:'第3週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/20',week:'第4週',stage:'結案評估',status:'已逾期',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'脆弱性骨折',judgedBy:'張宗達 醫師',reason:'個案符合 脆弱性骨折 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'}},
-    {id:'f3',medicalRecordNo:'00073602',idNumber:'C198765432',archiveOutcome:'',hospitalDays:null,name:'劉家豪',birthDate:'1949/05/22',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/05',updatedAt:'2026/07/08',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:'照護中',timelineSub:'展延後',assessmentStatus:'已填寫',assessments:{initial:{done:true,date:'2026/06/08'},f1:{done:true,date:'2026/06/19'},f2:{done:true,date:'2026/06/30'},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',openDate:'2026/06/05',closeDate:'2026/07/17',roomPref:null,address:'彰化縣埔心鄉義民路22號',department:'神經內科',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'Right MCA infarction, stable, left hemiparesis, ambulatory with assistance',medicalHistory:'高血壓病史8年，無其他重大病史',admissionTubes:'無',onsetDate:'2026/06/02',icdCode:'I639',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'2026/06/20',homeVisitStaff:'李煜明（營養師）',dispositionNote:'',assessmentRecords:[{date:'2026/06/07',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/21',week:'第3週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/07/19',week:'第6週',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},homeRehabSchedule:[
+    {id:'f3',medicalRecordNo:'00073602',idNumber:'C198765432',homeClockIn:[{date:'2026/06/08',clockedIn:true},{date:'2026/06/10',clockedIn:true},{date:'2026/06/12',clockedIn:false}],archiveOutcome:'',hospitalDays:null,name:'劉家豪',birthDate:'1949/05/22',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/05',updatedAt:'2026/07/08',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:'照護中',timelineSub:'展延後',assessmentStatus:'已填寫',assessments:{initial:{done:true,date:'2026/06/08'},f1:{done:true,date:'2026/06/19'},f2:{done:true,date:'2026/06/30'},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',openDate:'2026/06/05',closeDate:'2026/07/17',roomPref:null,address:'彰化縣埔心鄉義民路22號',department:'神經內科',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'Right MCA infarction, stable, left hemiparesis, ambulatory with assistance',medicalHistory:'高血壓病史8年，無其他重大病史',admissionTubes:'無',onsetDate:'2026/06/02',icdCode:'I639',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'2026/06/20',homeVisitStaff:'李煜明（營養師）',dispositionNote:'',assessmentRecords:[{date:'2026/06/07',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/21',week:'第3週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/07/19',week:'第6週',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},homeRehabSchedule:[
       {dow:0,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null,signStatus:'已簽到'},
       {dow:1,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:'已簽到'},
       {dow:2,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:'複評',signStatus:'未簽到'},
@@ -114,7 +115,7 @@ const CASES={
     ]},
     {id:'f4',medicalRecordNo:'00073688',idNumber:'D287654321',archiveOutcome:'',hospitalDays:14,name:'林翠娟',birthDate:'1946/10/11',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'台中榮總',date:'2026/04/15',updatedAt:'2026/06/20',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:11,timelineStep:'即將結案',assessmentStatus:'已填寫',assessments:{initial:{done:true,date:'2026/04/16'},f1:{done:true,date:'2026/04/19'},f2:{done:true,date:'2026/04/23'},f3:{done:true,date:'2026/04/26'},close:{done:false,date:''}},referral:{status:'已轉介',target:'居家醫療',note:'已轉介居家照護服務，聯絡窗口已確認'},upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',openDate:'2026/04/15',closeDate:'2026/04/29',roomPref:'single',address:'彰化縣溪州鄉中央路45號',department:'骨科',admissionDiagnosis:'Closed fracture, right intertrochanteric femur, s/p fall',dischargeDiagnosis:'S/p right proximal femoral nailing, fracture stable, weight-bearing as tolerated',medicalHistory:'骨質疏鬆症病史、高血壓病史7年',admissionTubes:'無',onsetDate:'2026/04/13',icdCode:'S72141',overviewNote:'',dischargeDest2:'門診復健',patientDest:'居家醫療',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/04/17',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/04/22',week:'第2週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/04/28',week:'第3週',stage:'結案評估',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'脆弱性骨折',judgedBy:'張宗達 醫師',reason:'個案符合 脆弱性骨折 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},dischargeDest:'返家＋居家照護服務'},
     {id:'f5',medicalRecordNo:'00073741',idNumber:'E176543210',archiveOutcome:'',hospitalDays:null,name:'張明輝',birthDate:'1951/03/28',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/01',updatedAt:'2026/06/15',status:'即將結案',mgr:'林美惠',formal:true,countdown:null,week:10,timelineStep:'即將結案',assessmentStatus:'已填寫',assessments:{initial:{done:true,date:'2026/05/04'},f1:{done:true,date:'2026/05/15'},f2:{done:true,date:'2026/05/26'},f3:{done:true,date:'2026/06/05'},close:{done:false,date:''}},referral:{status:'待轉介',note:'轉介長照服務，已聯繫長照管理中心'},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/05/01',closeDate:'2026/06/12',roomPref:null,address:'彰化縣大村鄉村上路18號',department:'神經內科',admissionDiagnosis:'Acute left basal ganglia hemorrhage with right hemiparesis',dischargeDiagnosis:'Left basal ganglia ICH, stable post-conservative management, right hemiparesis improving',medicalHistory:'高血壓病史20年、心房顫動病史3年',admissionTubes:'無',onsetDate:'2026/04/29',icdCode:'I619',overviewNote:'',dischargeDest2:'門診復健',patientDest:'',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/05/03',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/05/24',week:'第4週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/11',week:'第10週',stage:'結案評估',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},dischargeDest:'轉長照機構'},
-    {id:'f6',medicalRecordNo:'00073809',idNumber:'F265432109',archiveOutcome:'',hospitalDays:null,name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',updatedAt:'2026/07/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,assessmentStatus:'待填寫',assessments:{initial:{done:true,date:'2026/03/07'},f1:{done:true,date:'2026/03/30'},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null,address:'彰化縣埔鹽鄉南新路9號',department:'神經內科',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis and dysphagia',dischargeDiagnosis:'Right MCA infarction, stable, dysphagia improved, NG tube removed',medicalHistory:'糖尿病史15年、高血壓病史10年',admissionTubes:'NG',onsetDate:'2026/02/27',icdCode:'I639',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'2026/06/15',homeVisitStaff:'陳雅琪（社工師）',dispositionNote:'',assessmentRecords:[{date:'2026/03/03',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/03/24',week:'第4週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/05/20',week:'第7週',stage:'結案評估',status:'已逾期',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},homeRehabSchedule:[
+    {id:'f6',medicalRecordNo:'00073809',idNumber:'F265432109',homeClockIn:[{date:'2026/03/03',clockedIn:true},{date:'2026/03/05',clockedIn:true}],archiveOutcome:'',hospitalDays:null,name:'吳建宏',birthDate:'1948/12/05',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/03/01',updatedAt:'2026/07/01',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',timelineSub:'展延後',hadExtensionFail:true,assessmentStatus:'待填寫',assessments:{initial:{done:true,date:'2026/03/07'},f1:{done:true,date:'2026/03/30'},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/01',closeDate:'2026/05/24',roomPref:null,address:'彰化縣埔鹽鄉南新路9號',department:'神經內科',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis and dysphagia',dischargeDiagnosis:'Right MCA infarction, stable, dysphagia improved, NG tube removed',medicalHistory:'糖尿病史15年、高血壓病史10年',admissionTubes:'NG',onsetDate:'2026/02/27',icdCode:'I639',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'2026/06/15',homeVisitStaff:'陳雅琪（社工師）',dispositionNote:'',assessmentRecords:[{date:'2026/03/03',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/03/24',week:'第4週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/05/20',week:'第7週',stage:'結案評估',status:'已逾期',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},homeRehabSchedule:[
       {dow:0,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null,signStatus:'已簽到'},
       {dow:1,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null,signStatus:'已簽到'},
       {dow:2,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:'已簽到'},
@@ -123,7 +124,7 @@ const CASES={
       {dow:6,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:'已簽到'},
     ]},
     {id:'f7',medicalRecordNo:'00072215',idNumber:'G154321098',archiveOutcome:'結案成功-顯著進步',hospitalDays:21,name:'王秀美',birthDate:'1942/09/14',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/02/01',updatedAt:'2026/04/26',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:12,timelineStep:null,extensionResult:'success',assessments:{initial:{done:true,date:'2026/02/07'},f1:{done:true,date:'2026/03/02'},f2:{done:true,date:'2026/03/23'},f3:{done:true,date:'2026/04/13'},close:{done:true,date:'2026/04/23'}},referral:{status:'已轉介',target:'長照服務',note:'已轉介長照管理中心，後續由長照服務接續追蹤'},archiveType:'正常結案',archiveDate:'2026/04/26',archiveOperator:'林美惠',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',openDate:'2026/02/01',closeDate:'2026/04/26',roomPref:'double',address:'彰化縣秀水鄉安東路60號',department:'神經內科',admissionDiagnosis:'Acute left MCA infarction with right hemiparesis',dischargeDiagnosis:'Left MCA infarction, stable, ambulatory with quad cane, discharged home',medicalHistory:'高血壓病史18年、陳舊性腦梗塞病史',admissionTubes:'Foley',onsetDate:'2026/01/30',icdCode:'I639',overviewNote:'',dischargeDest2:'門診復健',patientDest:'長照服務',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/02/03',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/03/07',week:'第5週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/04/25',week:'第12週',stage:'結案評估',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'}},
-    {id:'f8',medicalRecordNo:'00072960',idNumber:'H243210987',archiveOutcome:'—',hospitalDays:null,name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',updatedAt:'2026/07/09',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'轉居家醫療',archiveDate:'2026/07/09',archiveOperator:'林美惠',extensionResult:null,assessments:{initial:{done:true,date:'2026/01/11'},f1:{done:true,date:'2026/01/14'},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:true,date:'2026/01/23'}},archiveReason:'醫師電話通知個管師，個案已轉為居家醫療計畫接續復健，PAC 系統追蹤至此結束。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null,address:'彰化縣花壇鄉中山路150號',department:'骨科',admissionDiagnosis:'Closed fracture, left femoral neck, s/p fall at home',dischargeDiagnosis:'S/p left hip hemiarthroplasty, fracture healing well, discharged for home PAC rehabilitation',medicalHistory:'骨質疏鬆症病史、退化性關節炎',admissionTubes:'無',onsetDate:'2026/01/08',icdCode:'S72002',overviewNote:'',dischargeDest2:'其他',patientDest:'居家醫療',homeVisitDate:'2026/01/20',homeVisitStaff:'王建宏（職能治療師）',dispositionNote:'',assessmentRecords:[{date:'2026/01/12',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/01/19',week:'第2週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/01/23',week:'第3週',stage:'結案評估',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'脆弱性骨折',judgedBy:'張宗達 醫師',reason:'個案符合 脆弱性骨折 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},referral:{status:'已轉介',target:'居家醫療',note:'已轉介居家醫療團隊接續照護，聯絡窗口：陳個管師 04-XXXX-XXXX。'},homeRehabSchedule:[
+    {id:'f8',medicalRecordNo:'00072960',idNumber:'H243210987',homeClockIn:[{date:'2026/01/12',clockedIn:true},{date:'2026/01/14',clockedIn:true}],archiveOutcome:'—',hospitalDays:null,name:'郭志強',birthDate:'1956/04/27',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/01/10',updatedAt:'2026/07/09',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,archiveType:'轉居家醫療',archiveDate:'2026/07/09',archiveOperator:'林美惠',extensionResult:null,assessments:{initial:{done:true,date:'2026/01/11'},f1:{done:true,date:'2026/01/14'},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:true,date:'2026/01/23'}},archiveReason:'醫師電話通知個管師，個案已轉為居家醫療計畫接續復健，PAC 系統追蹤至此結束。',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',openDate:'2026/01/10',closeDate:'2026/01/24',roomPref:null,address:'彰化縣花壇鄉中山路150號',department:'骨科',admissionDiagnosis:'Closed fracture, left femoral neck, s/p fall at home',dischargeDiagnosis:'S/p left hip hemiarthroplasty, fracture healing well, discharged for home PAC rehabilitation',medicalHistory:'骨質疏鬆症病史、退化性關節炎',admissionTubes:'無',onsetDate:'2026/01/08',icdCode:'S72002',overviewNote:'',dischargeDest2:'其他',patientDest:'居家醫療',homeVisitDate:'2026/01/20',homeVisitStaff:'王建宏（職能治療師）',dispositionNote:'',assessmentRecords:[{date:'2026/01/12',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/01/19',week:'第2週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/01/23',week:'第3週',stage:'結案評估',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'脆弱性骨折',judgedBy:'張宗達 醫師',reason:'個案符合 脆弱性骨折 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},referral:{status:'已轉介',target:'居家醫療',note:'已轉介居家醫療團隊接續照護，聯絡窗口：陳個管師 04-XXXX-XXXX。'},homeRehabSchedule:[
       {dow:0,date:'2026/06/29',period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:'初評'},
       {dow:1,date:'2026/06/30',period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
       {dow:2,date:'2026/07/01',period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null},
@@ -139,11 +140,12 @@ const CASES={
     // 測試個案：正式病歷／日照，專門用於測試「轉換模式」功能
     {id:'f11',medicalRecordNo:'00074155',idNumber:'M209876543',archiveOutcome:'',hospitalDays:null,name:'日照轉模式',birthDate:'1953/08/20',mode:'日照',modeType:'day',disease:'腦中風',source:'臺大醫院',date:'2026/05/03',updatedAt:'2026/06/30',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:7,timelineStep:'照護中',assessmentStatus:'已填寫',assessments:{initial:{done:true,date:'2026/05/16'},f1:{done:true,date:'2026/06/08'},f2:{done:true,date:'2026/06/29'},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',familyPhone:'0933-222-333',openDate:'2026/05/10',closeDate:'2026/08/02',roomPref:null,address:'彰化縣員林市中山路一段66號',department:'神經內科',admissionDiagnosis:'Acute right MCA territory infarction with left hemiparesis',dischargeDiagnosis:'Right MCA infarction, stable, left hemiparesis improving, ambulatory with assistance',medicalHistory:'高血壓病史15年、心房顫動病史2年',admissionTubes:'無',onsetDate:'2026/05/01',icdCode:'I639',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/05/12',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/02',week:'第4週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/07/28',week:'第12週',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'}},
     // 測試個案：正式病歷／居家，專門用於測試「轉換模式」功能
-    {id:'f12',medicalRecordNo:'00074198',idNumber:'N198765440',archiveOutcome:'',hospitalDays:null,name:'居家轉模式',birthDate:'1948/11/05',mode:'居家',modeType:'home',disease:'衰弱高齡',source:'彰基醫院',date:'2026/06/08',updatedAt:'2026/06/28',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:2,timelineStep:'照護中',assessmentStatus:'待填寫',assessments:{initial:{done:false,date:''},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',familyPhone:'0955-333-444',openDate:'2026/06/15',closeDate:'2026/07/13',roomPref:null,address:'彰化縣和美鎮彰美路20號',department:'復健科',admissionDiagnosis:'General frailty syndrome with recurrent falls and decreased functional mobility',dischargeDiagnosis:'Frailty syndrome, stable, discharged home with PAC rehabilitation plan',medicalHistory:'高血壓病史18年、輕度肌少症',admissionTubes:'無',onsetDate:'2026/06/05',icdCode:'R54',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'2026/06/25',homeVisitStaff:'李煜明（營養師）',dispositionNote:'',assessmentRecords:[{date:'2026/06/17',week:'第1週',stage:'初評',status:'已逾期',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'複評',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'衰弱高齡',judgedBy:'張宗達 醫師',reason:'個案符合 衰弱高齡 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},homeRehabSchedule:[
+    {id:'f12',medicalRecordNo:'00074198',idNumber:'N198765440',homeClockIn:[{date:'2026/06/16',clockedIn:false}],archiveOutcome:'',hospitalDays:null,name:'居家轉模式',birthDate:'1948/11/05',mode:'居家',modeType:'home',disease:'衰弱高齡',source:'彰基醫院',date:'2026/06/08',updatedAt:'2026/06/28',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:2,timelineStep:'照護中',assessmentStatus:'待填寫',assessments:{initial:{done:false,date:''},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',familyPhone:'0955-333-444',openDate:'2026/06/15',closeDate:'2026/07/13',roomPref:null,address:'彰化縣和美鎮彰美路20號',department:'復健科',admissionDiagnosis:'General frailty syndrome with recurrent falls and decreased functional mobility',dischargeDiagnosis:'Frailty syndrome, stable, discharged home with PAC rehabilitation plan',medicalHistory:'高血壓病史18年、輕度肌少症',admissionTubes:'無',onsetDate:'2026/06/05',icdCode:'R54',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'2026/06/25',homeVisitStaff:'李煜明（營養師）',dispositionNote:'',assessmentRecords:[{date:'2026/06/17',week:'第1週',stage:'初評',status:'已逾期',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'複評',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'衰弱高齡',judgedBy:'張宗達 醫師',reason:'個案符合 衰弱高齡 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},homeRehabSchedule:[
       {dow:1,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'黃志豪',duration:'40分鐘',tag:null},
       {dow:3,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null},
       {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null},
     ]},
+    {id:'ftest',medicalRecordNo:'00099001',name:'測試個案',birthDate:'1958/03/15',idNumber:'T123456789',mode:'住院',modeType:'hosp',disease:'腦中風',icdCode:'I639',source:'彰化基督',date:'2026/07/20',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:2,timelineStep:'照護中',timelineSub:null,openDate:'2026/07/20',closeDate:'2026/10/12',roomPref:null,address:'彰化縣員林市中山路100號',department:'復健科',bedNo:'303-A',attendingDoctor:'李律儀',admissionTubes:'NG, Foley',onsetDate:'2026/07/18',overviewNote:'',familyRelation:'女兒',familyName:'測試家屬',familyPhone:'0912-000-111',upstreamContact:{name:'王護理師',phone:'04-8888-9999',line:'test_line'},referral:{status:'待轉介',note:''},dischargeDest2:null,patientDest:null,homeVisitDate:null,homeVisitStaff:null,dispositionNote:'',assessments:{initial:{done:true,date:'2026/07/21'},f1:{done:false,date:null},f2:{done:false,date:null},f3:{done:false,date:null},close:{done:false,date:null}},assessmentRecords:[{date:'2026/07/21',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'複評',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'',medicalHistory:'高血壓病史8年',referralDoc:{name:'轉診單.pdf',size:'0.9 MB',date:'2026/07/20'}},
   ]
 };
 
@@ -190,12 +192,20 @@ function remainingDaysInfo(closeDateStr){
   if(days<0) return {text:`已逾期 ${Math.abs(days)} 天`,urgent:true};
   return {text:`${days} 天`,urgent:days<14};
 }
-// ── 照護進度：第 X/Y 週，Y 依疾病別 PAC_CARE_PERIOD 的 weeksMax（查無對照時預設 12 週）──
+// ── 年度編號：西元年（取自建立日期 c.date）＋流水號（取自 c.id 的數字部分，零填至3位）即時計算，不額外存欄位 ──
+function yearCaseNo(c){
+  const year=(c.date||c.openDate||'').slice(0,4)||'2026';
+  const num=parseInt((c.id||'').replace(/\D/g,''),10)||0;
+  return `${year}-${String(num).padStart(3,'0')}`;
+}
+// ── 照護進度：第 X/Y 週，Y 依疾病別 PAC_CARE_PERIOD 的 weeksMax 加上已核定的展延週數（查無對照時預設 12 週）；剩餘 2 週內文字轉紅提醒 ──
 function careProgressText(c){
   if(!c.week) return '—';
   const period=PAC_CARE_PERIOD[c.diseaseCategory||c.disease];
-  const total=period?period.weeksMax:12;
-  return `第 ${c.week}/${total} 週`;
+  const total=(period?period.weeksMax:12)+(c.approvedExtensionWeeks||0);
+  const text=`第 ${c.week}/${total} 週`;
+  const remain=total-c.week;
+  return remain<=2?`<span style="color:var(--red);font-weight:600">${text}</span>`:text;
 }
 // ── 展延狀態徽章：無需展延（灰）／待送件（黃，附倒數天數）／審核中（黃）／已核准（綠）／未核准（紅）──
 // 註：markNoExtension（不展延）與 confirmExtensionSuccess（展延成功）在現有資料模型中都會寫回相同的 status/timelineSub，
@@ -347,7 +357,6 @@ const TIMELINE_FORMAL_COMMON=[
 const FORMS={
   hosp:{
     common:[
-      {icon:'📋',name:'個案綜合評估報告書（評估總表）',meta:'自動帶入評估週數與日期',status:'done',type:'link',linkTarget:'評估量表模組'},
       {icon:'📄',name:'PAC 照護模式記錄表',meta:'個管師建立',status:'required'},
       {icon:'📝',name:'PAC 會議記錄',meta:'空白表單，填上個案資料',status:'pending'},
       {icon:'💬',name:'醫病溝通會議記錄',meta:'空白表單，填上個案資料',status:'pending'},
@@ -361,7 +370,6 @@ const FORMS={
   },
   day:{
     common:[
-      {icon:'📋',name:'個案綜合評估報告書（評估總表）',meta:'自動帶入評估週數與日期',status:'done',type:'link',linkTarget:'評估量表模組'},
       {icon:'📄',name:'PAC 照護模式記錄表',meta:'個管師建立',status:'required'},
       {icon:'📝',name:'PAC 會議記錄',meta:'空白表單',status:'pending'},
       {icon:'💬',name:'醫病溝通會議記錄',meta:'空白表單',status:'pending'},
@@ -376,7 +384,6 @@ const FORMS={
   },
   home:{
     common:[
-      {icon:'📋',name:'個案綜合評估報告書（評估總表）',meta:'自動帶入評估週數與日期',status:'done',type:'link',linkTarget:'評估量表模組'},
       {icon:'📄',name:'PAC 照護模式記錄表',meta:'個管師建立',status:'required'},
       {icon:'📝',name:'PAC 會議記錄',meta:'空白表單',status:'pending'},
       {icon:'💬',name:'醫病溝通會議記錄',meta:'空白表單',status:'pending'},
@@ -521,6 +528,11 @@ const DUAL_PANE_ICON=`<svg width="14" height="14" viewBox="0 0 48 48" fill="none
 let archiveTypeFilter=''; // 封存 Tab：封存類型篩選（空字串＝全部封存類型）
 let archiveDateFrom=''; // 封存 Tab：封存日期區間篩選（起，yyyy-mm-dd）
 let archiveDateTo=''; // 封存 Tab：封存日期區間篩選（訖，yyyy-mm-dd）
+let archiveOutcomeFilter=null; // 封存 Tab 儀表板卡片篩選：null｜'結案成功'｜'結案失敗'，比對 c.archiveOutcome 開頭且限今年
+function filterByArchiveOutcome(prefix){
+  archiveOutcomeFilter=(archiveOutcomeFilter===prefix)?null:prefix;
+  renderList(document.getElementById('main-content'));
+}
 let listSortOrder='dateDesc'; // 個案列表排序：'dateDesc'(收案日期新→舊，預設) | 'dateAsc' | 'nameAsc' | 'closeDateAsc'
 
 function renderList(container){
@@ -538,6 +550,10 @@ function renderList(container){
   // 統計卡「結案倒數 14/7 天」：排除已封存個案，依 daysUntilClose 篩出對應天數內（含已逾期）的個案數
   const closeSoon14=allCases.filter(c=>c.status!=='封存'&&daysUntilClose(c.closeDate)!==null&&daysUntilClose(c.closeDate)<=14).length;
   const closeSoon7=allCases.filter(c=>c.status!=='封存'&&daysUntilClose(c.closeDate)!==null&&daysUntilClose(c.closeDate)<=7).length;
+  // 結案管理 Tab 儀表板：今年成功／結案失敗筆數，依 c.archiveDate 年份是否為今年（本 prototype「今天」固定為 2026）與 c.archiveOutcome 開頭判斷
+  const archiveAllForStats=allCases.filter(c=>c.status==='封存');
+  const successThisYear=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,4)==='2026'&&(c.archiveOutcome||'').startsWith('結案成功')).length;
+  const failThisYear=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,4)==='2026'&&(c.archiveOutcome||'').startsWith('結案失敗')).length;
   // 搜尋／篩選列「全部負責人」「全部來源醫院」：依 CASES.formal 現有資料動態產生不重複清單
   const mgrOptions=[...new Set(CASES.formal.map(c=>c.mgr).filter(Boolean))];
   const sourceOptions=[...new Set(CASES.formal.map(c=>c.source).filter(Boolean))];
@@ -555,7 +571,7 @@ function renderList(container){
 
   const formalActive=sortCases(applyRoleFilter(CASES.formal.filter(c=>c.status!=='封存')));
   const archiveCasesAll=allCases.filter(c=>c.status==='封存');
-  // 封存 Tab：封存類型／封存日期區間篩選同時作用（AND），篩選後再依排序方式排列
+  // 封存 Tab：封存類型／封存日期區間／今年結案結果（儀表板卡片）篩選同時作用（AND），篩選後再依排序方式排列
   const archiveCases=sortCases(archiveCasesAll.filter(c=>{
     if(archiveTypeFilter&&c.archiveType!==archiveTypeFilter) return false;
     if(archiveDateFrom||archiveDateTo){
@@ -563,6 +579,10 @@ function renderList(container){
       if(!d||isNaN(d)) return false;
       if(archiveDateFrom&&d<new Date(archiveDateFrom)) return false;
       if(archiveDateTo&&d>new Date(archiveDateTo)) return false;
+    }
+    if(archiveOutcomeFilter){
+      if((c.archiveDate||'').slice(0,4)!=='2026') return false;
+      if(!(c.archiveOutcome||'').startsWith(archiveOutcomeFilter)) return false;
     }
     return true;
   }));
@@ -712,6 +732,20 @@ function renderList(container){
       <div class="${extraCardFilterClass('closeSoon7')}" onclick="filterByExtraCard('closeSoon7')">
         <div class="stat-label">結案倒數 7天</div>
         <div class="stat-value">${closeSoon7}</div>
+      </div>
+    </div>
+    `:''}
+
+    ${(!isDoc&&!isNur&&currentListTab==='archive')?`
+    <!-- 結案管理儀表板：今年成功／失敗結案筆數，點擊卡片可篩選下方列表 -->
+    <div class="stats-row">
+      <div class="stat-card${archiveOutcomeFilter==='結案成功'?' active-filter':''}" onclick="filterByArchiveOutcome('結案成功')">
+        <div class="stat-label">今年成功結案</div>
+        <div class="stat-value">${successThisYear}</div>
+      </div>
+      <div class="stat-card${archiveOutcomeFilter==='結案失敗'?' active-filter':''}" onclick="filterByArchiveOutcome('結案失敗')">
+        <div class="stat-label">今年結案失敗</div>
+        <div class="stat-value">${failThisYear}</div>
       </div>
     </div>
     `:''}
@@ -879,7 +913,7 @@ function renderCaseTable(cases,emptyMsg){
   if(!cases.length){
     return `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">${emptyMsg}</div>`;
   }
-  const headers=['姓名','病歷號碼','身分證','PAC疾病別','照護模式','開案日','預計結案日','照護進度','展延','評估量表','轉介','負責人'];
+  const headers=['年度編號','姓名','病歷號碼','身分證','PAC疾病別','照護模式','開案日','預計結案日','照護進度','展延','評估量表','轉介','負責人'];
   return `
   <div style="overflow-x:auto">
     <table class="case-list-table" style="min-width:1080px">
@@ -898,6 +932,7 @@ function renderCaseRow(c){
   const ext=extensionBadge(c);
   const ref=referralBadge(c);
   return `<tr style="cursor:pointer" onclick="renderPage('detail','${c.id}')">
+    <td>${yearCaseNo(c)}</td>
     <td><strong>${nameCell}</strong></td>
     <td>${c.medicalRecordNo||'—'}</td>
     <td>${c.idNumber||'—'}</td>
@@ -921,12 +956,12 @@ function renderCaseRow(c){
 // 第3組｜後續處置（6）：出院去向～家訪人員
 // 第4組｜評估量表（4）：初評～複評3
 // 負責人另置於最後，不歸屬任何一組
-const ARCHIVE_GROUP_END=new Set([8,14,20,24]); // 0-based欄位index，該欄右側加粗框線
+const ARCHIVE_GROUP_END=new Set([9,15,21,25]); // 0-based欄位index，該欄右側加粗框線（因最前面新增「年度編號」欄，較原本各組界線右移1）
 function renderArchiveTable(cases,emptyMsg){
   if(!cases.length){
     return `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">${emptyMsg}</div>`;
   }
-  const headers=['姓名','病歷號碼','身分證','PAC疾病別','照護模式','開案日','預計結案日','照護進度','展延',
+  const headers=['年度編號','姓名','病歷號碼','身分證','PAC疾病別','照護模式','開案日','預計結案日','照護進度','展延',
     '入院時管路','發病時間','ICD','開案日','結案日','結案是否成功',
     '出院去向','住院天數','展延週數','病人去向','家訪日期','家訪人員',
     '初評','複評1','複評2','複評3',
@@ -957,6 +992,7 @@ function renderArchiveRow(c){
   const a=c.assessments||{};
   const td=(html,i)=>`<td style="${ARCHIVE_GROUP_END.has(i)?'border-right:2px solid var(--gray-300)':''}">${html}</td>`;
   const cells=[
+    yearCaseNo(c),
     `<strong>${nameCell}</strong>`,
     c.medicalRecordNo||'—',
     c.idNumber||'—',
@@ -1076,16 +1112,22 @@ function renderDetail(container,caseId){
   if(!detailTabs.find(t=>t.key===detailActiveTab)) detailActiveTab='overview';
   const tabPanelStyle=(key)=>`display:${detailActiveTab===key?'':'none'}`;
 
-  // Tab 標籤下方小字狀態提示：統一樣式——未完成＝🔴（灰階文字），已完成＝✓（綠色文字），不加其他強調樣式
-  // 除「聯繫紀錄」外其餘 Tab 不需提示，但保留同樣高度的佔位空間，避免整排 Tab 高度參差不齊
+  // Tab 標籤提示：僅回傳布林值 hasIssue，true 時標籤文字前顯示紅點；只針對評估量表／居家排班／後續處置三個 Tab 判斷，其餘一律 false
   const tabHint=(key)=>{
-    if(key==='contact'){
-      const lastResult=(c.familyContacts&&c.familyContacts.length)?c.familyContacts[c.familyContacts.length-1].result:null;
-      return (!lastResult||lastResult==='尚未確定')
-        ?{text:'🔴 待聯絡家屬',color:'var(--gray-400)'}
-        :{text:'✓ 已聯絡家屬',color:'var(--green)'};
+    if(key==='assessment'){
+      const now=new Date('2026-06-25'); // 本模組固定示範「今天」，比對用簡單邏輯即可，不用真的比對複雜日期
+      return Object.values(c.assessments||{}).some(stage=>{
+        if(!stage||!stage.date) return false;
+        const d=new Date(String(stage.date).replace(/\//g,'-'));
+        return !isNaN(d)&&d<now;
+      });
     }
-    return null;
+    if(key==='rehab'){
+      if(c.modeType!=='home') return false;
+      return (c.homeClockIn||[]).some(r=>r.clockedIn===false);
+    }
+    if(key==='disposition') return !c.patientDest;
+    return false;
   };
 
   container.innerHTML=`
@@ -1197,12 +1239,12 @@ function renderDetail(container,caseId){
     <!-- Tab 導覽列 -->
     <div class="tabs detail-tabs">
       ${detailTabs.map((t,i)=>{
-        const hint=tabHint(t.key);
+        const hasIssue=tabHint(t.key);
         const prevGroup=i>0?detailTabs[i-1].group:null;
         const isGroupStart=!!t.group&&t.group!==prevGroup;
-        return `<div class="tab ${detailActiveTab===t.key?'active':''}" data-tab-key="${t.key}" style="${isGroupStart?'margin-left:10px;padding-left:14px;border-left:1px solid var(--gray-200)':''}" onclick="switchDetailTab('${t.key}')">
-          <div>${t.label}</div>
-          <div style="font-size:10px;margin-top:2px;${hint?`color:${hint.color}`:'visibility:hidden'}">${hint?hint.text:'—'}</div>
+        const isDisabled=t.key==='rehab'&&c.modeType!=='home';
+        return `<div class="tab ${detailActiveTab===t.key?'active':''} ${isDisabled?'disabled':''}" data-tab-key="${t.key}" style="${isGroupStart?'margin-left:10px;padding-left:14px;border-left:1px solid var(--gray-200)':''}" ${isDisabled?'':`onclick="switchDetailTab('${t.key}')"`}>
+          <div>${hasIssue?`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-right:4px"></span>`:''}${t.label}</div>
         </div>`;
       }).join('')}
     </div>
@@ -1279,7 +1321,7 @@ function renderDetail(container,caseId){
     <!-- 評估量表：紀錄表＋未來串接評估量表模組佔位 -->
     <div class="detail-tab-panel" data-tab-key="assessment" style="${tabPanelStyle('assessment')}">
       <div class="section-card">
-        <div class="sc-header"><div class="sc-title">📊 評估量表紀錄</div></div>
+        <div class="sc-header"><div class="sc-title">📊 評估量表紀錄</div><span style="font-size:10px;color:var(--gray-400)">點列展開量表內容</span></div>
         <div class="sc-body">
           <div style="overflow-x:auto">
             <table class="case-list-table">
@@ -1287,20 +1329,22 @@ function renderDetail(container,caseId){
                 <tr><th>紀錄日期</th><th>週數</th><th>時程</th><th>完成狀態</th><th>治療師</th><th>填寫提醒</th></tr>
               </thead>
               <tbody>
-                ${(c.assessmentRecords||[]).map(r=>{
+                ${(c.assessmentRecords||[]).map((r,idx)=>{
                   const statusCls=r.status==='已完成'?'badge-green':r.status==='已逾期'?'badge-red':'badge-gray';
-                  return `<tr>
+                  const isExpanded=expandedAssessmentKey===idx;
+                  return `<tr style="cursor:pointer;${isExpanded?'background:var(--blue-light)':''}" onclick="toggleAssessmentExpand(${idx})">
                     <td>${r.date||'—'}</td>
                     <td>${r.week||'—'}</td>
-                    <td>${r.stage}</td>
+                    <td>${r.stage}${isExpanded?' ▴':''}</td>
                     <td><span class="badge ${statusCls}">${r.status}</span></td>
                     <td>${(r.therapists||[]).join('、')||'—'}</td>
-                    <td>${isMgr?`<button class="btn btn-ghost btn-xs" onclick="sendAssessmentReminder()">送出提醒</button>`:'—'}</td>
+                    <td>${isMgr?`<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();sendAssessmentReminder('${(r.therapists||[]).join('|')}')">送出提醒</button>`:'—'}</td>
                   </tr>`;
                 }).join('')}
               </tbody>
             </table>
           </div>
+          ${(expandedAssessmentKey!=null&&c.assessmentRecords&&c.assessmentRecords[expandedAssessmentKey])?renderFakeAssessmentForm(c.assessmentRecords[expandedAssessmentKey]):''}
         </div>
       </div>
       <div class="section-card">
@@ -1319,25 +1363,6 @@ function renderDetail(container,caseId){
         <button class="btn btn-ghost btn-sm" onclick="openExportCloseModal()">📤 匯出結案</button>
       </div>
       `:''}
-      <!-- 轉診單（選填附件，唯讀查看） -->
-      <div class="section-card">
-        <div class="sc-header">
-          <div class="sc-title">📋 轉診單</div>
-        </div>
-        <div class="sc-body">
-          ${c.referralDoc?`
-          <div class="attachment-list">
-            <div class="attachment-item">
-              <span class="attachment-icon">📄</span>
-              <div style="flex:1"><div class="attachment-name">${c.referralDoc.name}</div><div class="attachment-meta">${c.referralDoc.size}・${c.referralDoc.date} 上傳</div></div>
-              <button class="btn btn-ghost btn-xs" onclick="alert('預覽附件：${c.referralDoc.name}')">預覽</button>
-            </div>
-          </div>
-          `:`
-          <div style="text-align:center;padding:16px;color:var(--gray-400);font-size:12px">未提供轉診單</div>
-          `}
-        </div>
-      </div>
 
       <!-- 醫療紀錄查看（目前是住院，或曾經是住院皆顯示；非目前模式時整體唯讀）-->
       ${wasEverMode(c,'住院')?`
@@ -1411,20 +1436,24 @@ function renderDetail(container,caseId){
         </div>
         <div class="sc-body">
           <div class="form-group" style="margin-bottom:14px">
+            <label>轉介（病人去向）</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+              ${['回家','護理之家','居家醫療','長照服務','社工服務','無需轉介','其他'].map(opt=>`<button class="btn ${c.patientDest===opt?'btn-primary':'btn-secondary'} btn-xs" ${dispositionReadonly?'disabled':''} onclick="selectPatientDest('${c.id}','${opt}')">${c.patientDest===opt?'✓ ':''}${opt}</button>`).join('')}
+            </div>
+            ${c.patientDest==='其他'?`<input class="form-control" style="margin-top:8px" placeholder="請填寫細節" value="${c.patientDestOther||''}" ${dispositionReadonly?'disabled':''} oninput="updatePatientDestOther(this.value)">`:''}
+          </div>
+          <div class="divider"></div>
+          <div class="form-group" style="margin:14px 0">
             <label>出院去向</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
               ${['門診復健','其他'].map(opt=>`<button class="btn ${c.dischargeDest2===opt?'btn-primary':'btn-secondary'} btn-xs" ${dispositionReadonly?'disabled':''} onclick="selectDischargeDest2('${c.id}','${opt}')">${c.dischargeDest2===opt?'✓ ':''}${opt}</button>`).join('')}
             </div>
+            ${c.dischargeDest2==='其他'?`<input class="form-control" style="margin-top:8px" placeholder="請填寫細節" value="${c.dischargeDest2Other||''}" ${dispositionReadonly?'disabled':''} oninput="updateDischargeDest2Other(this.value)">`:''}
           </div>
-          <div class="form-group" style="margin-bottom:14px">
-            <label>病人去向</label>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-              ${['回家','護理之家','居家醫療','長照服務','社工服務','其他'].map(opt=>`<button class="btn ${c.patientDest===opt?'btn-primary':'btn-secondary'} btn-xs" ${dispositionReadonly?'disabled':''} onclick="selectPatientDest('${c.id}','${opt}')">${c.patientDest===opt?'✓ ':''}${opt}</button>`).join('')}
-            </div>
-          </div>
-          <div class="info-grid-2">
-            <div class="info-item"><label>家訪日期</label><span>${c.homeVisitDate||'—'}</span></div>
-            <div class="info-item"><label>家訪人員</label><span>${c.homeVisitStaff||'—'}</span></div>
+          <div class="divider"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+            <div class="form-group"><label>家訪日期</label><input class="form-control" placeholder="例如：2026/07/20" value="${c.homeVisitDate||''}" ${dispositionReadonly?'disabled':''} oninput="updateHomeVisitDate(this.value)"></div>
+            <div class="form-group"><label>家訪人員</label><input class="form-control" placeholder="例如：李煜明（營養師）" value="${c.homeVisitStaff||''}" ${dispositionReadonly?'disabled':''} oninput="updateHomeVisitStaff(this.value)"></div>
           </div>
         </div>
       </div>
@@ -1705,6 +1734,24 @@ function renderHomeRehabSchedule(c){
     <div style="overflow-x:auto">
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;min-width:700px">${dayCells}</div>
     </div>
+    ${renderHomeClockInStatus(c)}
+  `;
+}
+// 打卡狀態：列出 c.homeClockIn 各筆排班的打卡結果，任一筆未打卡即由 tabHint() 觸發「居家排班」Tab 紅點
+function renderHomeClockInStatus(c){
+  const records=c.homeClockIn||[];
+  if(!records.length) return '';
+  return `
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)">
+      <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">打卡狀態</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${records.map(r=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--gray-100);border-radius:6px">
+          <span style="font-size:12px;color:var(--gray-700)">${r.date||'—'}</span>
+          <span style="font-size:12px;font-weight:600;color:${r.clockedIn?'var(--green)':'var(--red)'}">${r.clockedIn?'✓ 已打卡':'🔴 未打卡'}</span>
+        </div>`).join('')}
+      </div>
+    </div>
   `;
 }
 
@@ -1967,21 +2014,91 @@ function saveOverviewNote(caseId){
   renderPage('detail',currentCase);
 }
 
-// ── 評估量表 Tab：送出提醒（prototype 中僅模擬通知，不實際串接治療師端）──
-function sendAssessmentReminder(){
-  alert('提醒已送出給對應治療師');
+// ── 評估量表 Tab：點列展開/收合假評估表單（純靜態展示，不實際串接評估量表模組）──
+function toggleAssessmentExpand(idx){
+  expandedAssessmentKey=(expandedAssessmentKey===idx)?null:idx;
+  renderPage('detail',currentCase);
+}
+function renderFakeAssessmentForm(r){
+  return `
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)">
+    <div style="font-size:11px;color:var(--gray-400);margin-bottom:10px">📋 ${r.stage}評估表單（${r.date||'—'}）・以下為靜態展示表單，尚未串接實際評估量表模組，欄位不可填寫</div>
+    <div style="font-size:12.5px;font-weight:700;color:var(--gray-600);margin-bottom:8px">Berg 平衡量表（Berg Balance Scale）</div>
+    <div class="info-grid" style="margin-bottom:14px">
+      <div class="info-item"><label>坐到站</label><span>—</span></div>
+      <div class="info-item"><label>無支撐站立</label><span>—</span></div>
+      <div class="info-item"><label>無支撐坐姿</label><span>—</span></div>
+      <div class="info-item"><label>站到坐</label><span>—</span></div>
+      <div class="info-item"><label>轉位</label><span>—</span></div>
+      <div class="info-item"><label>總分</label><span>— ／ 56</span></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:12.5px;font-weight:700;color:var(--gray-600);margin:14px 0 8px">Barthel Index（日常生活功能量表）</div>
+    <div class="info-grid">
+      <div class="info-item"><label>進食</label><span>—</span></div>
+      <div class="info-item"><label>移位</label><span>—</span></div>
+      <div class="info-item"><label>盥洗</label><span>—</span></div>
+      <div class="info-item"><label>如廁</label><span>—</span></div>
+      <div class="info-item"><label>步行</label><span>—</span></div>
+      <div class="info-item"><label>總分</label><span>— ／ 100</span></div>
+    </div>
+  </div>`;
 }
 
-// ── 後續處置 Tab：出院去向／病人去向快選、備註編輯 ──
+// ── 評估量表 Tab：送出提醒——先勾選提醒對象（復健主管＋該筆紀錄治療師）再送出（prototype 中僅模擬通知，不實際串接治療師端）──
+let assessmentReminderTargets=[];
+function sendAssessmentReminder(therapistsStr){
+  const therapists=therapistsStr?therapistsStr.split('|'):[];
+  assessmentReminderTargets=['復健主管',...therapists];
+  const body=document.getElementById('assessment-reminder-targets');
+  if(body){
+    body.innerHTML=assessmentReminderTargets.map((name,i)=>`
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0">
+        <input type="checkbox" id="art-${i}" checked style="accent-color:var(--blue)">
+        <span style="font-size:13px">${name}</span>
+      </label>`).join('');
+  }
+  openModal('modal-assessment-reminder');
+}
+function confirmSendAssessmentReminder(){
+  const selected=assessmentReminderTargets.filter((name,i)=>document.getElementById('art-'+i)?.checked);
+  closeModal('modal-assessment-reminder');
+  if(!selected.length){ alert('尚未勾選任何提醒對象'); return; }
+  alert('提醒已送出給：'+selected.join('、'));
+}
+
+// ── 後續處置 Tab：轉介（病人去向）／出院去向快選、其他細節文字、家訪日期／人員、備註編輯 ──
 function selectDischargeDest2(caseId,value){
   const c=getCurrentCaseObj();
-  if(c) c.dischargeDest2=c.dischargeDest2===value?'':value;
+  if(c){
+    c.dischargeDest2=c.dischargeDest2===value?'':value;
+    if(c.dischargeDest2!=='其他') delete c.dischargeDest2Other;
+  }
   renderPage('detail',currentCase);
 }
 function selectPatientDest(caseId,value){
   const c=getCurrentCaseObj();
-  if(c) c.patientDest=c.patientDest===value?'':value;
+  if(c){
+    c.patientDest=c.patientDest===value?'':value;
+    if(c.patientDest!=='其他') delete c.patientDestOther;
+  }
   renderPage('detail',currentCase);
+}
+function updatePatientDestOther(value){
+  const c=getCurrentCaseObj();
+  if(c) c.patientDestOther=value;
+}
+function updateDischargeDest2Other(value){
+  const c=getCurrentCaseObj();
+  if(c) c.dischargeDest2Other=value;
+}
+function updateHomeVisitDate(value){
+  const c=getCurrentCaseObj();
+  if(c) c.homeVisitDate=value;
+}
+function updateHomeVisitStaff(value){
+  const c=getCurrentCaseObj();
+  if(c) c.homeVisitStaff=value;
 }
 function toggleDispositionNoteEdit(caseId){
   dispositionNoteEditCaseId=caseId;
@@ -2062,16 +2179,19 @@ function openExtensionSuccessModal(caseId){
   const defaultDate=`${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;
   document.getElementById('ext-success-closedate').value=defaultDate;
   document.getElementById('ext-success-note').value='';
+  document.getElementById('ext-success-weeks').value='0';
   openModal('modal-extension-success');
 }
 function confirmExtensionSuccess(){
   const c=getCurrentCaseObj();
   const closeDateVal=document.getElementById('ext-success-closedate').value;
+  const weeksVal=parseInt(document.getElementById('ext-success-weeks').value,10)||0;
   if(c){
     c.status='照護中';
     c.timelineStep='照護中';
     c.timelineSub='展延後';
     if(closeDateVal) c.closeDate=closeDateVal.replace(/-/g,'/');
+    c.approvedExtensionWeeks=(c.approvedExtensionWeeks||0)+weeksVal;
   }
   closeModal('modal-extension-success');
   alert('展延成功，預計結案日期已更新，已發送站內通知給復健師。');
@@ -2440,21 +2560,22 @@ function renderArchiveModalBody(){
       <textarea class="form-control" rows="2" id="archive-field-input" placeholder="${def.hint||''}"></textarea>
     </div>`:'';
 
+  const currentCaseObj=getCurrentCaseObj();
+  const defaultCloseDate=currentCaseObj&&currentCaseObj.closeDate?currentCaseObj.closeDate.replace(/\//g,'-'):'2026-07-09';
   const dateHtml=showCloseDate?`
     <div class="form-group" style="margin-bottom:10px">
       <label>結案日期</label>
-      <input class="form-control" type="date" id="archive-close-date" value="2026-07-09">
+      <input class="form-control" type="date" id="archive-close-date" value="${defaultCloseDate}">
     </div>`:'';
 
   const homeTransferHint=presetType==='轉居家醫療'?`
     <div class="info-note blue" style="margin-bottom:10px">此個案已轉為居家醫療計畫，PAC 系統追蹤到此結束。復健服務將由居家醫療計畫接續，請至居家排班管理模組，將此個案（含已排定的治療班表）之計畫歸屬更新為居家醫療，以利後續獎金結算正確歸類。</div>`:'';
 
-  const currentCaseObj=getCurrentCaseObj();
   const destHtml=showDischargeDest?`
     <div class="form-group" style="margin-bottom:10px">
       <label>出院後去向</label>
       <select class="form-control" id="archive-discharge-dest">
-        ${DISCHARGE_DEST_OPTIONS.map(o=>`<option value="${o}" ${currentCaseObj&&currentCaseObj.dischargeDest===o?'selected':''}>${o||'請選擇'}</option>`).join('')}
+        ${DISCHARGE_DEST_OPTIONS.map(o=>`<option value="${o}" ${currentCaseObj&&currentCaseObj.dischargeDest2===o?'selected':''}>${o||'請選擇'}</option>`).join('')}
       </select>
     </div>`:'';
 

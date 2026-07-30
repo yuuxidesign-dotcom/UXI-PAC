@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PAC 收案管理</title>
+<title>PAC 臨時資料</title>
 <link rel="stylesheet" href="個案管理4.css">
 <style>
 /* 表格內可點擊徽章：病摘／PAC判斷／回報上游／家屬確認／階段，點擊開啟對應彈窗 */
@@ -23,7 +23,7 @@
   </div>
   <nav class="sidebar-nav">
     <div class="nav-item disabled">🏠 個人儀表板</div>
-    <div class="nav-item active">📋 收案管理</div>
+    <div class="nav-item active">📋 臨時資料</div>
     <div class="nav-item linkable" onclick="location.href='個案管理4.html'">🗂 個案管理</div>
     <div class="nav-item linkable" onclick="location.href='排床管理2.html'">🛏 排床管理</div>
     <div class="nav-item disabled">📅 班表總覽頁</div>
@@ -55,7 +55,7 @@
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <div class="breadcrumb" id="bc">收案管理</div>
+    <div class="breadcrumb" id="bc">臨時資料</div>
     <div style="display:flex;align-items:center;gap:14px">
       <div style="font-size:11px;color:var(--gray-400)">2026/06/25 週四</div>
     </div>
@@ -69,19 +69,39 @@
      MODALS
 ══════════════════════════════ -->
 
-<!-- 新增諮詢：輕量初步建檔，僅收集最基本的 7 項資訊，疾病別／病摘／照護模式等留待個案建立後於展開列逐步補齊 -->
+<!-- 新增臨時患者：頂部「PAC 收案評估」toggle 切換一般建檔／PAC收案評估兩種欄位組合（見 收案管理.js toggleNewCaseIsPac） -->
 <div id="modal-new" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <div class="modal-header">
-      <div class="modal-title">＋ 新增諮詢</div>
+      <div class="modal-title">＋ 新增臨時患者</div>
       <button class="modal-close" onclick="closeModal('modal-new')">✕</button>
     </div>
     <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:10px;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--gray-200)">
+        <span style="font-weight:700;font-size:15px">PAC 收案評估</span>
+        <label class="switch" style="position:relative;display:inline-block;width:40px;height:22px">
+          <input type="checkbox" id="new-manual-ispac" onchange="toggleNewCaseIsPac(this.checked)" style="opacity:0;width:0;height:0">
+          <span id="new-manual-ispac-track" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--gray-300);transition:.2s;border-radius:22px"></span>
+          <span id="new-manual-ispac-knob" style="position:absolute;pointer-events:none;height:16px;width:16px;left:3px;bottom:3px;background-color:#fff;transition:.2s;border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.2)"></span>
+        </label>
+      </div>
       <div id="new-manual">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div class="form-group"><label>姓名 <span class="required">*</span></label><input class="form-control" id="new-manual-name" placeholder="e.g. 陳志明"></div>
           <div class="form-group"><label>年齡</label><input class="form-control" type="number" min="0" id="new-manual-age" placeholder="e.g. 76"></div>
-          <div class="form-group"><label>目前所在醫院或位置</label><input class="form-control" id="new-manual-location" list="new-manual-location-options" placeholder="e.g. 臺大醫院">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>身分證／居留證／其他身分識別碼 <span class="required hidden" id="new-manual-idnumber-required">*</span></label>
+            <input class="form-control" id="new-manual-idnumber" placeholder="e.g. A123456789" oninput="onNewCaseIdNumberInput()">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-500);margin-top:4px;cursor:pointer">
+              <input type="checkbox" id="new-manual-id-unknown" style="accent-color:var(--blue)" onchange="onNewCaseIdUnknownToggle(this.checked)"> 目前尚未取得身分識別資料
+            </label>
+            <div id="new-manual-id-match-hint" style="margin-top:6px"></div>
+            <div class="form-group hidden" id="new-manual-mrn-wrap" style="margin-top:8px">
+              <label>病歷號（已查到院內既有資料，自動帶入）</label>
+              <input class="form-control" id="new-manual-mrn" readonly style="background:var(--gray-50);color:var(--green);font-weight:600">
+            </div>
+          </div>
+          <div class="form-group"><label>來源</label><input class="form-control" id="new-manual-location" list="new-manual-location-options" placeholder="e.g. 臺大醫院">
             <datalist id="new-manual-location-options">
               <option value="彰化基督">
               <option value="彰濱秀傳">
@@ -98,7 +118,7 @@
               <option value="自行聯繫">
             </datalist>
           </div>
-          <div class="form-group"><label>發病時間</label><input class="form-control" type="date" id="new-manual-onsetdate"></div>
+          <div class="form-group pac-only-field hidden"><label>發病時間</label><input class="form-control" type="date" id="new-manual-onsetdate"></div>
           <div class="form-group"><label>居住地</label><input class="form-control" id="new-manual-address" placeholder="例如：彰化縣員林市○○路○○號"></div>
           <div class="form-group"><label>家屬聯絡電話</label><input class="form-control" type="tel" id="new-manual-familyphone" placeholder="e.g. 0912-345-678"></div>
           <div class="form-group"><label>疾病別</label>
@@ -110,7 +130,7 @@
               <option value="衰弱高齡">衰弱高齡</option>
             </select>
           </div>
-          <div class="form-group"><label>照護模式</label>
+          <div class="form-group"><label>照護模式 <span class="required general-only-field" id="new-manual-mode-required">*</span></label>
             <select class="form-control" id="new-manual-mode">
               <option value="">尚未選擇</option>
               <option value="住院">住院</option>
@@ -118,7 +138,14 @@
               <option value="居家">居家</option>
             </select>
           </div>
-          <div class="form-group full" style="grid-column:1/-1">
+          <div class="form-group general-only-field"><label>是否需要復健 <span class="required">*</span></label>
+            <select class="form-control" id="new-manual-needsrehab">
+              <option value="">尚未確定</option>
+              <option value="true">需復健</option>
+              <option value="false">不需復健</option>
+            </select>
+          </div>
+          <div class="form-group full pac-only-field hidden" style="grid-column:1/-1">
             <label>身上是否有管路</label>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
               <button type="button" class="btn btn-secondary btn-xs" onclick="toggleNewCaseTubeBadge('無')">無</button>
@@ -135,7 +162,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-new')">取消</button>
-      <button class="btn btn-primary" onclick="saveNewCase()">儲存諮詢</button>
+      <button class="btn btn-primary" onclick="saveNewCase()">儲存臨時患者</button>
     </div>
   </div>
 </div>
@@ -248,19 +275,26 @@
       <button class="modal-close" onclick="closeModal('modal-convert')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="info-note amber">＊此 prototype 為測試方便，點擊確認後將直接完成建檔；正式上線後，此步驟仍需由行政人員輸入病歷號才算完成建檔。</div>
-      <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">以下項目僅供提醒，未勾選亦可送出：</div>
-      <div class="checklist">
-        <div class="check-item"><input type="checkbox"><span>已選好日期</span></div>
-        <div class="check-item"><input type="checkbox"><span>已判斷完 PAC</span></div>
-        <div class="check-item"><input type="checkbox"><span>已預約排床（住院適用）</span></div>
-        <div class="check-item"><input type="checkbox"><span>居家可承接（居家適用）</span></div>
+      <div class="info-note amber" id="convert-pac-note">＊此 prototype 為測試方便，點擊確認後將直接完成建檔；正式上線後，此步驟仍需由行政人員輸入病歷號才算完成建檔。</div>
+      <div id="convert-checklist-wrap">
+        <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">以下項目僅供提醒，未勾選亦可送出：</div>
+        <div class="checklist">
+          <div class="check-item"><input type="checkbox"><span>已選好日期</span></div>
+          <div class="check-item"><input type="checkbox"><span>已判斷完 PAC</span></div>
+          <div class="check-item"><input type="checkbox"><span>已預約排床（住院適用）</span></div>
+          <div class="check-item"><input type="checkbox"><span>居家可承接（居家適用）</span></div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:12px;margin-bottom:12px">
+        <label>身分證／居留證號 <span class="required">*</span></label>
+        <input class="form-control" id="convert-idnumber" placeholder="交付建檔前必須確認身分證，避免行政重複建檔">
+        <div id="convert-id-match-hint" style="margin-top:6px"></div>
       </div>
       <div class="form-group" style="margin-top:12px;margin-bottom:12px">
         <label>預計開案日 <span class="required">*</span></label>
         <input class="form-control" type="date" id="convert-opendate">
       </div>
-      <div class="form-group">
+      <div class="form-group" id="convert-closedate-wrap">
         <label>預計結案日 <span class="required">*</span></label>
         <input class="form-control" type="date" id="convert-closedate">
       </div>
@@ -280,7 +314,7 @@
       <button class="modal-close" onclick="closeModal('modal-admin-finalize')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="info-note blue">請輸入行政建檔完成後取得的病歷號，確認後此個案將從收案管理列表移除，移交個案管理模組。</div>
+      <div class="info-note blue">請輸入行政建檔完成後取得的病歷號，確認後此個案將從臨時資料列表移除，移交個案管理模組。</div>
       <div class="form-group" style="margin-top:12px">
         <label>病歷號 <span class="required">*</span></label>
         <input class="form-control" id="admin-finalize-mrn" placeholder="e.g. 00073450">
@@ -448,6 +482,36 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-home-flow')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 身分證比對命中「已有正式資料」：詢問是否帶入既有病患基本資料（地址／家屬聯絡資料等），見 收案管理.js onNewCaseIdNumberInput／applyNewCaseIdMatch -->
+<div id="modal-id-match-formal" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">🪪 查到院內舊病人資料</div>
+      <button class="modal-close" onclick="closeModal('modal-id-match-formal')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-id-match-formal-body">
+      <!-- 由 JS 動態渲染（見 onNewCaseIdNumberInput）-->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="applyNewCaseIdMatch(false)">不帶入，我自己填</button>
+      <button class="btn btn-primary" onclick="applyNewCaseIdMatch(true)">帶入這些資料</button>
+    </div>
+  </div>
+</div>
+
+<!-- 非PAC判斷後續處理：送出判斷後跳出，3選項（移到一般／移到復健病房／結束收案），取代原本判斷卡片內嵌的5個選項 -->
+<div id="modal-nonpac-followup" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">已判斷為非PAC，請選擇後續處理方式</div>
+      <button class="modal-close" onclick="closeModal('modal-nonpac-followup')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-nonpac-followup-body">
+      <!-- 由 JS 動態渲染（見 openNonPacFollowupModal）-->
     </div>
   </div>
 </div>

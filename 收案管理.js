@@ -93,32 +93,32 @@ function sortCases(arr){
 // birthDate：出生日期，用於即時換算年齡；upstreamContact：上游聯絡人資訊；familyRelation：家屬關係
 // roomPref：房型偏好（null=無偏好，'single'=單人房，'double'=雙人房，'multi'=多人房）
 const CASES=[
-    {id:'t1',name:'李志明',birthDate:'1940/03/12',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/24',lastUpdated:'2026/06/24',onsetDate:'2026/06/22',chiefComplaint:'Sudden right-sided weakness and slurred speech',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'single',address:'彰化縣彰化市中山路一段100號',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'Right MCA infarction, post-thrombolysis, neurologically stable, left hemiparesis improving',medicalHistory:'高血壓病史15年、糖尿病史8年，規則服藥控制中',referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/24'}},
-    {id:'t2',name:'黃秋香',birthDate:'1948/11/02',gender:'男',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/06/22',lastUpdated:'2026/06/22',onsetDate:'2026/06/20',chiefComplaint:'Right hip pain and inability to bear weight after a fall at home',familyConfirmStatus:'尚未決定',status:'待補件',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待補件',upstreamStatus:'尚未回報',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',roomPref:null,address:'彰化縣員林市中正路200號',admissionDiagnosis:'Closed fracture, right femoral neck, s/p fall',dischargeDiagnosis:'S/p right hip hemiarthroplasty, fracture healing well, weight-bearing as tolerated',medicalHistory:'骨質疏鬆症病史，未規則服藥'},
-    {id:'t3',name:'吳金水',birthDate:'1945/07/20',gender:'男',mode:'日照',modeType:'day',disease:'腦中風',source:'台中榮總',date:'2026/06/20',lastUpdated:'2026/06/20',onsetDate:'2026/06/18',chiefComplaint:'Left-sided weakness and gait instability, acute onset',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',timelineSub:'醫師／護理師收案判斷',upstreamStatus:'尚未回報',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',roomPref:null,address:'彰化縣鹿港鎮中山路50號',admissionDiagnosis:'Acute lacunar infarction, right basal ganglia, with mild left-sided weakness',dischargeDiagnosis:'Lacunar infarct, right basal ganglia, stable, mild residual left hemiparesis',medicalHistory:'高血壓病史10年，未規則服藥'},
-    {id:'t4',name:'鄭文雄',birthDate:'1952/01/15',gender:'男',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'門診自轉',date:'2026/06/18',lastUpdated:'2026/06/18',onsetDate:'2026/06/16',chiefComplaint:'Left thigh pain and deformity after a fall, unable to ambulate',familyConfirmStatus:'尚未決定',status:'待排床',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待排床',upstreamStatus:'已回報收案',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'兒子',roomPref:'double',address:'彰化縣和美鎮和平路88號',admissionDiagnosis:'Closed fracture, left intertrochanteric femur, s/p fall',dischargeDiagnosis:'S/p left proximal femoral nailing, fracture stable, partial weight-bearing',medicalHistory:'高血壓病史9年、骨質疏鬆症病史',nurseNotified:true},
-    {id:'t5',name:'許美雲',birthDate:'1943/09/08',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/06/19',lastUpdated:'2026/06/19',onsetDate:'2026/06/17',chiefComplaint:'Right visual field loss and mild confusion, acute onset',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',roomPref:null,address:'彰化縣北斗鎮中華路15號',admissionDiagnosis:'Acute left PCA territory infarction with right visual field deficit',dischargeDiagnosis:'Left PCA infarction, stable, residual right homonymous hemianopia',medicalHistory:'心房顫動病史5年，服用抗凝血劑'},
-    {id:'t6',name:'周大為',birthDate:'1947/04/30',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/15',lastUpdated:'2026/06/15',onsetDate:'2026/06/13',chiefComplaint:'Left-sided weakness and dysarthria, acute onset',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',upstreamStatus:'已回報收案',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'multi',address:'彰化縣溪湖鎮西環路66號',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis and dysarthria',dischargeDiagnosis:'Right MCA infarction, post-thrombectomy, stable, dysarthria improving',medicalHistory:'高血壓病史12年、高血脂病史6年',nurseNotified:true},
+    {id:'t1',needsRehab:true,name:'李志明',birthDate:'1940/03/12',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/24',lastUpdated:'2026/06/24',onsetDate:'2026/06/22',chiefComplaint:'Sudden right-sided weakness and slurred speech',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'single',address:'彰化縣彰化市中山路一段100號',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'Right MCA infarction, post-thrombolysis, neurologically stable, left hemiparesis improving',medicalHistory:'高血壓病史15年、糖尿病史8年，規則服藥控制中',referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/24'}},
+    {id:'t2',needsRehab:false,name:'黃秋香',birthDate:'1948/11/02',gender:'男',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/06/22',lastUpdated:'2026/06/22',onsetDate:'2026/06/20',chiefComplaint:'Right hip pain and inability to bear weight after a fall at home',familyConfirmStatus:'尚未決定',status:'待補件',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待補件',upstreamStatus:'尚未回報',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',roomPref:null,address:'彰化縣員林市中正路200號',admissionDiagnosis:'Closed fracture, right femoral neck, s/p fall',dischargeDiagnosis:'S/p right hip hemiarthroplasty, fracture healing well, weight-bearing as tolerated',medicalHistory:'骨質疏鬆症病史，未規則服藥'},
+    {id:'t3',needsRehab:true,name:'吳金水',birthDate:'1945/07/20',gender:'男',mode:'日照',modeType:'day',disease:'腦中風',source:'台中榮總',date:'2026/06/20',lastUpdated:'2026/06/20',onsetDate:'2026/06/18',chiefComplaint:'Left-sided weakness and gait instability, acute onset',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',timelineSub:'醫師／護理師收案判斷',upstreamStatus:'尚未回報',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'配偶',roomPref:null,address:'彰化縣鹿港鎮中山路50號',admissionDiagnosis:'Acute lacunar infarction, right basal ganglia, with mild left-sided weakness',dischargeDiagnosis:'Lacunar infarct, right basal ganglia, stable, mild residual left hemiparesis',medicalHistory:'高血壓病史10年，未規則服藥'},
+    {id:'t4',needsRehab:true,name:'鄭文雄',birthDate:'1952/01/15',gender:'男',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'門診自轉',date:'2026/06/18',lastUpdated:'2026/06/18',onsetDate:'2026/06/16',chiefComplaint:'Left thigh pain and deformity after a fall, unable to ambulate',familyConfirmStatus:'尚未決定',status:'待排床',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待排床',upstreamStatus:'已回報收案',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'兒子',roomPref:'double',address:'彰化縣和美鎮和平路88號',admissionDiagnosis:'Closed fracture, left intertrochanteric femur, s/p fall',dischargeDiagnosis:'S/p left proximal femoral nailing, fracture stable, partial weight-bearing',medicalHistory:'高血壓病史9年、骨質疏鬆症病史',nurseNotified:true},
+    {id:'t5',needsRehab:false,name:'許美雲',birthDate:'1943/09/08',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/06/19',lastUpdated:'2026/06/19',onsetDate:'2026/06/17',chiefComplaint:'Right visual field loss and mild confusion, acute onset',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',roomPref:null,address:'彰化縣北斗鎮中華路15號',admissionDiagnosis:'Acute left PCA territory infarction with right visual field deficit',dischargeDiagnosis:'Left PCA infarction, stable, residual right homonymous hemianopia',medicalHistory:'心房顫動病史5年，服用抗凝血劑'},
+    {id:'t6',needsRehab:true,name:'周大為',birthDate:'1947/04/30',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/15',lastUpdated:'2026/06/15',onsetDate:'2026/06/13',chiefComplaint:'Left-sided weakness and dysarthria, acute onset',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',upstreamStatus:'已回報收案',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:'multi',address:'彰化縣溪湖鎮西環路66號',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis and dysarthria',dischargeDiagnosis:'Right MCA infarction, post-thrombectomy, stable, dysarthria improving',medicalHistory:'高血壓病史12年、高血脂病史6年',nurseNotified:true},
     // 居家臨時病歷示範：已完成①②，復健主管回覆可承接，已確認收案，進入待聯絡（與 t5 相同情境的另一筆示範）
-    {id:'t10',name:'蔡秀琴',birthDate:'1946/02/14',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/06/23',lastUpdated:'2026/06/23',onsetDate:'2026/06/21',chiefComplaint:'Transient left-sided weakness with largely resolved symptoms',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',roomPref:null,address:'彰化縣溪湖鎮成功路8號',admissionDiagnosis:'Suspected mild lacunar infarction, symptoms largely resolved prior to referral',dischargeDiagnosis:'—',medicalHistory:'高血壓病史，輕度認知障礙病史'},
+    {id:'t10',needsRehab:false,name:'蔡秀琴',birthDate:'1946/02/14',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'彰基醫院',date:'2026/06/23',lastUpdated:'2026/06/23',onsetDate:'2026/06/21',chiefComplaint:'Transient left-sided weakness with largely resolved symptoms',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',roomPref:null,address:'彰化縣溪湖鎮成功路8號',admissionDiagnosis:'Suspected mild lacunar infarction, symptoms largely resolved prior to referral',dischargeDiagnosis:'—',medicalHistory:'高血壓病史，輕度認知障礙病史'},
     // 居家臨時病歷示範：已完成①②，進入待聯絡（與 t5/t10 相同情境的另一筆示範）
-    {id:'t11',name:'邱麗雲',birthDate:'1949/10/30',gender:'男',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'台中榮總',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/23',chiefComplaint:'Left wrist pain and swelling after a fall at home',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'女兒',roomPref:null,address:'彰化縣田中鎮中州路45號',admissionDiagnosis:'Closed fracture, left distal radius, s/p fall at home',dischargeDiagnosis:'S/p closed reduction and casting, left distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、退化性關節炎'},
+    {id:'t11',needsRehab:false,name:'邱麗雲',birthDate:'1949/10/30',gender:'男',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'台中榮總',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/23',chiefComplaint:'Left wrist pain and swelling after a fall at home',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'女兒',roomPref:null,address:'彰化縣田中鎮中州路45號',admissionDiagnosis:'Closed fracture, left distal radius, s/p fall at home',dischargeDiagnosis:'S/p closed reduction and casting, left distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、退化性關節炎'},
     // 居家臨時病歷示範：已完成①②，進入待聯絡（與 t5/t10/t11 相同情境的另一筆示範）
-    {id:'t15',name:'廖美惠',birthDate:'1945/12/03',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/28',lastUpdated:'2026/06/28',onsetDate:'2026/06/26',chiefComplaint:'Mild right-sided weakness following acute stroke, ambulatory with assistance',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',roomPref:null,address:'彰化縣二水鄉光復路6號',admissionDiagnosis:'Acute right MCA infarction with mild left hemiparesis',dischargeDiagnosis:'Right MCA infarction, stable, mild left-sided weakness improving',medicalHistory:'高血壓病史9年、糖尿病史3年'},
+    {id:'t15',needsRehab:false,name:'廖美惠',birthDate:'1945/12/03',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'台中榮總',date:'2026/06/28',lastUpdated:'2026/06/28',onsetDate:'2026/06/26',chiefComplaint:'Mild right-sided weakness following acute stroke, ambulatory with assistance',familyConfirmStatus:'尚未決定',status:'待聯絡',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待聯絡',timelineSub:'待個案／家屬確認',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',roomPref:null,address:'彰化縣二水鄉光復路6號',admissionDiagnosis:'Acute right MCA infarction with mild left hemiparesis',dischargeDiagnosis:'Right MCA infarction, stable, mild left-sided weakness improving',medicalHistory:'高血壓病史9年、糖尿病史3年'},
     // 居家臨時病歷示範：步驟①已交付，復健主管已回覆「可承接」，個管師尚未點擊確認收案
-    {id:'t12',name:'許阿蘭',birthDate:'1944/08/17',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'臺大醫院',date:'2026/06/26',lastUpdated:'2026/06/26',onsetDate:'2026/06/24',chiefComplaint:'Mild left-sided weakness, ambulatory, referred for home-based PAC rehabilitation',familyConfirmStatus:'尚未決定',status:'待評估',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待評估',timelineSub:'待復健主管回覆是否收治居家復健',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:null,address:'彰化縣秀水鄉安東路22號',admissionDiagnosis:'Acute right MCA infarction with mild left-sided weakness',dischargeDiagnosis:'Right MCA infarction, stable, mild left hemiparesis, ambulatory',medicalHistory:'高血壓病史14年'},
+    {id:'t12',needsRehab:false,name:'許阿蘭',birthDate:'1944/08/17',gender:'男',mode:'居家',modeType:'home',disease:'腦中風',source:'臺大醫院',date:'2026/06/26',lastUpdated:'2026/06/26',onsetDate:'2026/06/24',chiefComplaint:'Mild left-sided weakness, ambulatory, referred for home-based PAC rehabilitation',familyConfirmStatus:'尚未決定',status:'待評估',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待評估',timelineSub:'待復健主管回覆是否收治居家復健',rehabReport:'可承接',upstreamStatus:'已回報收案',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',roomPref:null,address:'彰化縣秀水鄉安東路22號',admissionDiagnosis:'Acute right MCA infarction with mild left-sided weakness',dischargeDiagnosis:'Right MCA infarction, stable, mild left hemiparesis, ambulatory',medicalHistory:'高血壓病史14年'},
     // 居家臨時病歷示範：步驟①已交付，復健主管已回覆「無法承接（量能不足）」，個管師尚未點擊封存
-    {id:'t13',name:'江秀蓮',birthDate:'1950/05/09',gender:'男',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/06/27',lastUpdated:'2026/06/27',onsetDate:'2026/06/25',chiefComplaint:'Right hip pain after a fall at home, post-surgical recovery',familyConfirmStatus:'尚未決定',status:'待評估',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待評估',timelineSub:'待復健主管回覆是否收治居家復健',rehabReport:'無法承接',upstreamStatus:'已回報收案',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',roomPref:null,address:'彰化縣員林市三民街11號',admissionDiagnosis:'Closed fracture, right femoral neck, s/p fall at home',dischargeDiagnosis:'S/p right hip hemiarthroplasty, fracture healing well',medicalHistory:'骨質疏鬆症病史、慢性腎臟病第二期'},
-    {id:'t7',name:'蔡素珍',birthDate:'1950/12/25',gender:'男',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'台中榮總',date:'2026/06/12',lastUpdated:'2026/06/12',onsetDate:'2026/06/10',chiefComplaint:'Right wrist pain and limited range of motion after a fall',familyConfirmStatus:'尚未決定',status:'待開案',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待開案',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'媳婦',roomPref:null,address:'彰化縣田中鎮中州路120號',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、輕度失智症'},
-    {id:'t8',name:'謝國雄',birthDate:'1944/06/17',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'彰基醫院',date:'2026/06/08',lastUpdated:'2026/06/08',onsetDate:'2026/06/06',chiefComplaint:'Left-sided weakness and expressive aphasia, acute onset',familyConfirmStatus:'尚未決定',status:'封存',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:null,archiveType:'住院當日未報到',archiveDate:'2026/06/09',archiveOperator:'林美惠',archiveReason:'個案確認入院當日聯繫家屬後表示暫不入院，需重新評估時機。',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',roomPref:null,address:'彰化縣二林鎮斗苑路300號',admissionDiagnosis:'Acute left MCA infarction with right hemiparesis and expressive aphasia',dischargeDiagnosis:'Left MCA infarction, stable, residual expressive aphasia',medicalHistory:'糖尿病史10年、慢性腎臟病第三期'},
+    {id:'t13',needsRehab:false,name:'江秀蓮',birthDate:'1950/05/09',gender:'男',mode:'居家',modeType:'home',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/06/27',lastUpdated:'2026/06/27',onsetDate:'2026/06/25',chiefComplaint:'Right hip pain after a fall at home, post-surgical recovery',familyConfirmStatus:'尚未決定',status:'待評估',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待評估',timelineSub:'待復健主管回覆是否收治居家復健',rehabReport:'無法承接',upstreamStatus:'已回報收案',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',roomPref:null,address:'彰化縣員林市三民街11號',admissionDiagnosis:'Closed fracture, right femoral neck, s/p fall at home',dischargeDiagnosis:'S/p right hip hemiarthroplasty, fracture healing well',medicalHistory:'骨質疏鬆症病史、慢性腎臟病第二期'},
+    {id:'t7',needsRehab:true,name:'蔡素珍',birthDate:'1950/12/25',gender:'男',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'台中榮總',date:'2026/06/12',lastUpdated:'2026/06/12',onsetDate:'2026/06/10',chiefComplaint:'Right wrist pain and limited range of motion after a fall',familyConfirmStatus:'尚未決定',status:'待開案',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待開案',upstreamStatus:'已回報收案',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'媳婦',roomPref:null,address:'彰化縣田中鎮中州路120號',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、輕度失智症'},
+    {id:'t8',needsRehab:true,name:'謝國雄',birthDate:'1944/06/17',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'彰基醫院',date:'2026/06/08',lastUpdated:'2026/06/08',onsetDate:'2026/06/06',chiefComplaint:'Left-sided weakness and expressive aphasia, acute onset',familyConfirmStatus:'尚未決定',status:'封存',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:null,archiveType:'住院當日未報到',archiveDate:'2026/06/09',archiveOperator:'林美惠',archiveReason:'個案確認入院當日聯繫家屬後表示暫不入院，需重新評估時機。',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',roomPref:null,address:'彰化縣二林鎮斗苑路300號',admissionDiagnosis:'Acute left MCA infarction with right hemiparesis and expressive aphasia',dischargeDiagnosis:'Left MCA infarction, stable, residual expressive aphasia',medicalHistory:'糖尿病史10年、慢性腎臟病第三期'},
     // 封存個案：與「杏翔匯入」Tab 範例查詢結果（姓名王建民、出生日期 1952/08/20）同名同生日，用於示範新增個案時的封存資料比對命中情境
-    {id:'t9',name:'王建民',birthDate:'1952/08/20',gender:'男',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'門診自轉',date:'2025/11/02',lastUpdated:'2025/11/02',onsetDate:'2025/10/31',chiefComplaint:'Right wrist pain after a fall at home',familyConfirmStatus:'尚未決定',status:'封存',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:null,archiveType:'資料輸入錯誤',archiveDate:'2025/11/05',archiveOperator:'林美惠',archiveReason:'個案身分證字號登打錯誤，原個案資料作廢，需重新建立正確個案。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'兒子',roomPref:null,address:'彰化縣員林市光明街20號',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'高血壓病史6年'},
+    {id:'t9',needsRehab:true,name:'王建民',birthDate:'1952/08/20',gender:'男',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'門診自轉',date:'2025/11/02',lastUpdated:'2025/11/02',onsetDate:'2025/10/31',chiefComplaint:'Right wrist pain after a fall at home',familyConfirmStatus:'尚未決定',status:'封存',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:null,archiveType:'資料輸入錯誤',archiveDate:'2025/11/05',archiveOperator:'林美惠',archiveReason:'個案身分證字號登打錯誤，原個案資料作廢，需重新建立正確個案。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'兒子',roomPref:null,address:'彰化縣員林市光明街20號',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'高血壓病史6年'},
     // 測試個案：住院／腦中風，收案判斷中初始狀態
-    {id:'t16',name:'住院測試',birthDate:'1955/09/10',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/23',chiefComplaint:'Left-sided weakness and dysarthria, acute onset, referred for PAC evaluation',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',familyPhone:'0921-345-678',roomPref:'single',address:'彰化縣員林市中山路二段20號',admissionDiagnosis:'Acute right MCA territory infarction with left hemiparesis and dysarthria',dischargeDiagnosis:'Right MCA infarction, post-thrombolysis, neurologically stable, ambulatory with assistance',medicalHistory:'高血壓病史12年、心房顫動病史4年，規則服藥控制中',referralDoc:{name:'轉診單.pdf',size:'1.0 MB',date:'2026/06/25'}},
+    {id:'t16',needsRehab:true,name:'住院測試',birthDate:'1955/09/10',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/23',chiefComplaint:'Left-sided weakness and dysarthria, acute onset, referred for PAC evaluation',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',familyPhone:'0921-345-678',roomPref:'single',address:'彰化縣員林市中山路二段20號',admissionDiagnosis:'Acute right MCA territory infarction with left hemiparesis and dysarthria',dischargeDiagnosis:'Right MCA infarction, post-thrombolysis, neurologically stable, ambulatory with assistance',medicalHistory:'高血壓病史12年、心房顫動病史4年，規則服藥控制中',referralDoc:{name:'轉診單.pdf',size:'1.0 MB',date:'2026/06/25'}},
     // 測試個案：日照／脆弱性骨折，收案判斷中初始狀態
-    {id:'t17',name:'日照測試',birthDate:'1957/11/20',gender:'男',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'彰化基督教醫院',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/23',chiefComplaint:'Right wrist pain and swelling after a fall at home',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',familyPhone:'0933-123-456',roomPref:null,address:'彰化縣鹿港鎮中山路80號',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall at home',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、退化性關節炎病史，長期服用鈣片補充劑',referralDoc:{name:'轉診單.pdf',size:'0.9 MB',date:'2026/06/25'}},
+    {id:'t17',needsRehab:true,name:'日照測試',birthDate:'1957/11/20',gender:'男',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'彰化基督教醫院',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/23',chiefComplaint:'Right wrist pain and swelling after a fall at home',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'女兒',familyPhone:'0933-123-456',roomPref:null,address:'彰化縣鹿港鎮中山路80號',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall at home',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、退化性關節炎病史，長期服用鈣片補充劑',referralDoc:{name:'轉診單.pdf',size:'0.9 MB',date:'2026/06/25'}},
     // 測試個案：居家／衰弱高齡，收案判斷中初始狀態
-    {id:'t18',name:'居家測試',birthDate:'1950/08/15',gender:'男',mode:'居家',modeType:'home',disease:'衰弱高齡',source:'彰化秀傳醫院',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/15',chiefComplaint:'Recurrent falls and progressive decline in mobility and independence',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'配偶',familyPhone:'0987-654-321',roomPref:null,address:'彰化縣田尾鄉民族路15號',admissionDiagnosis:'General frailty syndrome with recurrent falls and progressive decline in mobility',dischargeDiagnosis:'Frailty syndrome, stable, discharged home with PAC rehabilitation plan',medicalHistory:'高血壓病史20年、輕度肌少症，近半年跌倒2次病史',referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/25'},homeRehabSchedule:[
+    {id:'t18',needsRehab:false,name:'居家測試',birthDate:'1950/08/15',gender:'男',mode:'居家',modeType:'home',disease:'衰弱高齡',source:'彰化秀傳醫院',date:'2026/06/25',lastUpdated:'2026/06/25',onsetDate:'2026/06/15',chiefComplaint:'Recurrent falls and progressive decline in mobility and independence',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'配偶',familyPhone:'0987-654-321',roomPref:null,address:'彰化縣田尾鄉民族路15號',admissionDiagnosis:'General frailty syndrome with recurrent falls and progressive decline in mobility',dischargeDiagnosis:'Frailty syndrome, stable, discharged home with PAC rehabilitation plan',medicalHistory:'高血壓病史20年、輕度肌少症，近半年跌倒2次病史',referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/25'},homeRehabSchedule:[
       {dow:0,period:'午休',timeRange:'約 12:00-13:30',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null,signStatus:null},
       {dow:1,period:'晚上',timeRange:'約 18:00-20:00',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:null},
       {dow:2,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null,signStatus:null},
@@ -126,6 +126,14 @@ const CASES=[
       {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'OT',therapist:'李佳穎',duration:'40分鐘',tag:null,signStatus:null},
       {dow:6,period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null,signStatus:null},
     ]},
+    // 假資料：PAC臨時患者示範（已完成PAC判斷，類型標記為PAC）
+    {id:'t19',needsRehab:true,name:'林秀蘭',birthDate:'1948/02/18',gender:'女',mode:'住院',modeType:'hosp',disease:'腦中風',diseaseCategory:'腦中風',caseType:'PAC',pacFlow:true,source:'彰化基督',date:'2026/07/22',lastUpdated:'2026/07/22',onsetDate:'2026/07/20',chiefComplaint:'Sudden left-sided weakness and facial droop',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'女兒',roomPref:null,address:'彰化縣員林市經山路10號',admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'—',medicalHistory:'高血壓病史9年'},
+    {id:'t20',needsRehab:true,name:'柯文彬',birthDate:'1951/06/09',gender:'男',mode:'居家',modeType:'home',disease:'脆弱性骨折',diseaseCategory:'脆弱性骨折',caseType:'PAC',pacFlow:true,source:'台中榮總',date:'2026/07/24',lastUpdated:'2026/07/24',onsetDate:'2026/07/22',chiefComplaint:'Left hip pain after a fall, unable to bear weight',familyConfirmStatus:'尚未決定',status:'待評估',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'待評估',timelineSub:'待復健主管回覆是否收治居家復健',rehabReport:null,upstreamStatus:'已回報收案',upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'兒子',roomPref:null,address:'彰化縣和美鎮和平路5號',admissionDiagnosis:'Closed fracture, left femoral neck, s/p fall',dischargeDiagnosis:'—',medicalHistory:'骨質疏鬆症病史'},
+    // 假資料：復健病房臨時患者示範（PAC判斷為非PAC，選擇轉復健病房後選擇留在所有臨時患者，類型標記為復健病房）
+    {id:'t21',needsRehab:true,name:'洪金山',birthDate:'1946/09/28',gender:'男',mode:'住院',modeType:'hosp',disease:'腦中風',caseType:'復健病房',pacFlow:false,source:'彰基醫院',date:'2026/07/21',lastUpdated:'2026/07/23',onsetDate:'2026/07/19',chiefComplaint:'Mild right-sided weakness, deemed not eligible for PAC, transferred for rehab ward care',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'已回報收案',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'配偶',roomPref:null,address:'彰化縣花壇鄉中山路2號',admissionDiagnosis:'Mild right MCA territory infarction',dischargeDiagnosis:'—',medicalHistory:'糖尿病史7年'},
+    {id:'t22',needsRehab:true,name:'賴玉梅',birthDate:'1949/12/11',gender:'女',mode:'住院',modeType:'hosp',disease:'腦中風',caseType:'復健病房',pacFlow:false,source:'台中三總',date:'2026/07/25',lastUpdated:'2026/07/25',onsetDate:'2026/07/23',chiefComplaint:'Residual mild weakness after stroke, not eligible for PAC, referred to rehab ward',familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',upstreamContact:{name:'陳出院準備護理師',phone:'04-3333-4444',line:'tc_chen'},familyRelation:'兒子',roomPref:null,address:'彰化縣芬園鄉彰南路3號',admissionDiagnosis:'Mild left MCA territory infarction',dischargeDiagnosis:'—',medicalHistory:'高血壓病史15年'},
+    // 假資料：身分證比對示範用——C123456789 代表「已有進行中的臨時紀錄」，用於新增/交付建檔時觸發 tempInProgress 比對結果
+    {id:'t23',needsRehab:false,name:'陳淑惠',idNumber:'C123456789',birthDate:'1953/03/03',gender:'女',mode:'',modeType:null,disease:'',caseType:'一般',source:'門診自轉',date:'2026/07/25',lastUpdated:'2026/07/25',onsetDate:null,familyConfirmStatus:'尚未決定',status:'收案判斷中',mgr:'林美惠',formal:false,countdown:null,week:null,timelineStep:'收案判斷中',upstreamStatus:'尚未回報',familyRelation:'女兒',roomPref:null,address:'彰化縣秀水鄉安東路1號'},
 ];
 
 // ── 常用上游聯絡人清單（新增個案時可快速選取帶入）──
@@ -156,6 +164,8 @@ function statusLabel(status){
 
 // ── 階段欄專屬對照：住院＝待排床(黃)/已預約床位(綠)；居家＝待居家發佈(黃)/居家發佈中(黃)/居家可承接(綠)；日照一律「－」，不套用徽章顏色或點擊行為 ──
 function stageDisplay(c){
+  // PAC判斷尚未完成前，階段欄位一律顯示「－」（階段是排床/居家承接的細部進度，判斷前談不上這個階段）
+  if(!c.diseaseCategory) return {text:'－',cls:'',clickable:false};
   if(c.modeType==='hosp'){
     if(c.bedAssigned===true) return {text:'已預約床位',cls:'badge-green',clickable:true};
     return {text:'待排床',cls:'badge-amber',clickable:true};
@@ -258,21 +268,41 @@ function renderPage(page,caseId){
   renderList(document.getElementById('main-content'));
 }
 
-let currentListTab='temp'; // 'temp'（進行中） | 'archive'（已結束紀錄）
+// 判斷是否為「PAC臨時患者」：疾病別已選定為四大PAC疾病別之一，或已明確走過PAC判斷流程（c.pacFlow），或已有PAC判斷結果
+function isPacCase(c){
+  return PAC_DISEASE_TYPES.includes(c.disease)||c.pacFlow===true||!!c.diseaseCategory;
+}
+// 類型欄位的可靠取值：優先讀 c.caseType，若舊資料從未補上這個欄位（例如 t1-t18 這批早期假資料），改用 isPacCase() 邏輯判斷回推，避免誤判成「一般」而把PAC判斷區塊藏起來
+function getCaseType(c){
+  if(c.caseType) return c.caseType;
+  return isPacCase(c)?'PAC':'一般';
+}
+let currentListTab='temp'; // 'temp'（所有臨時患者） | 'pac'（PAC臨時患者） | 'archive'（已結束紀錄）
 let archiveTypeFilter=''; // 已結束紀錄 Tab：類型篩選（空字串＝全部類型）
 let archiveDateFrom=''; // 已結束紀錄 Tab：日期區間篩選（起，yyyy-mm-dd）
 let archiveDateTo=''; // 已結束紀錄 Tab：日期區間篩選（訖，yyyy-mm-dd）
 let listSortOrder='dateDesc'; // 個案列表排序：建立日期/發病日/預計開始日/最後更新時間 × 新到舊/舊到新，共8種
 
-// ── 統計卡篩選（僅個管師/行政視角使用，與 statusFilter 各自獨立）：待提供病摘／待收案判斷／待決定報到／待回報上游／待行政建檔 ──
+// ── 統計卡篩選（僅個管師/行政視角使用，與 statusFilter 各自獨立）──
+// TEMP_METRIC_DEFS：「所有臨時患者」Tab 專用，只有 PAC收案中／復健病房收案中 兩張
+// PAC_METRIC_DEFS：「PAC收案中」Tab 專用，維持原本待提供病摘／待收案判斷／待決定報到／已交付建檔／待補病歷號
 let metricFilter=null;
-const METRIC_DEFS={
+const TEMP_METRIC_DEFS={
+  pacActive:{label:'PAC收案中',test:c=>getCaseType(c)==='PAC'},
+  rehabWardActive:{label:'復健病房收案中',test:c=>getCaseType(c)==='復健病房'},
+};
+const PAC_METRIC_DEFS={
   noSummary:{label:'待提供病摘',sub:'尚無病摘資料',test:c=>!(c.chiefComplaint||c.admissionDiagnosis||c.dischargeDiagnosis||c.referralDoc)},
   noJudge:{label:'待收案判斷',sub:'尚未判斷 PAC',test:c=>!c.diseaseCategory},
   noFamilyDecision:{label:'待決定報到',sub:'家屬尚未決定',test:c=>c.familyConfirmStatus==='尚未決定'},
   noUpstreamReport:{label:'待回報上游',sub:'尚未回報上游單位',test:c=>c.upstreamStatus==='尚未回報'},
   pendingAdminHandoff:{label:'已交付建檔',sub:'已判斷PAC，待交付',test:c=>!!c.diseaseCategory},
+  pendingRecordNo:{label:'待補病歷號',sub:'已交付建檔，尚未取得病歷號',test:c=>!!c.deliveredToAdmin&&!c.medicalRecordNo},
 };
+// METRIC_DEFS：目前顯示中的統計卡定義集合，依 currentListTab 動態指向 TEMP_METRIC_DEFS 或 PAC_METRIC_DEFS，供 filterByMetric／applyRoleFilter 共用查找
+function getActiveMetricDefs(){
+  return currentListTab==='pac'?PAC_METRIC_DEFS:TEMP_METRIC_DEFS;
+}
 function filterByMetric(key){
   metricFilter=(metricFilter===key)?null:key;
   renderList(document.getElementById('main-content'));
@@ -301,7 +331,7 @@ let expandedRows=new Set(); // 目前展開中的個案 id 集合，可多筆同
 let basicEditRowId=null; // 展開列「基本資訊＋備註」合併編輯目前作用中的個案 id（僅同時允許一列進入編輯）
 
 function renderList(container){
-  document.getElementById('bc').textContent='收案管理';
+  document.getElementById('bc').textContent='臨時資料';
   const isAdm=currentRole==='adm';
   const isMgr=currentRole==='mgr';
   const isDoc=currentRole==='doc';
@@ -316,7 +346,7 @@ function renderList(container){
   const applyRoleFilter=(arr)=>{
     let out=arr;
     if(statusFilter) out=out.filter(c=>c.status===statusFilter);
-    if(metricFilter) out=out.filter(METRIC_DEFS[metricFilter].test);
+    if(metricFilter) out=out.filter(getActiveMetricDefs()[metricFilter].test);
     return out;
   };
   const statFilterClass=(status)=>`stat-card${statusFilter===status?' active-filter':''}`;
@@ -344,6 +374,7 @@ function renderList(container){
   // 已結束紀錄 Tab：類型／日期區間篩選同時作用（AND），篩選後依排序方式排列，最後再套用搜尋列的四項篩選
   const archiveCasesTyped=sortCases(archiveCasesAll.filter(c=>{
     if(archiveTypeFilter&&c.archiveType!==archiveTypeFilter) return false;
+    if(archiveCaseTypeFilter&&getCaseType(c)!==archiveCaseTypeFilter) return false;
     if(archiveDateFrom||archiveDateTo){
       const d=c.archiveDate?new Date(c.archiveDate.replace(/\//g,'-')):null;
       if(!d||isNaN(d)) return false;
@@ -353,7 +384,9 @@ function renderList(container){
     return true;
   }));
   const archiveCases=applySearchFilters(archiveCasesTyped);
-  const tabCaseMap={temp:tempActive,archive:archiveCases};
+  const pacActiveAll=tempActiveAll.filter(isPacCase);
+  const pacActive=applySearchFilters(pacActiveAll);
+  const tabCaseMap={temp:tempActive,pac:pacActive,archive:archiveCases};
   const currentTabCases=tabCaseMap[currentListTab];
 
   const tabBodyHtml = currentListTab==='archive'
@@ -372,24 +405,38 @@ function renderList(container){
     ${(isDoc||isNur)?`<button class="btn btn-ghost btn-sm" style="margin-bottom:16px" onclick="resetRoleFilters()">查看所有個案</button>`:''}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div>
-        <div style="font-size:18px;font-weight:700">收案管理</div>
+        <div style="font-size:18px;font-weight:700">臨時資料</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        ${isMgr?`<button class="btn btn-primary" onclick="openModal('modal-new')">＋ 新增諮詢</button>`:''}
+        ${isMgr?`<button class="btn btn-primary" onclick="openModal('modal-new')">＋ 新增臨時患者</button>`:''}
       </div>
     </div>
 
-    <!-- Tabs：進行中 / 已結束紀錄（currentListTab 內部狀態值仍為 'temp'／'archive'，僅顯示文字調整） -->
+    <!-- Tabs：所有臨時患者／PAC臨時患者／已結束紀錄 -->
     <div class="tabs">
-      <div class="tab ${currentListTab==='temp'?'active':''}" onclick="switchTab('temp')">進行中 <span class="badge badge-amber" style="margin-left:4px">${tempActiveAll.length}</span></div>
+      <div class="tab ${currentListTab==='temp'?'active':''}" onclick="switchTab('temp')">所有臨時患者 <span class="badge badge-amber" style="margin-left:4px">${tempActiveAll.length}</span></div>
+      <div class="tab ${currentListTab==='pac'?'active':''}" onclick="switchTab('pac')">PAC收案中 <span class="badge badge-amber" style="margin-left:4px">${pacActiveAll.length}</span></div>
       <div class="tab ${currentListTab==='archive'?'active':''}" onclick="switchTab('archive')" style="color:var(--gray-400)">已結束紀錄 <span class="badge badge-gray" style="margin-left:4px">${archiveCasesAll.length}</span></div>
     </div>
 
     ${(!isDoc&&!isNur&&currentListTab==='temp')?`
-    <!-- 統計卡：進行中 Tab 專屬指標，再點一次可取消篩選 -->
+    <!-- 統計卡：「所有臨時患者」Tab 專用，只有 PAC收案中／復健病房收案中 兩張 -->
     <div class="stats-row">
-      ${Object.keys(METRIC_DEFS).map(key=>{
-        const def=METRIC_DEFS[key];
+      <div class="${metricFilterClass('pacActive')}" onclick="filterByMetric('pacActive')">
+        <div class="stat-label">PAC收案中</div>
+        <div class="stat-value">${CASES.filter(c=>c.status!=='封存'&&getCaseType(c)==='PAC').length}</div>
+      </div>
+      <div class="${metricFilterClass('rehabWardActive')}" onclick="filterByMetric('rehabWardActive')">
+        <div class="stat-label">復健病房收案中</div>
+        <div class="stat-value">${CASES.filter(c=>c.status!=='封存'&&getCaseType(c)==='復健病房').length}</div>
+      </div>
+    </div>
+    `:''}
+    ${(!isDoc&&!isNur&&currentListTab==='pac')?`
+    <!-- 統計卡：「PAC收案中」Tab 專用，維持原本 6 張卡片不變 -->
+    <div class="stats-row">
+      ${Object.keys(PAC_METRIC_DEFS).map(key=>{
+        const def=PAC_METRIC_DEFS[key];
         const count=CASES.filter(c=>c.status!=='封存').filter(def.test).length;
         return `<div class="${metricFilterClass(key)}" onclick="filterByMetric('${key}')">
           <div class="stat-label">${def.label}</div>
@@ -453,12 +500,16 @@ function renderCaseTable(cases,emptyMsg){
     return `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">${emptyMsg}</div>`;
   }
   const isArchiveTab=currentListTab==='archive';
+  const isPacTab=currentListTab==='pac';
   const headers=isArchiveTab
-    ?['','姓名','下一步','來源','發病日','疾病別','預計模式','病摘','PAC判斷','回報上游','家屬確認','結束原因','負責人','建立日期','操作']
-    :['','姓名','下一步','來源','發病日','疾病別','預計模式','病摘','PAC判斷','階段','預計開始日','回報上游','家屬確認','負責人','建立日期','交付建檔','操作'];
+    ?['','姓名','病歷號','類型','來源','疾病別','預計模式','是否需復健','病摘','結束原因','負責人','建立日期','操作']
+    :isPacTab
+      ?['','姓名','病歷號','下一步','來源','發病日','疾病別','預計模式','病摘','PAC判斷','階段','預計開始日','回報上游','家屬確認','負責人','建立日期','交付建檔','操作']
+      :['','姓名','病歷號','類型','來源','疾病別','預計模式','是否需復健','病摘','預計開始日','負責人','建立日期','交付建檔','操作'];
+  const minWidth=isArchiveTab?1180:(isPacTab?1520:1180);
   return `
   <div style="overflow-x:auto;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:${isArchiveTab?1280:1440}px">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:${minWidth}px">
       <thead>
         <tr style="background:var(--gray-50)">
           ${headers.map(h=>`<th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:10px;color:var(--gray-500);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap">${h}</th>`).join('')}
@@ -497,6 +548,7 @@ function saveQuickEdit(caseId){
     const modeSel=g('qe-mode'); if(modeSel&&modeSel.value!==c.mode){ c.mode=modeSel.value; c.modeType=MODE_TYPE_MAP[modeSel.value]; }
     const openDateInput=g('qe-opendate'); if(openDateInput&&openDateInput.value) c.openDate=openDateInput.value.replace(/-/g,'/');
     const mgrSel=g('qe-mgr'); if(mgrSel) c.mgr=mgrSel.value;
+    const needsRehabSel=g('qe-needsrehab'); if(needsRehabSel) c.needsRehab=(needsRehabSel.value===''?null:needsRehabSel.value==='true');
     touchCase(c);
   }
   quickEditRowId=null;
@@ -508,7 +560,17 @@ function renderCaseRow(c){
   const isExpanded=expandedRows.has(c.id);
   const isQuickEdit=quickEditRowId===c.id;
   const isArchiveTab=currentListTab==='archive';
+  const isPacTab=currentListTab==='pac';
   const td=(content,extra='')=>`<td style="padding:8px 10px;border-bottom:1px solid var(--gray-100);vertical-align:middle;${extra}">${content}</td>`;
+  const mrnCell=c.medicalRecordNo?`<span style="color:var(--green);font-weight:600">${c.medicalRecordNo}</span>`:'—';
+  const needsRehabCell=isQuickEdit
+    ?`<select class="form-control" id="qe-needsrehab-${c.id}" style="font-size:12px;padding:4px 6px">
+        <option value="" ${c.needsRehab==null?'selected':''}>—</option>
+        <option value="true" ${c.needsRehab===true?'selected':''}>需復健</option>
+        <option value="false" ${c.needsRehab===false?'selected':''}>不需復健</option>
+      </select>`
+    :(c.needsRehab==null?'—':(c.needsRehab?'需復健':'不需復健'));
+  const caseTypeCell=getCaseType(c);
 
   // 已結束紀錄列的徽章仍可點擊開啟對應彈窗查看內容；唯讀化改在各彈窗內部依 c.status==='封存' 處理（見 renderSummaryJudgeModalBody／renderUpstreamInfoModalBody）
   const summaryProvided=!!(c.referralDoc||c.chiefComplaint||c.admissionDiagnosis||c.dischargeDiagnosis||c.medicalHistory);
@@ -565,45 +627,41 @@ function renderCaseRow(c){
   const expandToggleCell=td(`<button class="btn btn-ghost btn-xs" style="padding:2px 7px" onclick="toggleRowExpand('${c.id}')">${isExpanded?'▴':'▾'}</button>`,'width:30px;text-align:center');
   const dateCell=td(shortDate(c.date));
 
+  // 交付建檔欄：改為軟性提醒，不再依病摘/PAC判斷/排床等條件反灰鎖死；只要尚未交付，按鈕一律可點，實際的身分證必填檢查在彈窗內把關，其餘項目在彈窗內以checklist提醒、未勾選仍可送出
+  const isAdm=currentRole==='adm';
+  let deliverCell;
+  if(c.deliveredToAdmin){
+    deliverCell=`<span class="badge badge-green">已交付建檔</span>`+(isAdm?`<div style="margin-top:4px"><button class="btn btn-primary btn-xs" onclick="confirmAdminFinalize('${c.id}')">✅ 確認建檔完成</button></div>`:'');
+  } else {
+    deliverCell=`<button class="btn btn-amber btn-xs" onclick="openConvertModal('${c.id}')">🏥 交付建檔</button>`;
+  }
+
   let mainRow;
+  let colspan;
   if(isArchiveTab){
-    // 已結束紀錄：移除「階段」「預計開始日」，新增「結束原因」（沿用既有 PAC不收案紀錄類型 c.archiveType）於「家屬確認」與「負責人」之間
+    // 已結束紀錄：姓名／病歷號／類型／來源／疾病別／預計模式／是否需復健／病摘／結束原因／負責人／建立日期／操作（回復資料）；不顯示預計開始日
     mainRow=`<tr>
     ${expandToggleCell}
     ${td(nameCell)}
-    ${td(nextStepBadge(c))}
+    ${td(mrnCell)}
+    ${td(caseTypeCell)}
     ${td(sourceCell)}
-    ${td(onsetDateCell)}
     ${td(diseaseCell)}
     ${td(modeCell)}
+    ${td(needsRehabCell)}
     ${td(summaryBadge)}
-    ${td(pacBadge)}
-    ${td(upstreamBadge)}
-    ${td(familyBadge)}
     ${td(c.archiveType||'—')}
     ${td(mgrCell)}
     ${dateCell}
     ${td(actionCell)}
   </tr>`;
-  } else {
-    // 進行中：「交付行政建檔」自展開列標題移至此欄（操作欄左邊）。門檻：病摘已上傳＋PAC判斷已完成，住院另需已排床、居家另需復健主管回覆可承接
-    const isAdm=currentRole==='adm';
-    const hasSummary=!!(c.chiefComplaint||c.admissionDiagnosis||c.dischargeDiagnosis||c.referralDoc);
-    const hasJudgment=!!c.diseaseCategory;
-    let canConvertToFormal=hasSummary&&hasJudgment;
-    if(c.modeType==='hosp') canConvertToFormal=canConvertToFormal&&c.bedAssigned===true;
-    else if(c.modeType==='home') canConvertToFormal=canConvertToFormal&&c.rehabReport==='可承接';
-    let deliverCell;
-    if(c.deliveredToAdmin){
-      deliverCell=`<span class="badge badge-green">已交付建檔</span>`+(isAdm?`<div style="margin-top:4px"><button class="btn btn-primary btn-xs" onclick="confirmAdminFinalize('${c.id}')">✅ 確認建檔完成</button></div>`:'');
-    } else if(canConvertToFormal){
-      deliverCell=`<button class="btn btn-amber btn-xs" onclick="openConvertModal('${c.id}')">🏥 交付行政建檔</button>`;
-    } else {
-      deliverCell=`<button class="btn btn-secondary btn-xs" disabled style="opacity:.45;cursor:not-allowed" title="請先完成病摘上傳、PAC判斷，住院需完成排床、居家需復健主管回覆可承接">🏥 交付行政建檔</button>`;
-    }
+    colspan=13;
+  } else if(isPacTab){
+    // PAC臨時患者：完整欄位，比照原本「進行中」單一Tab的內容，姓名後插入病歷號
     mainRow=`<tr>
     ${expandToggleCell}
     ${td(nameCell)}
+    ${td(mrnCell)}
     ${td(nextStepBadge(c))}
     ${td(sourceCell)}
     ${td(onsetDateCell)}
@@ -620,12 +678,82 @@ function renderCaseRow(c){
     ${td(deliverCell)}
     ${td(actionCell)}
   </tr>`;
+    colspan=18;
+  } else {
+    // 所有臨時患者：精簡欄位，姓名／病歷號／類型／來源／疾病別／預計模式／是否需復健／病摘／預計開始日／負責人／建立日期／交付建檔／操作
+    mainRow=`<tr>
+    ${expandToggleCell}
+    ${td(nameCell)}
+    ${td(mrnCell)}
+    ${td(caseTypeCell)}
+    ${td(sourceCell)}
+    ${td(diseaseCell)}
+    ${td(modeCell)}
+    ${td(needsRehabCell)}
+    ${td(summaryBadge)}
+    ${td(openDateCell)}
+    ${td(mgrCell)}
+    ${dateCell}
+    ${td(deliverCell)}
+    ${td(actionCell)}
+  </tr>`;
+    colspan=14;
   }
-
-  const colspan=isArchiveTab?15:17;
   const expandedRowHtml=isExpanded?`<tr><td colspan="${colspan}" style="padding:16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200)">${renderExpandedContent(c)}</td></tr>`:'';
 
   return mainRow+expandedRowHtml;
+}
+
+// 非PAC判斷後續處理：送出判斷後跳出的3選項彈窗，取代原本內嵌於判斷卡片的5個選項
+function openNonPacFollowupModal(caseId){
+  const isStroke=nonPacSelectedDisease==='腦中風';
+  const options=NON_PAC_OPTIONS.filter(o=>!o.strokeOnly||isStroke);
+  const actionMap={general:'nonPacFollowupGoGeneral',rehabward:'nonPacFollowupGoRehabWard',archiveEnd:'nonPacFollowupGoArchive'};
+  const body=document.getElementById('modal-nonpac-followup-body');
+  if(body){
+    body.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
+      ${options.map(o=>`<button type="button" class="btn btn-secondary" style="text-align:left;padding:12px 14px" onclick="${actionMap[o.key]}('${caseId}')">${o.label}</button>`).join('')}
+    </div>`;
+  }
+  const m=document.getElementById('modal-nonpac-followup');
+  if(m) m.dataset.caseId=caseId;
+  openModal('modal-nonpac-followup');
+}
+// 移到一般：留在「所有臨時患者」列表，類型改為一般，PAC相關欄位清空
+function nonPacFollowupGoGeneral(caseId){
+  const c=CASES.find(x=>x.id===caseId);
+  if(c){
+    c.pacFlow=false;
+    delete c.diseaseCategory;
+    c.caseType='一般';
+    c.status='收案判斷中';
+    c.timelineStep='收案判斷中';
+    touchCase(c);
+  }
+  closeModal('modal-nonpac-followup');
+  alert('已移到「所有臨時患者」，類型標示為一般。');
+  renderPage('list');
+}
+// 移到復健病房：留在「所有臨時患者」列表，類型改為復健病房
+function nonPacFollowupGoRehabWard(caseId){
+  const c=CASES.find(x=>x.id===caseId);
+  if(c){
+    c.pacFlow=false;
+    delete c.diseaseCategory;
+    c.caseType='復健病房';
+    c.status='收案判斷中';
+    c.timelineStep='收案判斷中';
+    touchCase(c);
+  }
+  closeModal('modal-nonpac-followup');
+  alert('已移到「所有臨時患者」，類型標示為復健病房。');
+  renderPage('list');
+}
+// 結束收案：開啟結束收案彈窗（不鎖定特定類型），由個管師從5大分類裡選擇實際結束原因
+function nonPacFollowupGoArchive(caseId){
+  currentCase=caseId;
+  closeModal('modal-nonpac-followup');
+  openArchiveModal({});
 }
 
 function toggleRowExpand(caseId){
@@ -691,6 +819,25 @@ function finalizeBasicEditSave(caseId){
     const familyPhone=g('be-familyphone'); if(familyPhone) c.familyPhone=familyPhone.value;
     const address=g('be-address'); if(address) c.address=address.value;
     const tubes=g('be-tubes'); if(tubes) c.tubes=tubes.value;
+    // 觸發點2：展開列身分證欄位值有變動時，重新查一次（只有值真的改變才查，避免重複打 API）
+    const idNumberInput=g('be-idnumber');
+    if(idNumberInput){
+      const newId=(idNumberInput.value||'').trim().toUpperCase();
+      if(newId&&newId!==c.idNumber){
+        const result=checkIdentityMatch(newId,c.name,c.id);
+        c.idNumber=newId;
+        if(result.level==='formal'){
+          c.medicalRecordNo=result.data.medicalRecordNo;
+          alert(`查到院內舊病人資料，病歷號 ${result.data.medicalRecordNo} 已自動帶入此個案。`);
+        } else if(result.level==='nameMismatch'){
+          alert(`查到的病歷號 ${result.data.medicalRecordNo} 姓名為「${result.data.name}」，與此個案姓名不符，請確認身分證是否輸入正確。`);
+        } else if(result.level==='tempInProgress'){
+          alert(`此身分證已有另一筆進行中的臨時資料（建立日期 ${shortDate(result.case.date)}），請確認是否重複建檔。`);
+        }
+      } else if(newId){
+        c.idNumber=newId;
+      }
+    }
     const openDate=g('be-opendate'); if(openDate&&openDate.value) c.openDate=openDate.value.replace(/-/g,'/');
     const closeDate=g('be-closedate'); if(closeDate&&closeDate.value) c.closeDate=closeDate.value.replace(/-/g,'/');
     const remark=g('be-remark'); if(remark) c.remark=remark.value;
@@ -737,12 +884,12 @@ function openRestoreModal(caseId, caseName){
         <div style="font-size:14px;font-weight:600;margin-bottom:12px" id="restore-name"></div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
-            <input type="radio" name="restore-status" value="reset" checked style="accent-color:var(--blue)">
-            <div><div style="font-size:13px;font-weight:600">回復到初始狀態（待病摘）</div><div style="font-size:11px;color:var(--gray-400)">清空PAC判斷、照護模式、家屬確認、排床／居家承接、交付建檔等欄位，回到剛新增諮詢時的狀態</div></div>
+            <input type="radio" name="restore-path" value="general" checked style="accent-color:var(--blue)">
+            <div><div style="font-size:13px;font-weight:600">恢復為一般臨時患者</div><div style="font-size:11px;color:var(--gray-400)">保留姓名／身分證／年齡／性別／聯絡方式／地址／家屬資料，其餘欄位清空</div></div>
           </label>
           <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
-            <input type="radio" name="restore-status" value="keep" style="accent-color:var(--blue)">
-            <div><div style="font-size:13px;font-weight:600">保留原有進度</div><div style="font-size:11px;color:var(--gray-400)">不清空任何欄位，只將狀態改回封存前記錄的狀態</div></div>
+            <input type="radio" name="restore-path" value="pac" style="accent-color:var(--blue)">
+            <div><div style="font-size:13px;font-weight:600">恢復至 PAC 收案流程</div><div style="font-size:11px;color:var(--gray-400)">保留姓名／身分證／年齡／性別／聯絡方式／地址／家屬資料，其餘欄位清空，重新走一次 PAC 判斷</div></div>
           </label>
         </div>
       </div>
@@ -759,27 +906,29 @@ function openRestoreModal(caseId, caseName){
   openModal('modal-restore');
 }
 
+// 回復資料：不論選哪條路徑，一律只保留身分層資料（姓名／身分證／年齡／性別／聯絡方式／地址／家屬資料），其餘工作流程欄位全部清空
 function confirmRestore(){
   const m=document.getElementById('modal-restore');
   const caseId=m.dataset.caseId;
-  const sel=m.querySelector('input[name="restore-status"]:checked');
-  const mode=sel?sel.value:'reset';
+  const sel=m.querySelector('input[name="restore-path"]:checked');
+  const path=sel?sel.value:'general';
   const c=CASES.find(x=>x.id===caseId);
   if(c){
-    if(mode==='reset'){
-      delete c.diseaseCategory;
-      c.mode='';
-      c.modeType=null;
-      c.familyConfirmStatus='尚未決定';
-      delete c.bedAssigned;
-      delete c.rehabReport;
-      delete c.deliveredToAdmin;
-      c.status='收案判斷中';
-      c.timelineStep='收案判斷中';
-    } else {
-      c.status=c.statusBeforeArchive||'收案判斷中';
-      c.timelineStep=c.status;
-    }
+    delete c.diseaseCategory;
+    c.mode='';
+    c.modeType=null;
+    c.familyConfirmStatus='尚未決定';
+    c.upstreamStatus='尚未回報';
+    delete c.bedAssigned;
+    delete c.bedModuleImported;
+    delete c.rehabReport;
+    delete c.homeStep1Delivered;
+    delete c.deliveredToAdmin;
+    delete c.deliveredToAdminDate;
+    delete c.medicalRecordNo;
+    c.status='收案判斷中';
+    c.timelineStep='收案判斷中';
+    c.pacFlow=(path==='pac');
     delete c.archiveType;
     delete c.archiveDate;
     delete c.archiveReason;
@@ -787,7 +936,7 @@ function confirmRestore(){
     touchCase(c);
   }
   closeModal('modal-restore');
-  alert(`個案已回復！${mode==='reset'?'已清空收案判斷後的資料，回到初始狀態':'已保留原有進度'}，狀態更新為「${statusLabel(c?c.status:'收案判斷中')}」，已移回臨時病歷列表。`);
+  alert(`個案已回復為${path==='pac'?'PAC 收案流程':'一般臨時患者'}，已保留基本資料，其餘資料清空，已移回臨時資料列表。`);
   renderList(document.getElementById('main-content'));
 }
 
@@ -802,6 +951,7 @@ function deleteArchivedCase(caseId){
 
 function switchTab(tabKey){
   currentListTab=tabKey;
+  metricFilter=null;
   renderList(document.getElementById('main-content'));
 }
 function onSortOrderChange(val){
@@ -813,8 +963,14 @@ function onSortOrderChange(val){
 function archiveFilterBar(){
   return `
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+    <select class="filter-sel" onchange="onArchiveCaseTypeFilterChange(this.value)">
+      <option value="" ${archiveCaseTypeFilter===''?'selected':''}>全部類型</option>
+      <option value="PAC" ${archiveCaseTypeFilter==='PAC'?'selected':''}>PAC</option>
+      <option value="復健病房" ${archiveCaseTypeFilter==='復健病房'?'selected':''}>復健病房</option>
+      <option value="一般" ${archiveCaseTypeFilter==='一般'?'selected':''}>一般</option>
+    </select>
     <select class="filter-sel" onchange="onArchiveTypeFilterChange(this.value)">
-      <option value="" ${archiveTypeFilter===''?'selected':''}>全部類型</option>
+      <option value="" ${archiveTypeFilter===''?'selected':''}>全部結束原因</option>
       ${ARCHIVE_TYPES_TEMP.map(o=>`<option value="${o.type}" ${archiveTypeFilter===o.type?'selected':''}>${o.type}</option>`).join('')}
     </select>
     <div style="display:flex;align-items:center;gap:6px">
@@ -823,6 +979,11 @@ function archiveFilterBar(){
       <input type="date" class="form-control" style="width:150px" value="${archiveDateTo}" onchange="onArchiveDateFilterChange('to',this.value)">
     </div>
   </div>`;
+}
+let archiveCaseTypeFilter='';
+function onArchiveCaseTypeFilterChange(val){
+  archiveCaseTypeFilter=val;
+  renderList(document.getElementById('main-content'));
 }
 function onArchiveTypeFilterChange(val){
   archiveTypeFilter=val;
@@ -939,6 +1100,8 @@ function renderBasicInfoBlock(c,isEditing){
     <div class="sc-body">
       <div class="info-grid">
         ${genderField}
+        ${text('身分證／居留證號',c.idNumber,'be-idnumber-'+caseId)}
+        ${c.medicalRecordNo?`<div class="info-item"><label>病歷號</label><span style="color:var(--green);font-weight:600">${c.medicalRecordNo}</span></div>`:''}
         ${text('地址',c.address,'be-address-'+caseId)}
         ${tubesField}
       </div>
@@ -999,6 +1162,11 @@ function renderSummaryJudgeModalBody(c){
   const isDoc=currentRole==='doc';
   const isNur=currentRole==='nur';
   const isAdm=currentRole==='adm';
+  // 一般／復健病房個案（非PAC類型）：仍顯示 OCR辨識（renderOcrImportSection 內部已依 caseType 隱藏杏翔匯入），但不顯示PAC判斷區塊
+  const isPacCaseType=getCaseType(c)==='PAC';
+  if(!isPacCaseType){
+    return (isMgr?renderOcrImportSection(c):'')+renderDigestSection(c,isMgr,isDoc,isNur);
+  }
   return (isMgr?renderOcrImportSection(c):'')+renderDigestSection(c,isMgr,isDoc,isNur)+renderJudgeSection(c,isAdm||c.status==='封存');
 }
 // ── 病摘彈窗最上方：OCR 辨識（上傳PDF／上傳圖片／串接Line）與杏翔匯入，模擬「辨識中→成功/失敗」三段流程，僅個管師可用 ──
@@ -1013,6 +1181,7 @@ function renderOcrImportSection(c){
   const caseId=c.id;
   const state=ocrState[caseId]||{phase:'idle'};
   const loading=state.phase==='loading';
+  const isPacCaseType=getCaseType(c)==='PAC';
   const statusBox=state.phase==='loading'
     ?`<div class="info-note blue" style="margin-top:12px;margin-bottom:0">⏳ 辨識中，請稍候…</div>`
     :state.phase==='success'
@@ -1023,7 +1192,7 @@ function renderOcrImportSection(c){
   return `
   <div class="section-card">
     <div class="sc-header">
-      <div class="sc-title">🔎 OCR 辨識 / 杏翔匯入</div>
+      <div class="sc-title">🔎 OCR 辨識${isPacCaseType?' / 杏翔匯入':''}</div>
     </div>
     <div class="sc-body">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
@@ -1033,10 +1202,10 @@ function renderOcrImportSection(c){
       </div>
       <input type="file" id="ocr-file-pdf-${caseId}" accept=".pdf,.doc,.docx" class="hidden" onchange="handleOcrFileSelected('${caseId}',this,'pdf')">
       <input type="file" id="ocr-file-img-${caseId}" accept=".jpg,.jpeg,.png" class="hidden" onchange="handleOcrFileSelected('${caseId}',this,'image')">
-      <div class="form-group" style="margin-bottom:0">
+      ${isPacCaseType?`<div class="form-group" style="margin-bottom:0">
         <label>杏翔匯入</label>
         <input class="form-control" id="his-import-input-${caseId}" placeholder="請輸入病歷號" ${loading?'disabled':''} onkeydown="handleHisImportKeydown(event,'${caseId}')">
-      </div>
+      </div>`:''}
       ${statusBox}
     </div>
   </div>`;
@@ -1120,11 +1289,13 @@ function renderDigestSection(c,isMgr,isDoc,isNur){
           <span class="attachment-icon">📄</span>
           <div style="flex:1"><div class="attachment-name">病摘原文.pdf</div><div class="attachment-meta">2.3 MB・${shortDate('2026/06/10')} 上傳</div></div>
           <button class="btn btn-ghost btn-xs" onclick="alert('預覽附件：病摘原文.pdf')">預覽</button>
+          ${isMgr?`<button class="btn btn-ghost btn-xs" title="刪除附件" onclick="if(confirm('確定要刪除「病摘原文.pdf」嗎？')) this.closest('.attachment-item').remove()">✕</button>`:''}
         </div>
         <div class="attachment-item">
           <span class="attachment-icon">🎬</span>
           <div style="flex:1"><div class="attachment-name">家屬提供影片.mp4</div><div class="attachment-meta">15.8 MB・${shortDate('2026/06/11')} 上傳</div></div>
           <button class="btn btn-ghost btn-xs" onclick="alert('預覽附件：家屬提供影片.mp4')">預覽</button>
+          ${isMgr?`<button class="btn btn-ghost btn-xs" title="刪除附件" onclick="if(confirm('確定要刪除「家屬提供影片.mp4」嗎？')) this.closest('.attachment-item').remove()">✕</button>`:''}
         </div>
       </div>
       ${(isDoc||isNur)?`<div style="font-size:11px;color:var(--gray-500);background:var(--gray-50);padding:8px 10px;border-radius:6px">此為個案病摘資料，僅供查閱，如需修改請聯繫負責個管師。</div>`:''}
@@ -1147,7 +1318,7 @@ function renderJudgeSection(c,isAdm){
         ${judgeOption('非 PAC',false,isAdm,caseId)}
         ${judgeOption('需再評估',false,isAdm,caseId)}
       </div>
-      ${showNonPacOptions?renderNonPacOptionsInline(caseId):''}
+      
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group">
           <label>判斷 PAC 疾病別</label>
@@ -1175,30 +1346,12 @@ function renderJudgeSection(c,isAdm){
 }
 // 判斷結果為「非 PAC」後內嵌顯示的 5 個後續處理選項：居家醫療／復健病房（僅腦中風）／一般（復健）／一般（開刀）／其他服務不收案
 // 這裡只負責記錄使用者勾選了哪一個（selectedNonPacOption，手動控制單選，不用瀏覽器 radio），實際動作留到「送出判斷」才執行（見 submitPacJudgment）
-let selectedNonPacOption=null;
+// 已改為送出判斷後才跳出的彈窗（modal-nonpac-followup），不再於判斷卡片內嵌顯示；此常數保留供該彈窗渲染按鈕清單使用
 const NON_PAC_OPTIONS=[
-  {key:'home',label:'居家醫療'},
-  {key:'rehabward',label:'復健病房',strokeOnly:true},
-  {key:'general_rehab',label:'一般（復健）'},
-  {key:'general_surgery',label:'一般（開刀）'},
-  {key:'archive',label:'其他服務／不收案'},
+  {key:'general',label:'移到一般'},
+  {key:'rehabward',label:'移到復健病房',strokeOnly:true},
+  {key:'archiveEnd',label:'結束收案'},
 ];
-function renderNonPacOptionsInline(caseId){
-  const isStroke=nonPacSelectedDisease==='腦中風';
-  const options=NON_PAC_OPTIONS.filter(o=>!o.strokeOnly||isStroke);
-  return `
-  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)">
-    <div style="font-size:12px;color:var(--gray-500);margin-bottom:8px">已判斷為非PAC，請選擇後續處理方式：</div>
-    <div class="checklist" style="margin:0">
-      ${options.map(o=>`<div class="check-item" onclick="selectNonPacOption('${o.key}','${caseId}')"><input type="checkbox" ${selectedNonPacOption===o.key?'checked':''} onclick="event.preventDefault()"><span>${o.label}</span></div>`).join('')}
-    </div>
-  </div>`;
-}
-// 勾選後續處理方式：只更新畫面上的勾選狀態（單選，勾選新的會取消前一個），不立即執行對應動作
-function selectNonPacOption(key,caseId){
-  selectedNonPacOption=(selectedNonPacOption===key)?null:key;
-  refreshSummaryJudgeModal(caseId);
-}
 
 // ── 輔助翻譯：同一彈窗內容切換視圖，不開第二層彈窗，「← 返回」切回主畫面 ──
 function renderSummaryTranslateView(){
@@ -1677,7 +1830,7 @@ function submitPacJudgment(caseId){
   if(result==='是 PAC'){
     const categorySel=document.getElementById('pac-disease-category-'+caseId);
     if(!categorySel||!categorySel.value){alert('請選擇 PAC 疾病別分類');return;}
-    if(c) c.diseaseCategory=categorySel.value;
+    if(c) { c.diseaseCategory=categorySel.value; c.caseType='PAC'; }
     closeModal('modal-summary-judge');
     // 是PAC判斷送出後直接套用「確定收案」的邏輯（原本 confirmCollection 對應 variant 的處理），不再另外跳「是否確定收案？」彈窗
     if(c&&c.modeType==='hosp'){
@@ -1713,21 +1866,8 @@ function submitPacJudgment(caseId){
   } else if(result==='非 PAC'){
     const categorySel=document.getElementById('pac-disease-category-'+caseId);
     nonPacSelectedDisease=(categorySel&&categorySel.value)?categorySel.value:(c?c.disease:null);
-    showNonPacOptions=true;
-    if(!selectedNonPacOption){
-      refreshSummaryJudgeModal(caseId);
-      alert('請先選擇後續處理方式');
-      return;
-    }
-    const nonPacActions={
-      home:()=>nonPacGoHomeCare(),
-      rehabward:()=>nonPacGoRehabWard(),
-      general_rehab:()=>nonPacGoGeneral('一般（復健）'),
-      general_surgery:()=>nonPacGoGeneral('一般（開刀）'),
-      archive:()=>nonPacGoArchive(),
-    };
-    const action=nonPacActions[selectedNonPacOption];
-    if(action) action();
+    closeModal('modal-summary-judge');
+    openNonPacFollowupModal(caseId);
   } else {
     closeModal('modal-summary-judge');
     alert('判斷結果：需再評估\n\n狀態維持不變，已記錄本次判斷意見供後續參考');
@@ -1810,16 +1950,149 @@ function toggleBasicEditTubeBadge(caseId,label){
   if(idx>-1) current.splice(idx,1); else current.push(label);
   input.value=current.join('、');
 }
+// ── 身分證比對機制：mock 杏翔病患主檔查詢（院內所有舊病人，不限走過PAC的人）──
+// prototype 階段：A123456789＝查無資料、B123456789＝已有正式患者（院內舊病人，病歷號123456，沿用身分建立本次服務紀錄）、C123456789＝已有進行中的臨時紀錄（見下方 CASES 種子資料 t23，提示查看避免重複建立），其餘身分證一律查無資料
+const MOCK_XINGXIANG_DB=[
+  {idNumber:'B123456789',medicalRecordNo:'123456',name:'張正雄',address:'彰化縣員林市中山路100號',familyName:'張小明',familyPhone:'0912-345-678',familyRelation:'兒子',lastUpdated:'2024/03/15'},
+];
+function mockXingxiangLookup(idNumber){
+  if(!idNumber) return {found:false};
+  const hit=MOCK_XINGXIANG_DB.find(r=>r.idNumber===idNumber.trim().toUpperCase());
+  return hit?{found:true,...hit}:{found:false};
+}
+// 比對順序：先查杏翔（院內舊病人，最強優先權）→ 再查 PAC 系統自己資料庫裡進行中的臨時資料 → 都沒有則查無資料
+// 若杏翔命中但姓名對不上，視為可能打錯身分證，回傳 nameMismatch 而非直接當同一人
+function checkIdentityMatch(idNumber,inputName,excludeCaseId){
+  if(!idNumber) return {level:'none'};
+  const xx=mockXingxiangLookup(idNumber);
+  if(xx.found){
+    if(inputName&&xx.name&&inputName.trim()!==xx.name.trim()){
+      return {level:'nameMismatch',data:xx};
+    }
+    return {level:'formal',data:xx};
+  }
+  const tempHit=CASES.find(c=>c.idNumber===idNumber.trim().toUpperCase()&&c.status!=='封存'&&c.id!==excludeCaseId);
+  if(tempHit) return {level:'tempInProgress',case:tempHit};
+  return {level:'none'};
+}
+// 渲染比對結果提示區塊（用於新增諮詢彈窗，非阻擋式，個管師可忽略繼續建立）
+function renderIdMatchHint(result,onApplyFnName){
+  if(result.level==='none') return '';
+  if(result.level==='tempInProgress'){
+    const c=result.case;
+    return `<div class="info-note amber" style="font-size:12px">此患者已有進行中的臨時資料，建立日期為 ${shortDate(c.date)}，目前階段為 ${nextStepBadge(c).replace(/<[^>]+>/g,'')}。<button type="button" class="btn btn-ghost btn-xs" style="margin-left:6px" onclick="alert('查看既有資料：${c.name}（示意，prototype 尚未串接跳轉）')">查看既有資料</button></div>`;
+  }
+  if(result.level==='formal'){
+    const d=result.data;
+    return `<div class="info-note blue" style="font-size:12px">此個案已在本醫院有病歷號 <strong>${d.medicalRecordNo}</strong>，最後更新於 ${d.lastUpdated}。查到的基本資料：地址「${d.address}」、家屬「${d.familyName}（${d.familyRelation}）」、聯絡電話「${d.familyPhone}」。
+      <div style="margin-top:6px;display:flex;gap:6px">
+        <button type="button" class="btn btn-primary btn-xs" onclick="${onApplyFnName}(true)">帶入這些資料</button>
+        <button type="button" class="btn btn-ghost btn-xs" onclick="${onApplyFnName}(false)">不帶入，我自己填</button>
+      </div>
+    </div>`;
+  }
+  if(result.level==='nameMismatch'){
+    return `<div class="info-note amber" style="font-size:12px;border-color:#F59E0B">查到的病歷號 ${result.data.medicalRecordNo} 姓名為「${result.data.name}」，與您輸入的姓名不符，請確認身分證是否輸入正確。</div>`;
+  }
+  return '';
+}
+let newCaseIdMatchResult=null;
+function onNewCaseIdNumberInput(){
+  const idVal=(document.getElementById('new-manual-idnumber').value||'').trim();
+  const nameVal=(document.getElementById('new-manual-name').value||'').trim();
+  const hintEl=document.getElementById('new-manual-id-match-hint');
+  const mrnWrap=document.getElementById('new-manual-mrn-wrap');
+  const mrnInput=document.getElementById('new-manual-mrn');
+  if(!idVal||idVal.length<8){ if(hintEl) hintEl.innerHTML=''; if(mrnWrap) mrnWrap.classList.add('hidden'); newCaseIdMatchResult=null; return; }
+  newCaseIdMatchResult=checkIdentityMatch(idVal,nameVal);
+  if(newCaseIdMatchResult.level==='formal'){
+    // 已有正式資料：病歷號先自動帶入顯示，再跳彈窗詢問是否連同其他基本資料一併帶入
+    const d=newCaseIdMatchResult.data;
+    if(mrnInput) mrnInput.value=d.medicalRecordNo;
+    if(mrnWrap) mrnWrap.classList.remove('hidden');
+    if(hintEl) hintEl.innerHTML='';
+    const bodyEl=document.getElementById('modal-id-match-formal-body');
+    if(bodyEl) bodyEl.innerHTML=`<div class="info-note blue">此個案已在本醫院有病歷號 <strong>${d.medicalRecordNo}</strong>，最後更新於 ${d.lastUpdated}。</div>
+      <div style="margin-top:10px;font-size:13px;line-height:1.8">
+        <div>地址：${d.address}</div>
+        <div>家屬：${d.familyName}（${d.familyRelation}）</div>
+        <div>聯絡電話：${d.familyPhone}</div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--gray-500)">是否要沿用既有患者身分，將以上基本資料一併帶入這次的臨時紀錄？</div>`;
+    openModal('modal-id-match-formal');
+  } else {
+    if(mrnWrap) mrnWrap.classList.add('hidden');
+    if(hintEl) hintEl.innerHTML=renderIdMatchHint(newCaseIdMatchResult,'applyNewCaseIdMatch');
+  }
+}
+function applyNewCaseIdMatch(apply){
+  if(!newCaseIdMatchResult||newCaseIdMatchResult.level!=='formal') return;
+  if(apply){
+    const d=newCaseIdMatchResult.data;
+    const set=(id,val)=>{const el=document.getElementById(id); if(el&&val) el.value=val;};
+    set('new-manual-address',d.address);
+    set('new-manual-familyphone',d.familyPhone);
+  }
+  closeModal('modal-id-match-formal');
+  const hintEl=document.getElementById('new-manual-id-match-hint');
+  if(hintEl) hintEl.innerHTML=`<div class="info-note blue" style="font-size:12px">已${apply?'帶入':'略過'}既有基本資料，病歷號 ${newCaseIdMatchResult.data.medicalRecordNo} 將沿用於這筆個案。</div>`;
+}
+function onNewCaseIdUnknownToggle(checked){
+  const input=document.getElementById('new-manual-idnumber');
+  if(input){ input.disabled=checked; if(checked){ input.value=''; } }
+  const hintEl=document.getElementById('new-manual-id-match-hint');
+  if(hintEl) hintEl.innerHTML='';
+  newCaseIdMatchResult=null;
+}
+
+// 新增臨時患者彈窗頂部「PAC 收案評估」toggle：切換一般建檔／PAC收案評估兩種欄位組合，PAC模式下身分證改為必填、多顯示發病時間與管路快選
+function toggleNewCaseIsPac(checked){
+  document.querySelectorAll('.pac-only-field').forEach(el=>el.classList.toggle('hidden',!checked));
+  document.querySelectorAll('.general-only-field').forEach(el=>el.classList.toggle('hidden',checked));
+  const reqStar=document.getElementById('new-manual-idnumber-required');
+  if(reqStar) reqStar.classList.toggle('hidden',!checked);
+  const track=document.getElementById('new-manual-ispac-track');
+  const knob=document.getElementById('new-manual-ispac-knob');
+  if(track) track.style.backgroundColor=checked?'var(--blue)':'var(--gray-300)';
+  if(knob) knob.style.transform=checked?'translateX(18px)':'translateX(0)';
+}
+
 function resetNewCaseForm(){
-  ['new-manual-name','new-manual-age','new-manual-location','new-manual-onsetdate','new-manual-address','new-manual-familyphone','new-manual-tubes','new-manual-disease','new-manual-mode'].forEach(id=>{
+  ['new-manual-name','new-manual-age','new-manual-location','new-manual-onsetdate','new-manual-address','new-manual-familyphone','new-manual-tubes','new-manual-disease','new-manual-mode','new-manual-idnumber'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.value='';
   });
+  const idInput=document.getElementById('new-manual-idnumber'); if(idInput) idInput.disabled=false;
+  const unknownCb=document.getElementById('new-manual-id-unknown'); if(unknownCb) unknownCb.checked=false;
+  const hintEl=document.getElementById('new-manual-id-match-hint'); if(hintEl) hintEl.innerHTML='';
+  const mrnWrap=document.getElementById('new-manual-mrn-wrap'); if(mrnWrap) mrnWrap.classList.add('hidden');
+  const mrnInput=document.getElementById('new-manual-mrn'); if(mrnInput) mrnInput.value='';
+  closeModal('modal-id-match-formal');
+  newCaseIdMatchResult=null;
+  const pacToggle=document.getElementById('new-manual-ispac');
+  if(pacToggle){ pacToggle.checked=false; toggleNewCaseIsPac(false); }
+  const needsRehabSel=document.getElementById('new-manual-needsrehab'); if(needsRehabSel) needsRehabSel.value='';
 }
 // ── 新增諮詢：僅收集 7 項基本資訊，建立一筆狀態為「收案判斷中」的個案，其餘欄位（疾病別／病摘／照護模式等）留待展開列逐步補齊 ──
 function saveNewCase(){
   const name=(document.getElementById('new-manual-name').value||'').trim();
   if(!name){ alert('請輸入姓名'); return; }
+  const isPac=document.getElementById('new-manual-ispac').checked;
+  const idUnknownEarly=document.getElementById('new-manual-id-unknown').checked;
+  if(isPac&&!idUnknownEarly&&!(document.getElementById('new-manual-idnumber').value||'').trim()){
+    alert('PAC 收案評估必須填寫身分證／居留證號，或勾選「目前尚未取得身分識別資料」');
+    return;
+  }
+  if(!isPac){
+    if(!document.getElementById('new-manual-mode').value){
+      alert('一般個案必須選擇預計模式（住院／日照／居家），選擇住院才會匯入排床模組');
+      return;
+    }
+    if(document.getElementById('new-manual-needsrehab').value===''){
+      alert('一般個案必須選擇是否需要復健，選擇需復健才會進入復健排班可選擇的個案清單');
+      return;
+    }
+  }
   const ageVal=document.getElementById('new-manual-age').value;
   const age=ageVal?parseInt(ageVal,10):null;
   const birthDate=(age!==null&&!isNaN(age))?`${2026-age}/01/01`:null; // 僅收集年齡，以固定月/日換算出可供 calcAge() 使用的估計出生日期
@@ -1831,6 +2104,10 @@ function saveNewCase(){
   const tubes=(document.getElementById('new-manual-tubes').value||'').trim();
   const diseaseVal=document.getElementById('new-manual-disease').value;
   const modeVal=document.getElementById('new-manual-mode').value;
+  const idUnknown=document.getElementById('new-manual-id-unknown').checked;
+  const idNumberVal=idUnknown?'':(document.getElementById('new-manual-idnumber').value||'').trim().toUpperCase();
+  const needsRehabSel=document.getElementById('new-manual-needsrehab').value;
+  const needsRehabVal=needsRehabSel===''?null:(needsRehabSel==='true');
 
   const newCase={
     id:'c'+Date.now(),
@@ -1852,7 +2129,16 @@ function saveNewCase(){
     address:address||null,
     familyPhone:familyPhone||null,
     tubes:tubes||null,
+    idNumber:idNumberVal||null,
+    pacFlow:isPac,
+    caseType:isPac?'PAC':'一般',
+    needsRehab:isPac?null:needsRehabVal,
   };
+  // 儲存當下若身分證有值，觸發一次比對（三個觸發點之一）；已有病歷號則直接沿用，不再等待行政補登
+  if(idNumberVal){
+    const result=checkIdentityMatch(idNumberVal,name);
+    if(result.level==='formal') newCase.medicalRecordNo=result.data.medicalRecordNo;
+  }
   CASES.push(newCase);
   closeModal('modal-new');
   resetNewCaseForm();
@@ -2153,19 +2439,51 @@ function openConvertModal(caseId){
   currentCase=caseId;
   const c=CASES.find(x=>x.id===caseId);
   if(!c) return;
+  const isPacCaseType=getCaseType(c)==='PAC';
   document.getElementById('convert-opendate').value=c.openDate?c.openDate.replace(/\//g,'-'):'';
   document.getElementById('convert-closedate').value=c.closeDate?c.closeDate.replace(/\//g,'-'):'';
+  document.getElementById('convert-idnumber').value=c.idNumber||'';
+  document.getElementById('convert-id-match-hint').innerHTML=c.medicalRecordNo?`<div class="info-note blue" style="font-size:12px">已查到既有病歷號 ${c.medicalRecordNo}，將沿用此號碼，行政只需確認即可。</div>`:'';
+  // 一般／復健病房個案：簡化版彈窗，不顯示checklist與預計結案日，只需身分證與預計開案日
+  const checklistWrap=document.getElementById('convert-checklist-wrap');
+  const closeDateWrap=document.getElementById('convert-closedate-wrap');
+  const pacNote=document.getElementById('convert-pac-note');
+  if(checklistWrap) checklistWrap.classList.toggle('hidden',!isPacCaseType);
+  if(closeDateWrap) closeDateWrap.classList.toggle('hidden',!isPacCaseType);
+  if(pacNote) pacNote.classList.toggle('hidden',!isPacCaseType);
   openModal('modal-convert');
 }
 // ── 交付行政建檔：不再從 CASES 移除，改為標記 c.deliveredToAdmin=true，待行政角色另外「確認建檔完成」才真正移除（見 confirmAdminFinalize）──
+// 觸發點3（保底）：身分證為必填檢查點，一旦有值（不論新輸入或既有值）就跑一次比對；命中進行中臨時資料/姓名不符時強制擋下交付動作
 function confirmConvertToFormal(){
   const c=getCurrentCaseObj();
   if(!c){ closeModal('modal-convert'); return; }
+  const idInput=document.getElementById('convert-idnumber');
+  const idVal=(idInput?idInput.value:'').trim().toUpperCase();
+  if(!idVal){ alert('交付建檔前必須先填寫身分證／居留證號，避免行政重複建檔'); return; }
+  const nameChanged=idVal!==(c.idNumber||'');
+  const result=checkIdentityMatch(idVal,c.name,c.id);
+  c.idNumber=idVal;
+  const hintEl=document.getElementById('convert-id-match-hint');
+  if(result.level==='tempInProgress'||result.level==='nameMismatch'){
+    const msg=result.level==='tempInProgress'
+      ?`此身分證已有另一筆進行中的臨時資料（建立日期 ${shortDate(result.case.date)}），請先確認是否為重複建檔，再繼續交付。`
+      :`查到的病歷號 ${result.data.medicalRecordNo} 姓名為「${result.data.name}」，與此個案姓名不符，請確認身分證是否輸入正確。`;
+    if(hintEl) hintEl.innerHTML=`<div class="info-note amber" style="font-size:12px;border-color:#F59E0B">${msg}</div>`;
+    alert('偵測到身分證比對衝突，已擋下本次交付，請先處理上方提示後再試一次。');
+    return;
+  }
+  if(result.level==='formal'){
+    c.medicalRecordNo=result.data.medicalRecordNo;
+    if(hintEl) hintEl.innerHTML=`<div class="info-note blue" style="font-size:12px">已沿用既有病歷號 ${result.data.medicalRecordNo}，行政端只需確認，不需重新登打。</div>`;
+  }
   const openInput=document.getElementById('convert-opendate');
   const closeInput=document.getElementById('convert-closedate');
   const openVal=openInput?openInput.value:'';
   const closeVal=closeInput?closeInput.value:'';
-  if(!openVal||!closeVal){ alert('請填寫預計開案日與預計結案日'); return; }
+  const isPacCaseType=getCaseType(c)==='PAC';
+  if(!openVal){ alert('請填寫預計開案日'); return; }
+  if(isPacCaseType&&!closeVal){ alert('請填寫預計結案日'); return; }
   const origOpen=c.openDate?c.openDate.replace(/\//g,'-'):'';
   const origClose=c.closeDate?c.closeDate.replace(/\//g,'-'):'';
   const dateChanged=(openVal!==origOpen)||(closeVal!==origClose);
@@ -2188,20 +2506,21 @@ function confirmConvertToFormal(){
 }
 function finalizeConvertToFormal(c,openVal,closeVal){
   c.openDate=openVal.replace(/-/g,'/');
-  c.closeDate=closeVal.replace(/-/g,'/');
+  if(closeVal) c.closeDate=closeVal.replace(/-/g,'/');
   c.deliveredToAdmin=true;
   c.deliveredToAdminDate=TODAY_STR;
   touchCase(c);
   closeModal('modal-convert');
-  alert('已交付行政建檔，個案資料已保留，待行政人員確認建檔完成後才會從收案管理列表移除。');
+  alert('已交付建檔，個案資料已保留，待行政人員確認建檔完成後才會從臨時資料列表移除。');
   renderPage('list');
 }
 // 行政角色「確認建檔完成」：先要求輸入病歷號，確認後才真正把個案從收案管理的 CASES 移除，模擬移交「個案管理」模組（本 prototype 兩模組資料不互通，不做實際跨檔案資料傳遞）
 let adminFinalizeCaseId=null;
 function confirmAdminFinalize(caseId){
   adminFinalizeCaseId=caseId;
+  const c=CASES.find(x=>x.id===caseId);
   const input=document.getElementById('admin-finalize-mrn');
-  if(input) input.value='';
+  if(input) input.value=(c&&c.medicalRecordNo)?c.medicalRecordNo:'';
   openModal('modal-admin-finalize');
 }
 function submitAdminFinalize(){
@@ -2231,11 +2550,25 @@ function nonPacGoHomeCare(){
   closeModal('modal-summary-judge');
   openArchiveModal({presetType:'轉居家醫療',locked:true});
 }
-// 疾病別為腦中風時的選項：直接列為「PAC不收案紀錄」，類型鎖定「轉復健病房」，跳過匯入排床模組流程
+// 疾病別為腦中風時的選項：詢問要放回「所有臨時患者」（類型改為復健病房，繼續留在臨時患者列表）還是直接送入「結束紀錄」
 function nonPacGoRehabWard(){
   showNonPacOptions=false;
   selectedNonPacOption=null;
   closeModal('modal-summary-judge');
+  const c=getCurrentCaseObj();
+  const keepActive=confirm('已選擇「復健病房」。是否將此個案放入「所有臨時患者」列表繼續追蹤（類型將顯示為復健病房）？\n\n選擇「確定」＝放入所有臨時患者；選擇「取消」＝直接送入結束紀錄。');
+  if(keepActive&&c){
+    c.pacFlow=false;
+    delete c.diseaseCategory;
+    c.caseType='復健病房';
+    c.status='收案判斷中';
+    c.timelineStep='收案判斷中';
+    touchCase(c);
+    alert('已放入「所有臨時患者」列表，類型標示為復健病房。');
+    renderPage('list');
+    return;
+  }
+  if(c) c.caseType='復健病房';
   openArchiveModal({presetType:'轉復健病房',locked:true});
 }
 function nonPacGoArchive(){
@@ -2267,8 +2600,8 @@ function nonPacGoGeneral(type){
   selectedNonPacOption=null;
   closeModal('modal-summary-judge');
   alert(importBed
-    ?`已選擇「${type}」。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。收案管理模組中本個案狀態更新為「PAC不收案紀錄」。`
-    :`已選擇「${type}」。收案管理模組中本個案狀態更新為「PAC不收案紀錄」。`);
+    ?`已選擇「${type}」。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。臨時資料模組中本個案狀態更新為「PAC不收案紀錄」。`
+    :`已選擇「${type}」。臨時資料模組中本個案狀態更新為「PAC不收案紀錄」。`);
   if(c) renderPage('detail',currentCase);
 }
 
@@ -2445,7 +2778,7 @@ function confirmArchive(){
   }
   closeModal('modal-archive');
   alert(isGeneralType&&importBed
-    ?`已選擇「${type}」。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。收案管理模組中本個案狀態更新為「PAC不收案紀錄」。`
+    ?`已選擇「${type}」。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。臨時資料模組中本個案狀態更新為「PAC不收案紀錄」。`
     :'個案已列為「PAC不收案紀錄」');
   if(c) renderPage('detail',currentCase);
 }

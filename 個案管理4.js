@@ -1,3 +1,5 @@
+// ══ 版本註記：2026/07/30 更新 — 從杏翔匯入患者改為病歷號搜尋流程、轉換模式改用排床模組提醒(修正阻擋bug)、刪除轉居家醫療、統一轉換類型系統、新增結案管理快速入口、結案管理新增刪除功能 ══
+
 
 // ── 角色設定 ──
 const ROLES = {
@@ -101,6 +103,11 @@ function sortCases(arr){
 // archiveType：結案類型（僅封存狀態使用，詳情頁漸進式揭露）
 // birthDate：出生日期，用於即時換算年齡；upstreamContact：上游聯絡人資訊；familyRelation：家屬關係
 // roomPref：房型偏好（null=無偏好，'single'=單人房，'double'=雙人房，'multi'=多人房）
+// 類型欄位的可靠取值：優先讀 c.caseType；舊資料（f1-f18等）從未補上這個欄位，一律視為PAC個案（因為都已經有judgeRecord/assessments等PAC專屬資料）
+function getCaseType(c){
+  return c.caseType||'PAC';
+}
+
 const CASES={
   formal:[
     {id:'f1',medicalRecordNo:'00073450',idNumber:'A123456789',archiveOutcome:'',hospitalDays:18,name:'陳建國',birthDate:'1954/02/10',mode:'住院',modeType:'hosp',disease:'腦中風',source:'臺大醫院',date:'2026/06/10',updatedAt:'2026/06/24',status:'展延中',mgr:'林美惠',formal:true,countdown:2,week:2,timelineStep:'展延中',timelineSub:'待展延申請',assessmentStatus:'待填寫',assessments:{initial:{done:true,date:'2026/06/13'},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'待轉介',note:''},upstreamContact:{name:'李護理師',phone:'02-1234-5678',line:'taida_li'},familyRelation:'兒子',openDate:'2026/06/10',closeDate:'2026/07/22',roomPref:'double',address:'彰化縣社頭鄉中山路33號',department:'神經內科',admissionDiagnosis:'Acute left MCA territory infarction with right hemiparesis and aphasia',dischargeDiagnosis:'Left MCA infarction, post-thrombolysis, neurologically stable for PAC rehabilitation',medicalHistory:'高血壓病史10年、第二型糖尿病病史5年',admissionTubes:'NG, Foley',onsetDate:'2026/06/08',icdCode:'I639',overviewNote:'',dischargeDest2:'',patientDest:'',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/06/12',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/26',week:'第3週',stage:'複評',status:'已逾期',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/07/20',week:'第6週',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},referralDoc:{name:'轉診單.pdf',size:'1.1 MB',date:'2026/06/10'}},
@@ -133,7 +140,7 @@ const CASES={
       {dow:6,date:'2026/07/12',period:'晚上',timeRange:'約 18:00-20:00',profession:'PT',therapist:'陳建成',duration:'40分鐘',tag:null,cancelled:true},
     ]},
     // 封存：正式病歷非PAC個案（PAC判斷後確認為非PAC，移交病床管理並封存於此模組）
-    {id:'f9',medicalRecordNo:'00074011',idNumber:'J132109876',archiveOutcome:'—',hospitalDays:null,name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'創傷性神經損傷',source:'門診',date:'2026/06/01',updatedAt:'2026/06/03',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,extensionResult:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',assessments:{initial:{done:true,date:'2026/06/07'},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null,address:'彰化縣芬園鄉彰南路5號',department:'復健科',admissionDiagnosis:'Post-surgical status, lumbar spine decompression, non-PAC rehabilitation',dischargeDiagnosis:'S/p lumbar spine surgery, stable, general rehabilitation continuing',medicalHistory:'退化性脊椎病史多年，長期下背痛',admissionTubes:'Foley',onsetDate:'2026/05/28',icdCode:'M4806',overviewNote:'',dischargeDest2:'其他',patientDest:'其他',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/06/03',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'複評',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'非PAC',diseaseCategory:null,judgedBy:'張宗達 醫師',reason:'個案為腰椎手術後一般復健，不符合PAC收案條件（非腦中風／創傷性神經損傷／脆弱性骨折／衰弱高齡四大類別），建議轉一般復健追蹤。',suggestion:'轉介一般復健科門診追蹤，不需PAC團隊介入。'}},
+    {id:'f9',caseType:'一般',needsRehab:true,medicalRecordNo:'00074011',idNumber:'J132109876',archiveOutcome:'—',hospitalDays:null,name:'陳淑真',birthDate:'1955/07/19',mode:'一般',modeType:'general',disease:'創傷性神經損傷',source:'門診',date:'2026/06/01',updatedAt:'2026/06/03',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:null,timelineStep:null,extensionResult:null,archiveType:'非PAC個案',archiveDate:'2026/06/03',archiveOperator:'林美惠',assessments:{initial:{done:true,date:'2026/06/07'},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},archiveReason:'收案判斷確認為非PAC個案，個案資料已移交病床管理模組統一管轄。',upstreamContact:{name:'—',phone:'—',line:'—'},familyRelation:'女兒',openDate:'2026/06/01',closeDate:'—',roomPref:null,address:'彰化縣芬園鄉彰南路5號',department:'復健科',admissionDiagnosis:'Post-surgical status, lumbar spine decompression, non-PAC rehabilitation',dischargeDiagnosis:'S/p lumbar spine surgery, stable, general rehabilitation continuing',medicalHistory:'退化性脊椎病史多年，長期下背痛',admissionTubes:'Foley',onsetDate:'2026/05/28',icdCode:'M4806',overviewNote:'',dischargeDest2:'其他',patientDest:'其他',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/06/03',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'複評',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'非PAC',diseaseCategory:null,judgedBy:'張宗達 醫師',reason:'個案為腰椎手術後一般復健，不符合PAC收案條件（非腦中風／創傷性神經損傷／脆弱性骨折／衰弱高齡四大類別），建議轉一般復健追蹤。',suggestion:'轉介一般復健科門診追蹤，不需PAC團隊介入。'}},
     {id:'f13',medicalRecordNo:'00074233',idNumber:'K221098765',archiveOutcome:'結案失敗-未達標準',hospitalDays:null,name:'許福來',birthDate:'1950/02/18',mode:'日照',modeType:'day',disease:'脆弱性骨折',source:'彰基醫院',date:'2026/03/10',updatedAt:'2026/04/07',status:'封存',mgr:'林美惠',formal:true,countdown:null,week:3,timelineStep:null,extensionResult:'fail',assessments:{initial:{done:true,date:'2026/03/12'},f1:{done:true,date:'2026/03/19'},f2:{done:true,date:'2026/03/26'},f3:{done:false,date:''},close:{done:true,date:'2026/04/06'}},referral:{status:'已轉介',target:'社工服務',note:'已轉介社工協助評估經濟補助資源'},archiveType:'結案失敗',archiveDate:'2026/04/07',archiveOperator:'林美惠',archiveReason:'展延申請未獲健保署核准，個案功能改善幅度未達展延標準，依規定結案。',upstreamContact:{name:'劉個管師',phone:'04-4444-5555',line:'cb_liu'},familyRelation:'兒子',openDate:'2026/03/10',closeDate:'2026/04/07',roomPref:null,address:'彰化縣田中鎮中州路12號',department:'骨科',admissionDiagnosis:'Closed fracture, right distal radius, s/p fall',dischargeDiagnosis:'S/p closed reduction and casting, right distal radius fracture, stable alignment',medicalHistory:'骨質疏鬆症病史、退化性關節炎病史',admissionTubes:'無',onsetDate:'2026/03/08',icdCode:'S52501',overviewNote:'',dischargeDest2:'其他',patientDest:'社工服務',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/03/12',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/03/31',week:'第3週',stage:'複評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/04/07',week:'第4週',stage:'結案評估',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'脆弱性骨折',judgedBy:'張宗達 醫師',reason:'個案符合 脆弱性骨折 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'}},
     // 測試個案：正式病歷／住院，專門用於測試「轉換模式」功能
     {id:'f10',medicalRecordNo:'00074102',idNumber:'L310987654',archiveOutcome:'',hospitalDays:10,name:'住院轉模式',birthDate:'1955/03/12',mode:'住院',modeType:'hosp',disease:'脆弱性骨折',source:'彰化秀傳',date:'2026/05/28',updatedAt:'2026/06/22',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:2,timelineStep:'照護中',assessmentStatus:'待填寫',assessments:{initial:{done:true,date:'2026/06/02'},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}},referral:{status:'無需轉介',note:''},upstreamContact:{name:'王個管師',phone:'04-2222-3333',line:'cy_wang'},familyRelation:'女兒',familyPhone:'0922-111-222',openDate:'2026/06/01',closeDate:'2026/06/22',roomPref:'single',address:'彰化縣彰化市中正路50號',department:'骨科',admissionDiagnosis:'Closed fracture, right femoral neck, s/p fall at home',dischargeDiagnosis:'S/p right hip hemiarthroplasty, fracture healing well, weight-bearing as tolerated',medicalHistory:'骨質疏鬆症病史、高血壓病史8年',admissionTubes:'Foley',onsetDate:'2026/05/26',icdCode:'S72002',overviewNote:'',dischargeDest2:'',patientDest:'回家',homeVisitDate:'',homeVisitStaff:'',dispositionNote:'',assessmentRecords:[{date:'2026/06/03',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'2026/06/22',week:'第3週',stage:'複評',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'脆弱性骨折',judgedBy:'張宗達 醫師',reason:'個案符合 脆弱性骨折 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'}},
@@ -146,6 +153,10 @@ const CASES={
       {dow:5,period:'午休',timeRange:'約 12:00-13:30',profession:'ST',therapist:'林雅芳',duration:'40分鐘',tag:null},
     ]},
     {id:'ftest',medicalRecordNo:'00099001',name:'測試個案',birthDate:'1958/03/15',idNumber:'T123456789',mode:'住院',modeType:'hosp',disease:'腦中風',icdCode:'I639',source:'彰化基督',date:'2026/07/20',status:'照護中',mgr:'林美惠',formal:true,countdown:null,week:2,timelineStep:'照護中',timelineSub:null,openDate:'2026/07/20',closeDate:'2026/10/12',roomPref:null,address:'彰化縣員林市中山路100號',department:'復健科',bedNo:'303-A',attendingDoctor:'李律儀',admissionTubes:'NG, Foley',onsetDate:'2026/07/18',overviewNote:'',familyRelation:'女兒',familyName:'測試家屬',familyPhone:'0912-000-111',upstreamContact:{name:'王護理師',phone:'04-8888-9999',line:'test_line'},referral:{status:'待轉介',note:''},dischargeDest2:null,patientDest:null,homeVisitDate:null,homeVisitStaff:null,dispositionNote:'',assessments:{initial:{done:true,date:'2026/07/21'},f1:{done:false,date:null},f2:{done:false,date:null},f3:{done:false,date:null},close:{done:false,date:null}},assessmentRecords:[{date:'2026/07/21',week:'第1週',stage:'初評',status:'已完成',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'複評',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']},{date:'—',week:'—',stage:'結案評估',status:'尚未開始',therapists:['李大熊(PT)','陳姍姍(OT)','林怡如(ST)']}],judgeRecord:{result:'是PAC',diseaseCategory:'腦中風',judgedBy:'張宗達 醫師',reason:'個案符合 腦中風 PAC 收案條件，開刀位置及病摘內容確認無誤，建議收案。',suggestion:'建議優先安排物理及職能治療，語言治療視評估結果決定頻率。'},admissionDiagnosis:'Acute right MCA infarction with left hemiparesis',dischargeDiagnosis:'',medicalHistory:'高血壓病史8年',referralDoc:{name:'轉診單.pdf',size:'0.9 MB',date:'2026/07/20'}},
+    // 假資料：患者管理示範用——一般個案（僅展開列，無詳情頁，欄位精簡）
+    {id:'g1',caseType:'一般',needsRehab:true,medicalRecordNo:'00012340',idNumber:'P223344556',name:'謝國雄',birthDate:'1960/05/12',gender:'男',mode:'住院',modeType:'hosp',disease:'一般骨科術後照護',source:'門診',date:'2026/07/18',updatedAt:'2026/07/18',status:'照護中',mgr:'林美惠',formal:true,openDate:'2026/07/18',closeDate:'2026/09/12',address:'彰化縣員林市三民街8號',familyRelation:'兒子',familyName:'謝小明',familyPhone:'0911-222-333',admissionTubes:'無',bedNo:'205-B',onsetDate:'2026/07/15',admissionDiagnosis:'S/p right knee replacement, general post-op rehabilitation'},
+    // 假資料：患者管理示範用——復健病房個案（由收案管理「非PAC→復健病房」交付而來，僅展開列）
+    {id:'g2',caseType:'復健病房',needsRehab:true,medicalRecordNo:'00012345',idNumber:'A134585678',name:'賴玉梅',birthDate:'1950/01/20',gender:'女',mode:'住院',modeType:'hosp',disease:'腦中風',source:'彰基醫院',date:'2026/07/25',updatedAt:'2026/07/25',status:'照護中',mgr:'林美惠',formal:true,openDate:'2026/07/20',closeDate:'2026/10/12',address:'彰化縣芬園鄉彰南路3號',familyRelation:'兒子',familyName:'陳小明',familyPhone:'0912-345-678',admissionTubes:'無',bedNo:'301-A（單人）',onsetDate:'2026/07/18',admissionDiagnosis:'Mild right MCA territory infarction, transferred to rehab ward for continued therapy'},
   ]
 };
 
@@ -271,40 +282,56 @@ function archiveCloseBadge(c){
   return {text:'其他',cls:'badge-gray'};
 }
 
+// ── 刪除已結案資料：永久刪除，適用於結案管理「所有患者」與「PAC個案」兩個子分頁 ──
+function deleteArchivedCase(caseId,caseName){
+  const proceed=confirm(`確定要永久刪除「${caseName}」這筆已結案資料嗎？此動作無法復原。`);
+  if(!proceed) return;
+  const idx=CASES.formal.findIndex(x=>x.id===caseId);
+  if(idx>-1) CASES.formal.splice(idx,1);
+  alert(`已永久刪除「${caseName}」的資料。`);
+  renderPage('list');
+}
 // ── 回復資料 Modal：將「結案管理」封存個案移回「正式病歷」，比照收案管理同款回復邏輯改寫 ──
 function openRestoreModal(caseId,caseName){
+  const c=CASES.formal.find(x=>x.id===caseId);
+  const type=c?getCaseType(c):'一般';
   let m=document.getElementById('modal-restore');
   if(!m){
     m=document.createElement('div');
     m.id='modal-restore';
     m.className='modal-overlay hidden';
-    m.innerHTML=`<div class="modal" style="max-width:440px">
+    document.body.appendChild(m);
+    m.addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+  }
+  const isPacType=type==='PAC';
+  const bodyContent=isPacType
+    ?`<div class="info-note blue" style="margin-bottom:14px">此個案將回復到進入患者管理當下的狀態，重新進入「PAC個案」列表，聯繫紀錄、病摘、PAC判斷紀錄、展延歷程等資料皆完整保留，不會清空。</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px" id="restore-name"></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
+          <input type="radio" name="restore-status" value="pac-full" checked style="accent-color:var(--blue)">
+          <div><div style="font-size:13px;font-weight:600">恢復為進行中的PAC個案</div><div style="font-size:11px;color:var(--gray-400)">保留完整服務歷程（聯繫紀錄／病摘／PAC判斷／展延紀錄等），僅將結案狀態解除，展延狀態一併回復至最初的「照護中」</div></div>
+        </label>
+      </div>`
+    :`<div class="info-note amber" style="margin-bottom:14px">🔄 ${type==='復健病房'?'復健病房':'一般、復健病房'}患者回復資料<br>回復後個案將重新進入「所有患者」列表，請選擇回復方式。</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px" id="restore-name"></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
+          <input type="radio" name="restore-status" value="${type==='復健病房'?'rehabward':'general'}" checked style="accent-color:var(--blue)">
+          <div><div style="font-size:13px;font-weight:600">恢復為${type==='復健病房'?'復健病房':'一般'}患者</div><div style="font-size:11px;color:var(--gray-400)">保留基本資料與病摘，其餘資料清空</div></div>
+        </label>
+      </div>`;
+  m.innerHTML=`<div class="modal" style="max-width:440px">
       <div class="modal-header">
-        <div class="modal-title">🔄 回復資料</div>
+        <div class="modal-title">🔄 ${isPacType?'PAC患者回復資料':(type==='復健病房'?'復健病房患者回復資料':'一般、復健病房患者回復資料')}</div>
         <button class="modal-close" onclick="closeModal('modal-restore')">✕</button>
       </div>
-      <div class="modal-body">
-        <div class="info-note amber" style="margin-bottom:14px">回復後個案將移回「正式病歷」列表，請選擇回復後的初始狀態。</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:12px" id="restore-name"></div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
-            <input type="radio" name="restore-status" value="照護中" checked style="accent-color:var(--blue)">
-            <div><div style="font-size:13px;font-weight:600">照護中</div><div style="font-size:11px;color:var(--gray-400)">重新進入照護流程，比照一般個案繼續追蹤</div></div>
-          </label>
-          <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
-            <input type="radio" name="restore-status" value="展延中" style="accent-color:var(--blue)">
-            <div><div style="font-size:13px;font-weight:600">展延中・待展延申請</div><div style="font-size:11px;color:var(--gray-400)">回到待重新送出展延申請的狀態</div></div>
-          </label>
-        </div>
-      </div>
+      <div class="modal-body">${bodyContent}</div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('modal-restore')">取消</button>
         <button class="btn btn-primary" onclick="confirmRestore()">確認回復</button>
       </div>
     </div>`;
-    document.body.appendChild(m);
-    m.addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
-  }
   document.getElementById('restore-name').textContent=`個案：${caseName}`;
   m.dataset.caseId=caseId;
   openModal('modal-restore');
@@ -313,30 +340,44 @@ function confirmRestore(){
   const m=document.getElementById('modal-restore');
   const caseId=m.dataset.caseId;
   const sel=m.querySelector('input[name="restore-status"]:checked');
-  const status=sel?sel.value:'照護中';
+  const choice=sel?sel.value:'general';
   const c=CASES.formal.find(x=>x.id===caseId);
   if(c){
-    c.status=status;
-    c.timelineStep=status;
-    c.timelineSub=status==='展延中'?'待展延申請':null;
+    if(choice==='pac-full'){
+      // PAC個案：完整保留聯繫紀錄／病摘／PAC判斷／展延紀錄等服務歷程，僅解除結案狀態，展延狀態一併回復至最初的「照護中」
+      c.status='照護中';
+      c.timelineStep='照護中';
+      c.timelineSub=null;
+      c.countdown=null;
+      c.extensionResult=null;
+      c.hadExtensionFail=false;
+      c.approvedExtensionWeeks=0;
+    } else {
+      // 一般／復健病房：保留基本資料與病摘（disease/mode/needsRehab/address/familyName/familyPhone/familyRelation/idNumber/medicalRecordNo/admissionTubes/bedNo/admissionDiagnosis 等），其餘欄位清空重來
+      c.caseType=choice==='rehabward'?'復健病房':'一般';
+      c.status='照護中';
+      delete c.diseaseCategory;
+      delete c.judgeRecord;
+      c.openDate='';
+      c.closeDate='';
+    }
     c.archiveType=null;
     c.archiveDate=null;
     c.archiveOperator=null;
     c.archiveReason=null;
-    c.extensionResult=null;
+    c.archiveOutcome='';
   }
   closeModal('modal-restore');
-  alert(`個案已回復！狀態更新為「${status}」，已移回正式病歷列表。`);
+  alert(`個案已回復，已移回「${choice==='pac-full'?'PAC個案':'所有患者'}」列表。`);
   currentListTab='formal';
   renderPage('list');
 }
 
-// ── 結案管理類型清單：資料性錯誤兩項＋轉居家醫療；「非PAC」「正常結案」「結案失敗」皆走各自獨立流程（鎖定 preset 觸發 openArchiveModal，不出現在此清單）
+// ── 結案管理類型清單：資料性錯誤兩項；「非PAC」「正常結案」「結案失敗」皆走各自獨立流程（鎖定 preset 觸發 openArchiveModal，不出現在此清單）
 // field：選擇該類型後顯示的必填文字欄位標籤；未設定表示不需額外說明
 const ARCHIVE_TYPES_FORMAL=[
   {type:'資料輸入錯誤'},
   {type:'重複建立個案'},
-  {type:'轉居家醫療'}, // 醫師電話通知個管師個案已轉居家醫療計畫，個管師手動封存，非系統鎖定觸發
 ];
 
 // ── 時間軸節點定義 ──
@@ -518,7 +559,8 @@ function renderPage(page,caseId,formName){
   else if(page==='his-record') renderHisRecord(content,caseId);
 }
 
-let currentListTab='formal'; // 'formal' | 'archive'
+let currentListTab='formal'; // 'formal'（所有患者） | 'pac'（PAC個案） | 'archive'（結案管理）
+let archiveSubTab='all'; // 結案管理巢狀子Tab：'all'（所有患者） | 'pac'（PAC個案）
 let tabView={formal:'list',archive:'list'}; // 各 Tab 各自的視圖狀態：'card' or 'list'；正式病歷 Tab 預設「列表」（表格檢視）
 let listSelection={temp:null,formal:null,archive:null}; // 列表視圖（左右分割）時，各 Tab 目前選中的個案 id
 let dualPaneMode=false; // 雙欄瀏覽模式（獨立於卡片／表格檢視的另一種切換）：開啟後不論目前是卡片或表格檢視，一律改為左側精簡清單＋右側完整詳情頁
@@ -536,9 +578,10 @@ function filterByArchiveOutcome(prefix){
 let listSortOrder='dateDesc'; // 個案列表排序：'dateDesc'(收案日期新→舊，預設) | 'dateAsc' | 'nameAsc' | 'closeDateAsc'
 
 function renderList(container){
-  document.getElementById('bc').textContent='個案管理';
+  document.getElementById('bc').textContent='患者管理';
   const isDoc=currentRole==='doc';
   const isNur=currentRole==='nur';
+  const isMgr=currentRole==='mgr';
 
   const allCases=CASES.formal;
   const countBy=(status)=>allCases.filter(c=>c.status===status&&c.status!=='封存').length;
@@ -554,6 +597,11 @@ function renderList(container){
   const archiveAllForStats=allCases.filter(c=>c.status==='封存');
   const successThisYear=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,4)==='2026'&&(c.archiveOutcome||'').startsWith('結案成功')).length;
   const failThisYear=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,4)==='2026'&&(c.archiveOutcome||'').startsWith('結案失敗')).length;
+  // 「今天」固定為 2026/06/25，本月＝2026/06；結案管理儀表板改用本月範圍，且僅計算 PAC 類型個案
+  const successThisMonth=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,7)==='2026/06'&&getCaseType(c)==='PAC'&&(c.archiveOutcome||'').startsWith('結案成功')).length;
+  const failThisMonth=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,7)==='2026/06'&&getCaseType(c)==='PAC'&&(c.archiveOutcome||'').startsWith('結案失敗')).length;
+  const generalArchiveThisMonth=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,7)==='2026/06'&&getCaseType(c)==='一般').length;
+  const rehabWardArchiveThisMonth=archiveAllForStats.filter(c=>(c.archiveDate||'').slice(0,7)==='2026/06'&&getCaseType(c)==='復健病房').length;
   // 搜尋／篩選列「全部負責人」「全部來源醫院」：依 CASES.formal 現有資料動態產生不重複清單
   const mgrOptions=[...new Set(CASES.formal.map(c=>c.mgr).filter(Boolean))];
   const sourceOptions=[...new Set(CASES.formal.map(c=>c.source).filter(Boolean))];
@@ -570,9 +618,11 @@ function renderList(container){
   const extraCardFilterClass=(type)=>`stat-card${extraCardFilter===type?' active-filter':''}`;
 
   const formalActive=sortCases(applyRoleFilter(CASES.formal.filter(c=>c.status!=='封存')));
+  const pacActive=sortCases(applyRoleFilter(CASES.formal.filter(c=>c.status!=='封存'&&getCaseType(c)==='PAC')));
   const archiveCasesAll=allCases.filter(c=>c.status==='封存');
-  // 封存 Tab：封存類型／封存日期區間／今年結案結果（儀表板卡片）篩選同時作用（AND），篩選後再依排序方式排列
+  // 封存 Tab：封存類型／封存日期區間／今年結案結果（儀表板卡片）篩選同時作用（AND），再依 archiveSubTab（所有患者／PAC個案）過濾，篩選後再依排序方式排列
   const archiveCases=sortCases(archiveCasesAll.filter(c=>{
+    if(archiveSubTab==='pac'&&getCaseType(c)!=='PAC') return false;
     if(archiveTypeFilter&&c.archiveType!==archiveTypeFilter) return false;
     if(archiveDateFrom||archiveDateTo){
       const d=c.archiveDate?new Date(c.archiveDate.replace(/\//g,'-')):null;
@@ -586,7 +636,7 @@ function renderList(container){
     }
     return true;
   }));
-  const tabCaseMap={formal:formalActive,archive:archiveCases};
+  const tabCaseMap={formal:formalActive,pac:pacActive,archive:archiveCases};
   const currentTabCases=tabCaseMap[currentListTab];
 
   // 雙欄瀏覽模式：先確定選中個案，讓側邊欄 highlight 與右側詳情頁一致（正式病歷／結案管理共用同一套雙欄邏輯）
@@ -597,12 +647,9 @@ function renderList(container){
   }
 
   let tabBodyHtml='';
-  if(dualPaneMode){
-    const dualPaneEmptyMsg=currentListTab==='archive'
-      ?(archiveCasesAll.length?'沒有符合條件的結案紀錄':'目前沒有結案紀錄')
-      :'目前沒有個案';
+  if(dualPaneMode&&currentListTab==='pac'){
+    const dualPaneEmptyMsg='目前沒有個案';
     tabBodyHtml=`
-      ${currentListTab==='archive'?archiveFilterBar():''}
       <div style="display:flex;gap:14px;align-items:flex-start">
         <div style="width:168px;flex-shrink:0;display:flex;flex-direction:column;gap:6px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:10px;max-height:calc(100vh - 300px);overflow-y:auto">
           ${currentTabCases.length?currentTabCases.map(c=>dualPaneListItem(c,currentListTab)).join(''):`<div style="text-align:center;padding:20px 6px;color:var(--gray-400);font-size:11px">${dualPaneEmptyMsg}</div>`}
@@ -610,24 +657,17 @@ function renderList(container){
         <div id="dual-pane-detail-panel" style="flex:1;min-width:0"></div>
       </div>
     `;
-  } else if(currentListTab==='archive'&&tabView.archive==='card'){
-    tabBodyHtml=`
-      ${archiveFilterBar()}
-      <div class="case-grid">${archiveCases.length?archiveCases.map(c=>caseCard(c)).join(''):`<div style="text-align:center;padding:20px 8px;color:var(--gray-400);font-size:12px">${archiveCasesAll.length?'沒有符合條件的結案紀錄':'目前沒有結案紀錄'}</div>`}</div>
-    `;
   } else if(currentListTab==='archive'){
     tabBodyHtml=`
       ${archiveFilterBar()}
-      ${renderArchiveTable(archiveCases,archiveCasesAll.length?'沒有符合條件的結案紀錄':'目前沒有結案紀錄')}
+      ${archiveSubTab==='pac'?renderArchiveTable(archiveCases,archiveCasesAll.length?'沒有符合條件的結案紀錄':'目前沒有結案紀錄'):renderArchiveTableSimple(archiveCases,archiveCasesAll.length?'沒有符合條件的結案紀錄':'目前沒有結案紀錄')}
     `;
-  } else if(tabView[currentListTab]==='card'){
-    tabBodyHtml=`<div class="case-grid">${currentTabCases.map(c=>caseCard(c)).join('')}</div>`;
   } else {
     tabBodyHtml=renderCaseTable(currentTabCases,'目前沒有個案');
   }
 
-  // 搜尋／篩選列＋排序／檢視切換列：僅正式病歷 Tab 套用新版設計，結案管理 Tab 維持原樣（本次調整範圍僅限正式病歷 Tab）
-  const isFormalTab=currentListTab==='formal';
+  // 搜尋／篩選列＋排序／檢視切換列：所有患者／PAC個案 Tab 套用同一版設計，結案管理 Tab 維持原樣
+  const isFormalTab=currentListTab==='formal'||currentListTab==='pac';
   const searchBarHtml=isFormalTab?`
     <div class="search-bar">
       <div class="search-wrap">
@@ -657,13 +697,22 @@ function renderList(container){
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="搜尋姓名、病歷號…">
       </div>
-      <select class="filter-sel"><option>全部類型</option><option>住院PAC</option><option>日照PAC</option><option>居家PAC</option><option>一般</option></select>
+      <select class="filter-sel"><option>全部類型</option><option>PAC</option><option>復健病房</option><option>一般</option></select>
       <select class="filter-sel">
         <option>全部疾病別</option>
         <option>腦中風</option><option>創傷性神經損傷</option><option>脆弱性骨折</option><option>衰弱高齡</option><option>一般（非PAC）</option>
       </select>
+      <select class="filter-sel">
+        <option>全部照護模式</option>
+        <option>住院</option><option>日照</option><option>居家</option>
+      </select>
+      <select class="filter-sel">
+        <option>全部負責人</option>
+        ${mgrOptions.map(m=>`<option>${m}</option>`).join('')}
+      </select>
     </div>
   `;
+  // 都不提供卡片檢視；雙欄瀏覽僅在「PAC個案」Tab 提供，其餘Tab只有列表模式
   const sortToggleHtml=isFormalTab?`
     <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:16px">
       <select class="filter-sel" id="sort-order-select" onchange="onSortOrderChange(this.value)">
@@ -677,9 +726,8 @@ function renderList(container){
         <option value="updatedAsc" ${listSortOrder==='updatedAsc'?'selected':''}>最後更新時間（舊→新）</option>
       </select>
       <div class="view-toggle">
-        <button class="view-toggle-btn ${(!dualPaneMode&&tabView[currentListTab]==='card')?'active':''}" onclick="switchView('card')">▦ 卡片</button>
-        <button class="view-toggle-btn ${(!dualPaneMode&&tabView[currentListTab]==='list')?'active':''}" onclick="switchView('list')">☰ 列表</button>
-        <button class="view-toggle-btn ${dualPaneMode?'active':''}" onclick="toggleDualPane()">${DUAL_PANE_ICON} 雙欄</button>
+        <button class="view-toggle-btn ${!dualPaneMode?'active':''}" onclick="switchView('list')">☰ 列表</button>
+        ${currentListTab==='pac'?`<button class="view-toggle-btn ${dualPaneMode?'active':''}" onclick="toggleDualPane()">${DUAL_PANE_ICON} 雙欄</button>`:''}
       </div>
     </div>
   `:`
@@ -691,11 +739,7 @@ function renderList(container){
         <option value="closeDateAsc" ${listSortOrder==='closeDateAsc'?'selected':''}>預估出院日期（近→遠）</option>
       </select>
       <div class="view-toggle">
-        <button class="view-toggle-btn ${tabView[currentListTab]==='card'?'active':''}" onclick="switchView('card')">▦ 卡片</button>
-        <button class="view-toggle-btn ${tabView[currentListTab]==='list'?'active':''}" onclick="switchView('list')">☰ 列表</button>
-      </div>
-      <div class="view-toggle" title="雙欄瀏覽模式">
-        <button class="view-toggle-btn ${dualPaneMode?'active':''}" onclick="toggleDualPane()">${DUAL_PANE_ICON} 雙欄</button>
+        <button class="view-toggle-btn active">☰ 列表</button>
       </div>
     </div>
   `;
@@ -703,19 +747,45 @@ function renderList(container){
   container.innerHTML=`
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
       <div>
-        <div style="font-size:18px;font-weight:700">個案管理</div>
-        <div style="font-size:12px;color:var(--gray-500);margin-top:3px">共 ${allCases.length} 位個案・住院 ${modeCount.hosp}・日照 ${modeCount.day}・居家 ${modeCount.home}</div>
+        <div style="font-size:18px;font-weight:700">患者管理</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:3px">共 ${allCases.length} 位患者・PAC ${allCases.filter(c=>getCaseType(c)==='PAC').length}人・復健病房 ${allCases.filter(c=>getCaseType(c)==='復健病房').length}人・一般 ${allCases.filter(c=>getCaseType(c)==='一般').length}人</div>
       </div>
+      ${isMgr?`<button class="btn btn-primary" onclick="openNewPatientModal()">📥 從杏翔匯入患者</button>`:''}
     </div>
 
-    <!-- Tabs：正式病歷 / 結案管理 -->
+    <!-- Tabs：所有患者 / PAC個案 / 結案管理（結案管理下再分兩個子Tab：所有患者／PAC個案） -->
     <div class="tabs">
-      <div class="tab ${currentListTab==='formal'?'active':''}" onclick="switchTab('formal')">正式病歷 <span class="badge badge-blue" style="margin-left:4px">${formalActive.length}</span></div>
+      <div class="tab ${currentListTab==='formal'?'active':''}" onclick="switchTab('formal')">所有患者 <span class="badge badge-blue" style="margin-left:4px">${allCases.filter(c=>c.status!=='封存').length}</span></div>
+      <div class="tab ${currentListTab==='pac'?'active':''}" onclick="switchTab('pac')">PAC個案 <span class="badge badge-blue" style="margin-left:4px">${allCases.filter(c=>c.status!=='封存'&&getCaseType(c)==='PAC').length}</span></div>
       <div class="tab ${currentListTab==='archive'?'active':''}" onclick="switchTab('archive')" style="color:var(--gray-400)">結案管理 <span class="badge badge-gray" style="margin-left:4px">${archiveCasesAll.length}</span></div>
     </div>
+    ${currentListTab==='archive'?`
+    <div class="tabs" style="margin-top:-1px;margin-bottom:14px">
+      <div class="tab ${archiveSubTab==='all'?'active':''}" style="font-size:12px;padding:8px 14px" onclick="switchArchiveSubTab('all')">所有患者 <span class="badge badge-gray" style="margin-left:4px">${archiveCasesAll.filter(c=>getCaseType(c)!=='PAC').length}</span></div>
+      <div class="tab ${archiveSubTab==='pac'?'active':''}" style="font-size:12px;padding:8px 14px" onclick="switchArchiveSubTab('pac')">PAC個案 <span class="badge badge-gray" style="margin-left:4px">${archiveCasesAll.filter(c=>getCaseType(c)==='PAC').length}</span></div>
+    </div>
+    `:''}
 
     ${(!isDoc&&!isNur&&currentListTab==='formal')?`
-    <!-- 統計卡：單一列 4 張等寬卡片，僅正式病歷 Tab 顯示 -->
+    <!-- 統計卡：「所有患者」Tab 顯示各類型收治中人數 -->
+    <div class="stats-row">
+      <div class="stat-card" onclick="switchTab('pac')">
+        <div class="stat-label">PAC個案</div>
+        <div class="stat-value">${allCases.filter(c=>c.status!=='封存'&&getCaseType(c)==='PAC').length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">復健病房</div>
+        <div class="stat-value">${allCases.filter(c=>c.status!=='封存'&&getCaseType(c)==='復健病房').length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">一般</div>
+        <div class="stat-value">${allCases.filter(c=>c.status!=='封存'&&getCaseType(c)==='一般').length}</div>
+      </div>
+    </div>
+    `:''}
+
+    ${(!isDoc&&!isNur&&currentListTab==='pac')?`
+    <!-- 統計卡：單一列 4 張等寬卡片，僅「PAC個案」Tab 顯示（原本正式病歷 Tab 的展延/結案倒數指標，僅對PAC個案有意義） -->
     <div class="stats-row">
       <div class="${statFilterClass('展延中')}" onclick="filterByStatus('展延中')">
         <div class="stat-label">展延申請中</div>
@@ -736,16 +806,29 @@ function renderList(container){
     </div>
     `:''}
 
-    ${(!isDoc&&!isNur&&currentListTab==='archive')?`
-    <!-- 結案管理儀表板：今年成功／失敗結案筆數，點擊卡片可篩選下方列表 -->
+    ${(!isDoc&&!isNur&&currentListTab==='archive'&&archiveSubTab==='pac')?`
+    <!-- 結案管理儀表板（PAC個案子分頁）：本月PAC結案成功／失敗筆數，點擊卡片可篩選下方列表 -->
     <div class="stats-row">
       <div class="stat-card${archiveOutcomeFilter==='結案成功'?' active-filter':''}" onclick="filterByArchiveOutcome('結案成功')">
-        <div class="stat-label">今年成功結案</div>
-        <div class="stat-value">${successThisYear}</div>
+        <div class="stat-label">本月 PAC 結案成功</div>
+        <div class="stat-value">${successThisMonth}</div>
       </div>
       <div class="stat-card${archiveOutcomeFilter==='結案失敗'?' active-filter':''}" onclick="filterByArchiveOutcome('結案失敗')">
-        <div class="stat-label">今年結案失敗</div>
-        <div class="stat-value">${failThisYear}</div>
+        <div class="stat-label">本月 PAC 結案失敗</div>
+        <div class="stat-value">${failThisMonth}</div>
+      </div>
+    </div>
+    `:''}
+    ${(!isDoc&&!isNur&&currentListTab==='archive'&&archiveSubTab==='all')?`
+    <!-- 結案管理儀表板（所有患者子分頁）：本月一般／復健病房結案筆數 -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">本月一般結案</div>
+        <div class="stat-value">${generalArchiveThisMonth}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">本月復健病房結案</div>
+        <div class="stat-value">${rehabWardArchiveThisMonth}</div>
       </div>
     </div>
     `:''}
@@ -806,6 +889,11 @@ function caseListSidebarItem(c,tabKey){
 
 function switchTab(tabKey){
   currentListTab=tabKey;
+  if(tabKey!=='pac') dualPaneMode=false;
+  renderList(document.getElementById('main-content'));
+}
+function switchArchiveSubTab(subTab){
+  archiveSubTab=subTab;
   renderList(document.getElementById('main-content'));
 }
 function onSortOrderChange(val){
@@ -908,15 +996,317 @@ function caseCard(c){
   </div>`;
 }
 
-// ── 個案表格（正式病歷 Tab 預設檢視）：姓名／病歷號碼／身分證／PAC疾病別／照護模式／開案日／預計結案日／照護進度／展延／評估量表／轉介／負責人 ──
+// 病摘徽章：比照收案管理模組的呈現方式——已提供（綠）／尚未提供（灰），依是否有主訴/病史/入院診斷/出院診斷等欄位判斷
+function simpleSummaryBadge(c){
+  const hasSummary=!!(c.chiefComplaint||c.admissionDiagnosis||c.dischargeDiagnosis||c.medicalHistory);
+  return hasSummary
+    ?`<span class="badge badge-clickable badge-green" onclick="event.stopPropagation();alert('病摘瀏覽功能開發中')">已提供 ›</span>`
+    :`<span class="badge badge-clickable badge-gray" onclick="event.stopPropagation();alert('病摘瀏覽功能開發中')">尚未提供 ›</span>`;
+}
+// ── 結案管理（所有患者展開列快速入口）：依個案類型顯示可選項（PAC限定選項僅PAC個案可見），點擊直接送出對應結案流程 ──
+function openQuickArchiveModal(caseId){
+  currentCase=caseId;
+  const c=CASES.formal.find(x=>x.id===caseId);
+  if(!c) return;
+  const isPacType=getCaseType(c)==='PAC';
+  const body=document.getElementById('quick-archive-body');
+  body.innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${isPacType?`<button type="button" class="btn btn-secondary" style="text-align:left;padding:12px 14px" onclick="quickArchivePacSuccess()">PAC成功結案</button>`:''}
+      ${isPacType?`<button type="button" class="btn btn-secondary" style="text-align:left;padding:12px 14px" onclick="quickArchivePacFail()">PAC不成功結案</button>`:''}
+      <button type="button" class="btn btn-secondary" style="text-align:left;padding:12px 14px" onclick="quickArchiveSimple('資料輸入錯誤')">資料輸入錯誤</button>
+      <button type="button" class="btn btn-secondary" style="text-align:left;padding:12px 14px" onclick="quickArchiveSimple('重複建立個案')">重複建立個案</button>
+      <button type="button" class="btn btn-secondary" style="text-align:left;padding:12px 14px" onclick="quickArchiveSimple('結束此筆資料')">結束此筆資料</button>
+    </div>
+  `;
+  openModal('modal-quick-archive');
+}
+function quickArchivePacSuccess(){
+  closeModal('modal-quick-archive');
+  openArchiveModal({formal:true,presetType:'正常結案',locked:true,showCloseDate:true,showDischargeDest:true,successMsg:()=>'已成功結案，個案移至結案管理'});
+}
+function quickArchivePacFail(){
+  closeModal('modal-quick-archive');
+  openArchiveModal({formal:true,presetType:'結案失敗',locked:true,showCloseDate:true,showDischargeDest:true,successMsg:()=>'已標記結案失敗，個案移至結案管理'});
+}
+function quickArchiveSimple(type){
+  closeModal('modal-quick-archive');
+  openArchiveModal({formal:true,presetType:type,locked:true});
+}
+
+// ── 轉換類型：一般／復健病房／PAC 三種類型互轉，只能轉成非目前類型的其他類型，可用於「所有患者」展開區與PAC個案詳情頁 ──
+let convertPacCaseId=null;
+function openConvertPatientTypeModal(caseId){
+  const c=CASES.formal.find(x=>x.id===caseId);
+  if(!c) return;
+  convertPacCaseId=caseId;
+  const currentType=getCaseType(c);
+  const allTypes=['PAC','復健病房','一般'];
+  const targets=allTypes.filter(t=>t!==currentType);
+  document.getElementById('modal-convert-pac-title').textContent=`🔀 轉換類型（目前：${currentType}）`;
+  const body=document.getElementById('convert-pac-body');
+  body.innerHTML=`
+    <div class="form-group" style="margin-bottom:12px">
+      <label>轉換為 <span class="required">*</span></label>
+      <select class="form-control" id="cp-target" onchange="renderConvertPatientTypeFields()">
+        <option value="">請選擇</option>
+        ${targets.map(t=>`<option value="${t}">${t}</option>`).join('')}
+      </select>
+    </div>
+    <div id="cp-fields"></div>
+  `;
+  openModal('modal-convert-pac');
+}
+function renderConvertPatientTypeFields(){
+  const target=document.getElementById('cp-target').value;
+  const fieldsEl=document.getElementById('cp-fields');
+  if(target==='PAC'){
+    const proceed=confirm('轉為PAC收治需要重新進行PAC判斷。確定要繼續嗎？');
+    if(!proceed){ document.getElementById('cp-target').value=''; fieldsEl.innerHTML=''; return; }
+    fieldsEl.innerHTML=`
+      <div class="form-group" style="margin-bottom:12px">
+        <label>疾病別分類 <span class="required">*</span></label>
+        <select class="form-control" id="cp-disease">
+          <option value="">請選擇</option>
+          <option value="腦中風">腦中風</option>
+          <option value="創傷性神經損傷">創傷性神經損傷</option>
+          <option value="脆弱性骨折">脆弱性骨折</option>
+          <option value="衰弱高齡">衰弱高齡</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>判斷者 <span class="required">*</span></label>
+        <select class="form-control" id="cp-judgedby">
+          <option value="張宗達 醫師">張宗達 醫師</option>
+          <option value="陳玉玲 護理師">陳玉玲 護理師</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>轉為PAC原因說明 <span class="required">*</span></label>
+        <textarea class="form-control" rows="3" id="cp-reason" placeholder="請說明轉為PAC收治的臨床依據，例如病情變化、家屬要求評估、原判斷疏漏等"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>PAC照護模式 <span class="required">*</span></label>
+        <select class="form-control" id="cp-mode">
+          <option value="">請選擇</option>
+          <option value="住院">住院</option>
+          <option value="日照">日照</option>
+          <option value="居家">居家</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>預計開始日期 <span class="required">*</span></label>
+        <input class="form-control" type="date" id="cp-opendate" value="2026-06-25" onchange="onConvertPacDateChange()">
+      </div>
+      <div class="form-group">
+        <label>預計結束日期 <span class="required">*</span></label>
+        <input class="form-control" type="date" id="cp-closedate">
+      </div>
+    `;
+  } else if(target==='復健病房'||target==='一般'){
+    fieldsEl.innerHTML=`
+      <div class="form-group" style="margin-bottom:12px">
+        <label>照護模式 <span class="required">*</span></label>
+        <select class="form-control" id="cp-simple-mode">
+          <option value="">請選擇</option>
+          <option value="住院">住院</option>
+          <option value="日照">日照</option>
+          <option value="居家">居家</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>是否需復健 <span class="required">*</span></label>
+        <select class="form-control" id="cp-simple-needsrehab">
+          <option value="">請選擇</option>
+          <option value="true">需復健</option>
+          <option value="false">不需復健</option>
+        </select>
+      </div>
+    `;
+  } else {
+    fieldsEl.innerHTML='';
+  }
+}
+// 預計開始日期變動時，若疾病別已選，依 PAC_CARE_PERIOD 的 weeksMax 自動帶入預計結束日期（可手動調整）
+function onConvertPacDateChange(){
+  const diseaseSel=document.getElementById('cp-disease');
+  const openInput=document.getElementById('cp-opendate');
+  const closeInput=document.getElementById('cp-closedate');
+  if(!diseaseSel||!diseaseSel.value||!openInput.value) return;
+  const period=PAC_CARE_PERIOD[diseaseSel.value];
+  if(!period) return;
+  const openD=new Date(openInput.value);
+  openD.setDate(openD.getDate()+period.weeksMax*7);
+  closeInput.value=openD.toISOString().slice(0,10);
+}
+function submitConvertPatientType(){
+  const c=CASES.formal.find(x=>x.id===convertPacCaseId);
+  if(!c){ closeModal('modal-convert-pac'); return; }
+  const target=document.getElementById('cp-target').value;
+  if(!target){ alert('請選擇要轉換的類型'); return; }
+  const modeTypeMap={'住院':'hosp','日照':'day','居家':'home'};
+  if(target==='PAC'){
+    const disease=document.getElementById('cp-disease').value;
+    const judgedBy=document.getElementById('cp-judgedby').value;
+    const reason=(document.getElementById('cp-reason').value||'').trim();
+    const mode=document.getElementById('cp-mode').value;
+    const openDate=document.getElementById('cp-opendate').value;
+    const closeDate=document.getElementById('cp-closedate').value;
+    if(!disease){ alert('請選擇疾病別分類'); return; }
+    if(!reason){ alert('請填寫轉為PAC原因說明'); return; }
+    if(!mode){ alert('請選擇PAC照護模式'); return; }
+    if(!openDate||!closeDate){ alert('請填寫預計開始與結束日期'); return; }
+    // 身分層資料（病歷號/身分證/地址/家屬）完全沿用不動；排床/復健排班既有紀錄不受影響
+    c.caseType='PAC';
+    c.disease=disease;
+    c.diseaseCategory=disease;
+    c.mode=mode;
+    c.modeType=modeTypeMap[mode];
+    c.openDate=openDate.replace(/-/g,'/');
+    c.closeDate=closeDate.replace(/-/g,'/');
+    c.week=1;
+    c.status='照護中';
+    c.timelineStep='照護中';
+    c.assessments={initial:{done:false,date:''},f1:{done:false,date:''},f2:{done:false,date:''},f3:{done:false,date:''},close:{done:false,date:''}};
+    c.referral={status:'待轉介',note:''};
+    c.judgeRecord={result:'是PAC',diseaseCategory:disease,judgedBy,reason:`【轉為PAC收治】${reason}`,suggestion:''};
+    c.convertedToPacNote=reason;
+    c.convertedToPacDate='2026/06/25';
+    if(mode==='住院'){
+      if(c.bedNo){ c.bedAssigned=true; }
+      else { c.bedAssigned=false; c.timelineSub='待排床'; }
+    } else if(mode==='居家'){
+      c.timelineStep='待評估';
+      c.timelineSub='待復健主管回覆是否收治居家復健';
+      c.rehabReport=null;
+    }
+    closeModal('modal-convert-pac');
+    alert(`已將 ${c.name} 轉為PAC收治個案。`);
+    renderPage('detail',c.id);
+  } else {
+    // 轉為復健病房／一般：不需重新判斷，僅需照護模式與是否需復健；若原本是PAC，PAC相關歷史資料（judgeRecord/assessments等）保留但不再顯示於一般欄位
+    const mode=document.getElementById('cp-simple-mode').value;
+    const needsRehabVal=document.getElementById('cp-simple-needsrehab').value;
+    if(!mode){ alert('請選擇照護模式'); return; }
+    if(needsRehabVal===''){ alert('請選擇是否需復健'); return; }
+    c.caseType=target;
+    c.mode=mode;
+    c.modeType=modeTypeMap[mode];
+    c.needsRehab=needsRehabVal==='true';
+    closeModal('modal-convert-pac');
+    alert(`已將 ${c.name} 轉換為「${target}」類型。`);
+    renderPage('list');
+  }
+}
+// ── 從杏翔匯入患者：mock 杏翔病患主檔，用病歷號直接查詢；prototype 階段固定 123456／234567 兩筆命中資料，其餘一律查無 ──
+const MOCK_PATIENT_MGMT_XX_DB=[
+  {medicalRecordNo:'123456',name:'黃國樑',idNumber:'Z123456789',gender:'男',address:'彰化縣鹿港鎮中山路20號',familyName:'黃小華',familyPhone:'0933-666-777',familyRelation:'兒子'},
+  {medicalRecordNo:'234567',name:'許雅婷',idNumber:'Y234567891',gender:'女',address:'彰化縣和美鎮彰美路8號',familyName:'許志明',familyPhone:'0922-888-999',familyRelation:'配偶'},
+];
+let newPatientImportedData=null;
+function openNewPatientModal(){
+  ['np-mrn-search','np-disease','np-opendate','np-closedate'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const modeSel=document.getElementById('np-mode'); if(modeSel) modeSel.value='';
+  const rehabSel=document.getElementById('np-needsrehab'); if(rehabSel) rehabSel.value='';
+  const casetypeSel=document.getElementById('np-casetype'); if(casetypeSel) casetypeSel.value='';
+  const admissionTypeWrap=document.getElementById('np-admissiontype-wrap'); if(admissionTypeWrap) admissionTypeWrap.classList.add('hidden');
+  const admissionTypeSel=document.getElementById('np-admissiontype'); if(admissionTypeSel) admissionTypeSel.value='';
+  const hintEl=document.getElementById('np-mrn-search-hint'); if(hintEl) hintEl.innerHTML='';
+  const importFields=document.getElementById('np-import-fields'); if(importFields) importFields.classList.add('hidden');
+  const saveBtn=document.getElementById('np-save-btn'); if(saveBtn) saveBtn.disabled=true;
+  newPatientImportedData=null;
+  openModal('modal-new-patient');
+}
+function searchNewPatientMrn(){
+  const mrn=(document.getElementById('np-mrn-search').value||'').trim();
+  const hintEl=document.getElementById('np-mrn-search-hint');
+  const importFields=document.getElementById('np-import-fields');
+  const saveBtn=document.getElementById('np-save-btn');
+  if(!mrn){ alert('請輸入病歷號'); return; }
+  const hit=MOCK_PATIENT_MGMT_XX_DB.find(r=>r.medicalRecordNo===mrn);
+  if(!hit){
+    hintEl.innerHTML=`<div class="info-note red" style="font-size:12px">查無此病歷號的杏翔資料，患者管理僅接受已在杏翔建檔的患者，請確認病歷號是否正確。</div>`;
+    importFields.classList.add('hidden');
+    saveBtn.disabled=true;
+    newPatientImportedData=null;
+    return;
+  }
+  newPatientImportedData=hit;
+  hintEl.innerHTML=`<div class="info-note green" style="font-size:12px">已查到杏翔資料，請確認下方基本資料後補齊剩餘欄位。</div>`;
+  document.getElementById('np-import-summary').textContent=`姓名：${hit.name}（${hit.gender}）　身分證：${hit.idNumber}　地址：${hit.address}　家屬：${hit.familyName}（${hit.familyRelation}）　電話：${hit.familyPhone}`;
+  importFields.classList.remove('hidden');
+  saveBtn.disabled=false;
+}
+// 類型＝一般 且 照護模式＝住院 時，多顯示「住院類型」欄位（一般住院／安寧）
+function onNewPatientTypeOrModeChange(){
+  const casetype=document.getElementById('np-casetype').value;
+  const mode=document.getElementById('np-mode').value;
+  const wrap=document.getElementById('np-admissiontype-wrap');
+  const show=(casetype==='一般'&&mode==='住院');
+  wrap.classList.toggle('hidden',!show);
+  if(!show) document.getElementById('np-admissiontype').value='';
+}
+function saveNewPatient(){
+  if(!newPatientImportedData){ alert('請先查詢杏翔並取得患者資料'); return; }
+  const casetypeVal=document.getElementById('np-casetype').value;
+  if(!casetypeVal){ alert('請選擇類型（復健病房或一般）'); return; }
+  const modeVal=document.getElementById('np-mode').value;
+  if(!modeVal){ alert('請選擇照護模式'); return; }
+  const needsRehabVal=document.getElementById('np-needsrehab').value;
+  if(needsRehabVal===''){ alert('請選擇是否需復健'); return; }
+  let admissionTypeVal=null;
+  if(casetypeVal==='一般'&&modeVal==='住院'){
+    admissionTypeVal=document.getElementById('np-admissiontype').value;
+    if(!admissionTypeVal){ alert('請選擇住院類型（一般住院或安寧）'); return; }
+  }
+  const diseaseVal=(document.getElementById('np-disease').value||'').trim();
+  const openDateVal=document.getElementById('np-opendate').value;
+  const closeDateVal=document.getElementById('np-closedate').value;
+  const modeTypeMap={'住院':'hosp','日照':'day','居家':'home'};
+  const d=newPatientImportedData;
+  const newCase={
+    id:'g'+Date.now(),
+    caseType:casetypeVal,
+    needsRehab:needsRehabVal==='true',
+    medicalRecordNo:d.medicalRecordNo,
+    idNumber:d.idNumber,
+    name:d.name,
+    gender:d.gender,
+    address:d.address,
+    familyName:d.familyName,
+    familyPhone:d.familyPhone,
+    familyRelation:d.familyRelation,
+    mode:modeVal,
+    modeType:modeTypeMap[modeVal]||null,
+    admissionType:admissionTypeVal,
+    disease:diseaseVal,
+    source:'杏翔匯入',
+    date:'2026/06/25',
+    updatedAt:'2026/06/25',
+    status:'照護中',
+    mgr:ROLES.mgr.name,
+    formal:true,
+    openDate:openDateVal?openDateVal.replace(/-/g,'/'):'',
+    closeDate:closeDateVal?closeDateVal.replace(/-/g,'/'):'',
+  };
+  CASES.formal.push(newCase);
+  closeModal('modal-new-patient');
+  alert(`已從杏翔匯入患者：${d.name}，類型為${casetypeVal}。`);
+  renderPage('list');
+}
 function renderCaseTable(cases,emptyMsg){
   if(!cases.length){
     return `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">${emptyMsg}</div>`;
   }
-  const headers=['年度編號','姓名','病歷號碼','身分證','PAC疾病別','照護模式','開案日','預計結案日','照護進度','展延','評估量表','轉介','負責人'];
+  const isPacOnlyTab=currentListTab==='pac';
+  const headers=isPacOnlyTab
+    ?['年度編號','姓名','病歷號碼','身分證','PAC疾病別','照護模式','開案日','預計結案日','照護進度','展延','評估量表','轉介','負責人']
+    :['','年度編號','姓名','病歷號碼','類型','疾病別','照護模式','是否需復健','病摘','開案日','負責人','建立日期'];
   return `
   <div style="overflow-x:auto">
-    <table class="case-list-table" style="min-width:1080px">
+    <table class="case-list-table" style="min-width:${isPacOnlyTab?1080:1100}px">
       <thead>
         <tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr>
       </thead>
@@ -926,26 +1316,98 @@ function renderCaseTable(cases,emptyMsg){
     </table>
   </div>`;
 }
+let expandedGeneralRows=new Set();
+function toggleGeneralRowExpand(caseId){
+  if(expandedGeneralRows.has(caseId)) expandedGeneralRows.delete(caseId);
+  else expandedGeneralRows.add(caseId);
+  renderList(document.getElementById('main-content'));
+}
 function renderCaseRow(c){
   const age=c.birthDate?calcAge(c.birthDate):null;
   const nameCell=`${c.name}${age!==null?`<span style="font-size:11px;color:var(--gray-400);margin-left:3px">(${age})</span>`:''}`;
-  const ext=extensionBadge(c);
-  const ref=referralBadge(c);
-  return `<tr style="cursor:pointer" onclick="renderPage('detail','${c.id}')">
+  const isPacType=getCaseType(c)==='PAC';
+  const isPacOnlyTab=currentListTab==='pac';
+
+  if(isPacOnlyTab){
+    // 「PAC個案」Tab：完整版列表，全部都是PAC類型，點擊整列進入詳情頁
+    const ext=extensionBadge(c);
+    const ref=referralBadge(c);
+    return `<tr style="cursor:pointer" onclick="renderPage('detail','${c.id}')">
+      <td>${yearCaseNo(c)}</td>
+      <td><strong>${nameCell}</strong></td>
+      <td>${c.medicalRecordNo||'—'}</td>
+      <td>${c.idNumber||'—'}</td>
+      <td>${c.disease||'—'}</td>
+      <td>${c.mode||'—'}</td>
+      <td>${c.openDate||'—'}</td>
+      <td>${c.closeDate||'—'}</td>
+      <td>${careProgressText(c)}</td>
+      <td><span class="badge ${ext.cls}">${ext.text}</span></td>
+      <td>${assessmentBadges(c)}</td>
+      <td><span class="badge ${ref.cls}">${ref.text}</span></td>
+      <td>${c.mgr||'—'}</td>
+    </tr>`;
+  }
+
+  // 「所有患者」Tab：一律精簡版列表（不論PAC與否），展開列呈現細節；PAC類型展開後給「前往PAC個案管理」導覽連結，一般/復健病房展開後給「編輯」與「轉為PAC收治」
+  const isExpanded=expandedGeneralRows.has(c.id);
+  const typeLabel=getCaseType(c);
+  const typeBadge=`<span class="badge ${typeLabel==='PAC'?'badge-blue':typeLabel==='復健病房'?'badge-amber':'badge-gray'}">${typeLabel}</span>`;
+  const mainRow=`<tr>
+    <td style="cursor:pointer;text-align:center" onclick="toggleGeneralRowExpand('${c.id}')">${isExpanded?'▾':'▸'}</td>
     <td>${yearCaseNo(c)}</td>
     <td><strong>${nameCell}</strong></td>
     <td>${c.medicalRecordNo||'—'}</td>
-    <td>${c.idNumber||'—'}</td>
-    <td>${c.disease}</td>
-    <td>${c.mode}</td>
+    <td>${typeBadge}</td>
+    <td>${c.disease||'—'}</td>
+    <td>${c.mode||'—'}</td>
+    <td>${c.needsRehab==null?'—':(c.needsRehab?'需復健':'不需復健')}</td>
+    <td>${simpleSummaryBadge(c)}</td>
     <td>${c.openDate||'—'}</td>
-    <td>${c.closeDate||'—'}</td>
-    <td>${careProgressText(c)}</td>
-    <td><span class="badge ${ext.cls}">${ext.text}</span></td>
-    <td>${assessmentBadges(c)}</td>
-    <td><span class="badge ${ref.cls}">${ref.text}</span></td>
     <td>${c.mgr||'—'}</td>
+    <td>${c.date||'—'}</td>
   </tr>`;
+  if(!isExpanded) return mainRow;
+
+  const actionArea=isPacType
+    ?`<div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openConvertPatientTypeModal('${c.id}')">🔀 轉換類型</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openQuickArchiveModal('${c.id}')">📁 結案管理</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="renderPage('detail','${c.id}')">前往PAC個案管理 →</button>
+      </div>`
+    :`<div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="alert('編輯功能開發中')">✏️ 編輯</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openQuickArchiveModal('${c.id}')">📁 結案管理</button>
+        </div>
+        <div style="background:#FEF3C7;border:1px solid #FBBF24;border-radius:8px;padding:10px 14px">
+          <button class="btn btn-amber btn-sm" onclick="event.stopPropagation();openConvertPatientTypeModal('${c.id}')">🔀 轉換類型</button>
+        </div>
+      </div>`;
+  const expandedRow=`<tr>
+    <td colspan="12" style="background:var(--gray-50);padding:16px 20px">
+      <div class="info-grid">
+        <div class="info-item"><label>性別</label><span>${c.gender||'—'}</span></div>
+        <div class="info-item"><label>身分證</label><span>${c.idNumber||'—'}</span></div>
+        <div class="info-item"><label>是否需復健</label><span>${c.needsRehab==null?'—':(c.needsRehab?'需復健':'不需復健')}</span></div>
+        <div class="info-item"><label>管路</label><span>${c.admissionTubes||'—'}</span></div>
+        <div class="info-item"><label>地址</label><span>${c.address||'—'}</span></div>
+        <div class="info-item"><label>電話</label><span>${c.familyPhone||'—'}</span></div>
+        <div class="info-item"><label>家屬姓名</label><span>${c.familyName||'—'}（${c.familyRelation||'—'}）</span></div>
+        <div class="info-item"><label>來源醫院</label><span>${c.source||'—'}</span></div>
+        <div class="info-item"><label>發病日</label><span>${c.onsetDate||'—'}</span></div>
+        <div class="info-item"><label>床位（限住院）</label><span>${c.bedNo||'—'}</span></div>
+        <div class="info-item"><label>開案日</label><span>${c.openDate||'—'}</span></div>
+        <div class="info-item"><label>預計結案日</label><span>${c.closeDate||'—'}</span></div>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-200)">
+        ${actionArea}
+      </div>
+    </td>
+  </tr>`;
+  return mainRow+expandedRow;
 }
 
 // ── 結案管理表格：姓名／病歷號／疾病別／模式／開案日／預計結案日／照護天數／展延／轉介／結案／負責人 ──
@@ -957,6 +1419,73 @@ function renderCaseRow(c){
 // 第4組｜評估量表（4）：初評～複評3
 // 負責人另置於最後，不歸屬任何一組
 const ARCHIVE_GROUP_END=new Set([9,15,21,25]); // 0-based欄位index，該欄右側加粗框線（因最前面新增「年度編號」欄，較原本各組界線右移1）
+// ── 結案管理「所有患者」子分頁：一律用簡易版列表（不論PAC與否），可展開，展開內容與「所有患者」列表一致；複雜完整版只在「PAC個案」子分頁顯示 ──
+let expandedArchiveRows=new Set();
+function toggleArchiveRowExpand(caseId){
+  if(expandedArchiveRows.has(caseId)) expandedArchiveRows.delete(caseId);
+  else expandedArchiveRows.add(caseId);
+  renderList(document.getElementById('main-content'));
+}
+function renderArchiveTableSimple(cases,emptyMsg){
+  if(!cases.length){
+    return `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">${emptyMsg}</div>`;
+  }
+  const headers=['','年度編號','姓名','病歷號碼','類型','疾病別','照護模式','是否需復健','病摘','開案日','結案原因','結案日','負責人','操作'];
+  return `
+  <div style="overflow-x:auto">
+    <table class="case-list-table" style="min-width:1200px">
+      <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${cases.map(c=>renderArchiveRowSimple(c)).join('')}</tbody>
+    </table>
+  </div>`;
+}
+function renderArchiveRowSimple(c){
+  const age=c.birthDate?calcAge(c.birthDate):null;
+  const nameCell=`${c.name}${age!==null?`<span style="font-size:11px;color:var(--gray-400);margin-left:3px">(${age})</span>`:''}`;
+  const typeLabel=getCaseType(c);
+  const typeBadge=`<span class="badge ${typeLabel==='PAC'?'badge-blue':typeLabel==='復健病房'?'badge-amber':'badge-gray'}">${typeLabel}</span>`;
+  const isExpanded=expandedArchiveRows.has(c.id);
+  const mainRow=`<tr>
+    <td style="cursor:pointer;text-align:center" onclick="toggleArchiveRowExpand('${c.id}')">${isExpanded?'▾':'▸'}</td>
+    <td>${yearCaseNo(c)}</td>
+    <td><strong>${nameCell}</strong></td>
+    <td>${c.medicalRecordNo||'—'}</td>
+    <td>${typeBadge}</td>
+    <td>${c.disease||'—'}</td>
+    <td>${c.mode||'—'}</td>
+    <td>${c.needsRehab==null?'—':(c.needsRehab?'需復健':'不需復健')}</td>
+    <td>${simpleSummaryBadge(c)}</td>
+    <td>${c.openDate||'—'}</td>
+    <td>${c.archiveType||c.archiveOutcome||'—'}</td>
+    <td>${c.archiveDate||'—'}</td>
+    <td>${c.mgr||'—'}</td>
+    <td><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button></td>
+  </tr>`;
+  if(!isExpanded) return mainRow;
+  const expandedRow=`<tr>
+    <td colspan="14" style="background:var(--gray-50);padding:16px 20px">
+      <div class="info-grid">
+        <div class="info-item"><label>性別</label><span>${c.gender||'—'}</span></div>
+        <div class="info-item"><label>身分證</label><span>${c.idNumber||'—'}</span></div>
+        <div class="info-item"><label>是否需復健</label><span>${c.needsRehab==null?'—':(c.needsRehab?'需復健':'不需復健')}</span></div>
+        <div class="info-item"><label>管路</label><span>${c.admissionTubes||'—'}</span></div>
+        <div class="info-item"><label>地址</label><span>${c.address||'—'}</span></div>
+        <div class="info-item"><label>電話</label><span>${c.familyPhone||'—'}</span></div>
+        <div class="info-item"><label>家屬姓名</label><span>${c.familyName||'—'}（${c.familyRelation||'—'}）</span></div>
+        <div class="info-item"><label>來源醫院</label><span>${c.source||'—'}</span></div>
+        <div class="info-item"><label>發病日</label><span>${c.onsetDate||'—'}</span></div>
+        <div class="info-item"><label>床位（限住院）</label><span>${c.bedNo||'—'}</span></div>
+        <div class="info-item"><label>開案日</label><span>${c.openDate||'—'}</span></div>
+        <div class="info-item"><label>預計結案日</label><span>${c.closeDate||'—'}</span></div>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between">
+        <button class="btn btn-danger btn-sm" onclick="deleteArchivedCase('${c.id}','${c.name}')">🗑 刪除此筆資料</button>
+        <button class="btn btn-secondary btn-sm" onclick="openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button>
+      </div>
+    </td>
+  </tr>`;
+  return mainRow+expandedRow;
+}
 function renderArchiveTable(cases,emptyMsg){
   if(!cases.length){
     return `<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:13px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px">${emptyMsg}</div>`;
@@ -1019,7 +1548,7 @@ function renderArchiveRow(c){
     a.f2?.date||'—',
     a.f3?.date||'—',
     c.mgr||'—',
-    `<button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button>`,
+    `<div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button><button class="btn btn-ghost btn-xs" style="color:var(--red,#DC2626)" onclick="event.stopPropagation();deleteArchivedCase('${c.id}','${c.name}')">🗑 刪除</button></div>`,
   ];
   return `<tr style="cursor:pointer" onclick="renderPage('detail','${c.id}')">${cells.map((html,i)=>td(html,i)).join('')}</tr>`;
 }
@@ -1028,7 +1557,7 @@ function renderDetail(container,caseId){
   currentCase=caseId;
   if(detailActiveTabCaseId!==caseId){ detailActiveTab='overview'; detailActiveTabCaseId=caseId; }
   const c=CASES.formal.find(x=>x.id===caseId)||CASES.formal[0];
-  document.getElementById('bc').textContent=`個案管理 › ${c.name}`;
+  document.getElementById('bc').textContent=`患者管理 › ${c.name}`;
 
   const isMgr=currentRole==='mgr';
   const isDoc=currentRole==='doc';
@@ -1070,6 +1599,7 @@ function renderDetail(container,caseId){
   let actions='';
   if(isMgr) actions=`
       <button class="btn btn-ghost btn-sm" onclick="openConvertModeModal()">🔁 轉換模式</button>
+      <button class="btn btn-ghost btn-sm" onclick="openConvertPatientTypeModal(currentCase)">🔀 轉換類型</button>
       <button class="btn btn-secondary btn-sm" onclick="openArchiveModal({formal:true})">結案管理</button>
       <button class="btn btn-green btn-sm" onclick="openArchiveModal({formal:true,presetType:'正常結案',locked:true,showCloseDate:true,showDischargeDest:true,successMsg:()=>'已成功結案，個案移至結案管理'})">✓ 成功結案</button>
       <button class="btn btn-danger btn-sm" onclick="openArchiveModal({formal:true,presetType:'結案失敗',locked:true,showCloseDate:true,showDischargeDest:true,successMsg:()=>'已標記結案失敗，個案移至結案管理'})">不成功結案</button>
@@ -1269,8 +1799,8 @@ function renderDetail(container,caseId){
           <div class="info-grid">
             <div class="info-item"><label>${c.modeType==='general'?'一般疾病類型':'PAC 疾病別'}</label><span>${c.disease}</span></div>
             <div class="info-item"><label>照護模式</label><span>${c.mode}</span></div>
-            <div class="info-item"><label>病歷號</label><span>00073450</span></div>
-            ${c.mode==='住院'?`<div class="info-item"><label>床位</label><span>A301</span></div><div class="info-item"><label>主治醫師</label><span>張宗達 醫師</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div><div class="info-item"><label>科別</label><span>${c.department||'—'}</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div>`:`<div class="info-item"><label>科別</label><span>${c.department||'—'}</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div>`}
+            <div class="info-item"><label>病歷號</label><span>${c.medicalRecordNo||'—'}</span></div>
+            ${c.mode==='住院'?`<div class="info-item"><label>床位</label><span>${c.bedNo?c.bedNo:(c.bedAssigned===false?'<span style="color:var(--amber-600,#B45309);font-weight:600">待排床</span>':'—')}</span></div><div class="info-item"><label>主治醫師</label><span>張宗達 醫師</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div><div class="info-item"><label>科別</label><span>${c.department||'—'}</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div>`:`<div class="info-item"><label>科別</label><span>${c.department||'—'}</span><div style="font-size:10px;color:var(--gray-400);margin-top:2px">由杏翔系統匯入</div></div>`}
           </div>
           <div class="divider"></div>
           <div class="info-grid">
@@ -1421,6 +1951,12 @@ function renderDetail(container,caseId){
       <div class="section-card">
         <div class="sc-header"><div class="sc-title">📅 居家復健排班</div><span style="font-size:10px;color:var(--gray-400)">${c.modeType==='home'?'本週':'僅居家期間資料，唯讀'}</span></div>
         <div class="sc-body" style="${c.modeType!=='home'?'opacity:.65':''}">
+          ${(c.modeType==='home'&&c.timelineStep==='待評估'&&!c.homeRehabHandedOff)?`
+          <div class="info-note amber" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <span>此個案剛轉為PAC居家收治，尚未交付復健主管評估是否可承接居家復健。</span>
+            <button class="btn btn-amber btn-sm" onclick="deliverToRehabDirector('${c.id}')">📤 交付復健主管報名</button>
+          </div>`:''}
+          ${c.homeRehabHandedOff?`<div class="info-note blue" style="margin-bottom:12px">✅ 已交付復健主管，等待回覆是否收治居家復健。</div>`:''}
           <div class="info-note blue" style="margin-bottom:12px">${c.modeType==='home'?'排班資料同步自復健排班管理模組，如需異動請至該模組操作':'個案目前非居家模式，以下為居家期間留存的排班資料，僅供查看'}</div>
           ${renderHomeRehabSchedule(c)}
         </div>
@@ -1644,6 +2180,15 @@ function switchRehabWeek(caseId,weekIndex){
 }
 
 // ── 居家復健排班（唯讀週視圖，可切換週次）：初評／複評／結案評估以不同顏色標籤與一般例行治療區隔 ──
+// 居家排班 Tab：交付復健主管報名，通知復健主管評估是否可承接居家復健
+function deliverToRehabDirector(caseId){
+  const c=CASES.formal.find(x=>x.id===caseId);
+  if(!c) return;
+  c.homeRehabHandedOff=true;
+  c.timelineSub='待復健主管回覆是否收治居家復健';
+  alert(`已交付復健主管報名，${c.name} 將等待復健主管回覆是否收治居家復健。`);
+  renderPage('detail',caseId);
+}
 function renderHomeRehabSchedule(c){
   const schedule=c.homeRehabSchedule;
   if(!schedule||!schedule.length){
@@ -1759,7 +2304,7 @@ function renderHomeClockInStatus(c){
 function renderFormFill(container,caseId,formName){
   currentForm=formName;
   const c=CASES.formal.find(x=>x.id===caseId)||CASES.formal[0];
-  document.getElementById('bc').textContent=`個案管理 › ${c.name} › ${formName}`;
+  document.getElementById('bc').textContent=`患者管理 › ${c.name} › ${formName}`;
 
   const fillData=FORM_FILL_CONTENT[formName];
   const isMgr=currentRole==='mgr';
@@ -1875,7 +2420,7 @@ function renderFormFill(container,caseId,formName){
 function renderHisRecord(container,caseId){
   currentCase=caseId;
   const c=CASES.formal.find(x=>x.id===caseId)||CASES.formal[0];
-  document.getElementById('bc').textContent=`個案管理 › ${c.name} › 正式病歷（杏翔）`;
+  document.getElementById('bc').textContent=`患者管理 › ${c.name} › 正式病歷（杏翔）`;
 
   const isHosp=c.modeType==='hosp';
   const dateLabel1=isHosp?'入院日期':'開案日期';
@@ -2357,12 +2902,12 @@ function renderConvertModeDetailsStep(c){
     else if(fromMode==='日照') extraNote=`<div class="info-note blue" style="margin-top:10px">日照個案排班本來就在院內，轉住院不影響</div>`;
   } else if(newMode==='日照'){
     submitLabel='確認轉換';
-    if(fromMode==='住院') dischargeDateField=`<div class="form-group" style="margin-bottom:10px"><label>更新的出院日期 <span class="required">*</span></label><input class="form-control" type="date" id="convert-mode-dischargedate"><div style="font-size:11px;color:var(--gray-400);margin-top:2px">排班不受影響</div></div>`;
+    if(fromMode==='住院') extraNote=`<div class="info-note amber" style="margin-top:10px">⚠️ 請至排床管理模組更新此個案的出院日期</div>`;
     else if(fromMode==='居家') extraNote=`<div class="info-note amber" style="margin-top:10px">將通知復健主管取消居家排班</div>`;
   } else if(newMode==='居家'){
     submitLabel='通知復健主管';
-    if(fromMode==='住院') dischargeDateField=`<div class="form-group" style="margin-bottom:10px"><label>更新的出院日期 <span class="required">*</span></label><input class="form-control" type="date" id="convert-mode-dischargedate"></div>`;
-    extraNote=`<div class="info-note amber" style="margin-top:10px">將通知復健主管取消院內排班</div>`;
+    if(fromMode==='住院') extraNote=`<div class="info-note amber" style="margin-top:10px">⚠️ 請至排床管理模組更新此個案的出院日期，並將通知復健主管取消院內排班</div>`;
+    else extraNote=`<div class="info-note amber" style="margin-top:10px">將通知復健主管取消院內排班</div>`;
   }
   const defaultClose=c.closeDate?c.closeDate.replace(/\//g,'-'):'';
   document.getElementById('convert-mode-body').innerHTML=`
@@ -2429,9 +2974,7 @@ function confirmConvertToDay(c){
   const dateStr=dateVal?dateVal.replace(/-/g,'/'):'2026/07/09';
   const closeStr=closeVal?closeVal.replace(/-/g,'/'):c.closeDate;
   if(fromMode==='住院'){
-    const dischargeVal=document.getElementById('convert-mode-dischargedate')?.value;
-    if(!dischargeVal){ alert('請填寫更新的出院日期'); return; }
-    c.dischargeDate=dischargeVal.replace(/-/g,'/');
+    // 出院日期改由排床管理模組更新（見上方提醒note），此處不再收集/擋下
   }
   if(fromMode==='居家') cancelFutureHomeRehab(c);
   if(!c.modeHistory) c.modeHistory=[];
@@ -2452,11 +2995,7 @@ function submitConvertToHome(c){
   const dateStr=dateVal?dateVal.replace(/-/g,'/'):'2026/07/09';
   const closeStr=closeVal?closeVal.replace(/-/g,'/'):c.closeDate;
   let dischargeDateVal='';
-  if(fromMode==='住院'){
-    const dv=document.getElementById('convert-mode-dischargedate')?.value;
-    if(!dv){ alert('請填寫更新的出院日期'); return; }
-    dischargeDateVal=dv.replace(/-/g,'/');
-  }
+  // 出院日期改由排床管理模組更新（見上方提醒note），此處不再收集/擋下
   c.modeConvertPending={targetMode:'居家',requestDate:dateStr,closeDate:closeStr,note:noteVal,rehabReplied:false};
   if(dischargeDateVal) c.modeConvertPending.dischargeDate=dischargeDateVal;
   closeModal('modal-convert-mode');

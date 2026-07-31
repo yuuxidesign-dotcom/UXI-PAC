@@ -1,8 +1,10 @@
+// ══ 版本註記：2026/07/31 更新 — 移除新增個案按鈕與待輸入病歷號Tab（個案一律從患者管理模組匯入）、今日更新表格加日期欄、新增歷史紀錄區塊（14天內異動與完成狀態）══
+
 
 const ROLES={mgr:{n:'林美惠',l:'個案管理師',av:'av-m',ch:'林'},nur:{n:'陳玉玲',l:'護理師',av:'av-n',ch:'陳'},adm:{n:'蔡書明',l:'行政',av:'av-a',ch:'蔡'}};
 const PAC_WK={p1:42,p2:14,p3:42};
 function switchRole(r){const c=ROLES[r];document.getElementById('ua').textContent=c.ch;document.getElementById('ua').className='uav '+c.av;document.getElementById('uname').textContent=c.n;document.getElementById('urole').textContent=c.l;const ro=r!=='mgr';document.getElementById('ro-banner').classList.toggle('show',ro);document.getElementById('btn-new').classList.toggle('hidden',ro);}
-function switchMain(el,id){document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');['tc-case','tc-bed','tc-today-update','tc-need-mrn','tc-weekinout','tc-discharged'].forEach(i=>{const e=document.getElementById(i);if(e)e.classList.toggle('hidden',i!==id);});}
+function switchMain(el,id){document.querySelectorAll('.tabs .tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');['tc-case','tc-bed','tc-today-update','tc-weekinout','tc-discharged'].forEach(i=>{const e=document.getElementById(i);if(e)e.classList.toggle('hidden',i!==id);});}
 // 統計卡第二排（時間提醒）與儀表板卡片共用：切到個案排床總覽分頁，並捲動到對應區塊，不做篩選
 function scrollToCaseSection(sectionId){
   switchMain(document.getElementById('tab-case'),'tc-case');
@@ -101,7 +103,7 @@ function parseListDate(str){
 function switchFloor(el,id){document.querySelectorAll('.ftabs .ft').forEach(t=>t.classList.remove('active'));el.classList.add('active');['f3','f5','f6'].forEach(i=>{const e=document.getElementById(i);if(e)e.classList.toggle('hidden',i!==id);});}
 function switchView(v){document.getElementById('vgrid').classList.toggle('hidden',v!=='grid');document.getElementById('vlist').classList.toggle('hidden',v!=='list');document.getElementById('vbg').classList.toggle('active',v==='grid');document.getElementById('vbl').classList.toggle('active',v==='list');}
 function toggleX(id){const row=document.getElementById(id);const btn=document.getElementById('xb'+id.replace('x',''));const h=row.classList.contains('hidden');row.classList.toggle('hidden',!h);if(btn)btn.textContent=h?'▼':'▶';}
-function onCS(val){const cp=document.getElementById('cprev');const box=document.getElementById('cprev-box');const warn=document.getElementById('rwarn');const dis=document.getElementById('disdate');if(!val){cp.classList.add('hidden');return;}cp.classList.remove('hidden');const d={p1:{t:'陳志明・68歲男・腦中風・房型偏好：單人房',w:42,warn:true},p2:{t:'蔡美玲・72歲女・脆弱性骨折・房型偏好：無偏好',w:14,warn:false},p3:{t:'黃建國・55歲男・創傷性神經損傷・房型偏好：雙人房',w:42,warn:false},h1:{t:'王大明・76歲男・末期癌症（胃癌）',w:null,warn:false},g1:{t:'張惠美・64歲女・一般復健',w:null,warn:false},g2:{t:'林志偉・45歲男・外科開刀',w:null,warn:false},t1:{t:'排床測試・68歲男・脆弱性骨折・房型偏好：無偏好',w:14,warn:false}}[val]||{t:'個案資料',w:null,warn:false};box.innerHTML='個案：<strong>'+d.t+'</strong>';if(d.w){const dt=new Date('2026-06-25');dt.setDate(dt.getDate()+d.w);const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),dd=String(dt.getDate()).padStart(2,'0');dis.value=y+'-'+m+'-'+dd;box.innerHTML+='<br><span style="font-size:11px;color:var(--blue)">預計出院日依疾病別（'+d.w/7+'週療程）自動帶入，可手動調整。</span>';}else{dis.value='';}warn.classList.toggle('hidden',!d.warn);selectedCaseGender=CASE_GENDER[val]||null;applyPillGenderLock();}
+function onCS(val){const cp=document.getElementById('cprev');const box=document.getElementById('cprev-box');const warn=document.getElementById('rwarn');const dis=document.getElementById('disdate');if(!val){cp.classList.add('hidden');return;}cp.classList.remove('hidden');const d={p1:{t:'陳志明・68歲男・PAC腦中風・房型偏好：單人房',w:42,warn:true},p2:{t:'蔡美玲・72歲女・PAC脆弱性骨折・房型偏好：無偏好',w:14,warn:false},p3:{t:'黃建國・55歲男・PAC創傷性神經損傷・房型偏好：雙人房',w:42,warn:false},h1:{t:'王大明・76歲男・末期癌症（胃癌）',w:null,warn:false},g1:{t:'張惠美・64歲女・一般復健',w:null,warn:false},g2:{t:'林志偉・45歲男・外科開刀',w:null,warn:false},t1:{t:'排床測試・68歲男・PAC脆弱性骨折・房型偏好：無偏好',w:14,warn:false}}[val]||{t:'個案資料',w:null,warn:false};box.innerHTML='個案：<strong>'+d.t+'</strong>';if(d.w){const dt=new Date('2026-06-25');dt.setDate(dt.getDate()+d.w);const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),dd=String(dt.getDate()).padStart(2,'0');dis.value=y+'-'+m+'-'+dd;box.innerHTML+='<br><span style="font-size:11px;color:var(--blue)">預計出院日依疾病別（'+d.w/7+'週療程）自動帶入，可手動調整。</span>';}else{dis.value='';}warn.classList.toggle('hidden',!d.warn);selectedCaseGender=CASE_GENDER[val]||null;applyPillGenderLock();}
 function selBed(el,bed,type){if(el.classList.contains('tk'))return;document.querySelectorAll('.bpc.pk').forEach(c=>c.classList.remove('pk'));el.classList.add('pk');document.getElementById('selb').textContent=bed+'（'+type+'）';}
 
 // ── 床位性別／混合限制：讀取病室卡片檢視的實際入住狀態，判斷該病室目前住客性別 ──
@@ -664,22 +666,6 @@ function addTodayInRow(name,ageGender,bedNo,moveinDateText){
   const badge=document.getElementById('badge-today-in');
   if(badge) badge.textContent=(parseInt(badge.textContent,10)||0)+1;
 }
-function switchNcTab(el,id){el.closest('.mb').querySelectorAll('.mtab').forEach(t=>t.classList.remove('active'));el.classList.add('active');['nc-m','nc-h','nc-i'].forEach(i=>{const e=document.getElementById(i);if(e)e.classList.toggle('hidden',i!==id);});}
-// 供「切換至手動建立」等非 .mtab 觸發點使用：不需要既有 el 參照即可切換 nc-* tab
-function goToNcTab(id){
-  const tabs=['nc-m','nc-h','nc-i'];
-  const idx=tabs.indexOf(id);
-  document.querySelectorAll('#m-newcase .mtab').forEach((t,i)=>t.classList.toggle('active',i===idx));
-  tabs.forEach(i=>{const e=document.getElementById(i);if(e)e.classList.toggle('hidden',i!==id);});
-}
-function onNcT(v){document.getElementById('nc-pd').style.display=v==='p'?'flex':'none';document.getElementById('nc-gd').style.display=v==='g'?'flex':'none';}
-// 杏翔帶入查詢：僅測試病歷號 00073450 視為查得到資料，其餘一律視為查無資料
-function showHis(){
-  const val=(document.getElementById('his-no').value||'').trim();
-  const found = val==='00073450';
-  document.getElementById('hisres').classList.toggle('hidden',!found);
-  document.getElementById('hisres-fail').classList.toggle('hidden',found);
-}
 function openModal(id){document.getElementById(id).classList.remove('hidden');}
 function closeModal(id){document.getElementById(id).classList.add('hidden');}
 document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');}));
@@ -691,6 +677,16 @@ const ROOM_TYPE_MAP={
   '301':'PAC','303':'復健病房','308':'一般復健','312':'骨科',
   '501':'PAC','505':'家醫科','606':'神外','612':'安寧',
 };
+// 疾病別顯示格式：PAC 個案（疾病別屬於四大類）加「PAC」前綴；床位所屬病室的病房類型為「復健病房」時一律改用「復健病房-」前綴（取代PAC前綴，不論個案類型）
+// roomType 傳入 ROOM_TYPE_MAP 對照後的病房類型字串（例如 'PAC'／'復健病房'／undefined），查無床位或該病室未指定病房類型時傳 null，一律套用 PAC 前綴規則
+// 判斷依據一律是床位所屬病室的病房類型欄位，不是疾病別文字本身，避免誤判成「所有腦中風的人都套用復健病房前綴」
+const PAC_DISEASE_NAMES=['腦中風','脆弱性骨折','創傷性神經損傷','衰弱高齡'];
+function formatDiseaseLabel(disease,roomType){
+  if(!disease||disease==='—') return disease;
+  if(roomType==='復健病房') return '復健病房-'+disease;
+  if(PAC_DISEASE_NAMES.includes(disease)) return 'PAC'+disease;
+  return disease;
+}
 function roomTypeCell(roomNo){
   const label=ROOM_TYPE_MAP[roomNo];
   return label?`<span class="room-pb" style="position:static;display:inline-block">${label}</span>`:'<span style="color:var(--gray-300)">—</span>';
@@ -882,12 +878,14 @@ function initCaseTableExpand(tbodyId,mode){
     const isPlannedLike=(mode==='planned'||mode==='today-in');
     const isAdmittedLike=(mode==='admitted'||mode==='today-out');
     const bedStatus=isPlannedLike?'已預約':(isPac?'PAC住院中':(typeBadge.includes('tt-hos')?'安寧住院':'一般住院'));
-    const diseaseHtml=tds[4].innerHTML;
+    const diseaseTextRaw=tds[4].textContent.trim();
     const bedNoRaw=tds[5].textContent.trim();
     const hasBed=bedNoRaw&&bedNoRaw!=='—'&&bedNoRaw!=='尚未安排';
     const bedNo=hasBed?bedNoRaw:null;
     const rawName=nameHtml.replace(/<[^>]+>/g,'').trim().split(/\s/)[0];
     const roomNo=bedNo?bedNo.split('-')[0]:null;
+    const diseaseFormatted=formatDiseaseLabel(diseaseTextRaw,roomNo?ROOM_TYPE_MAP[roomNo]:null);
+    const diseaseHtml=diseaseFormatted!==diseaseTextRaw?diseaseFormatted:tds[4].innerHTML;
 
     let mrnText,admitText,dischargeHtml,dischargeText,extHtml;
     if(isAdmittedLike){
@@ -906,7 +904,7 @@ function initCaseTableExpand(tbodyId,mode){
     }
 
     if(bedNo){
-      vlistRowInfo[bedNo]=vlistRowInfo[bedNo]||{bedNo,roomNo,roomSize:ROOM_SIZE_MAP[roomNo]||'—',bedStatus,caseName:rawName,diseaseText:tds[4].textContent.trim(),mrnText,dischargeText};
+      vlistRowInfo[bedNo]=vlistRowInfo[bedNo]||{bedNo,roomNo,roomSize:ROOM_SIZE_MAP[roomNo]||'—',bedStatus,caseName:rawName,diseaseText:diseaseFormatted,mrnText,dischargeText};
     }
     const waitTr=bedNo?[...document.querySelectorAll('#waiting-body tr[data-bed]')].find(r=>r.dataset.bed===bedNo):null;
     const nextName=waitTr?waitTr.dataset.candidate:'—';
@@ -985,13 +983,15 @@ function initVListExpand(){
     const rawName=tds[5].textContent.trim();
     const nameMatch=rawName.match(/^([^\s(（]+)/);
     const caseName=nameMatch?nameMatch[1]:rawName;
-    const diseaseHtml=tds[6].innerHTML;
+    const diseaseTextRaw=tds[6].textContent.trim();
+    const diseaseFormatted=formatDiseaseLabel(diseaseTextRaw,ROOM_TYPE_MAP[roomNo]);
+    const diseaseHtml=diseaseFormatted!==diseaseTextRaw?diseaseFormatted:tds[6].innerHTML;
     const mrnText=tds[7].textContent.trim();
     const admitText=tds[8].textContent.trim();
     const dischargeHtml=tds[9].innerHTML;
     const dischargeText=tds[9].textContent.trim();
 
-    vlistRowInfo[bedNo]=vlistRowInfo[bedNo]||{bedNo,roomNo,roomSize,bedStatus,caseName,diseaseText:tds[6].textContent.trim(),mrnText,dischargeText};
+    vlistRowInfo[bedNo]=vlistRowInfo[bedNo]||{bedNo,roomNo,roomSize,bedStatus,caseName,diseaseText:diseaseFormatted,mrnText,dischargeText};
 
     const waitTr=[...document.querySelectorAll('#waiting-body tr[data-bed]')].find(r=>r.dataset.bed===bedNo);
     const nextName=waitTr?waitTr.dataset.candidate:'—';
@@ -1058,7 +1058,7 @@ function renderDischargedRow(tr){
   const nameHtml=tds[1].innerHTML;
   const ageGenderText=tds[2].textContent.trim();
   const typeBadge=tds[3].innerHTML;
-  const diseaseHtml=tds[4].innerHTML;
+  const diseaseTextRaw=tds[4].textContent.trim();
   const bedNo=tds[5].textContent.trim();
   const mrnText=tds[6].textContent.trim();
   const admitText=tds[7].textContent.trim();
@@ -1066,6 +1066,8 @@ function renderDischargedRow(tr){
   const note=tds[9].textContent.trim();
   const rawName=nameHtml.replace(/<[^>]+>/g,'').trim();
   const roomNo=bedNo&&bedNo!=='—'?bedNo.split('-')[0]:null;
+  const diseaseFormatted=formatDiseaseLabel(diseaseTextRaw,roomNo?ROOM_TYPE_MAP[roomNo]:null);
+  const diseaseHtml=diseaseFormatted!==diseaseTextRaw?diseaseFormatted:tds[4].innerHTML;
   const referral=tr.dataset.referral||'—';
   const caseType=typeBadge.includes('tt-pac')?'PAC':(typeBadge.includes('tt-hos')?'安寧':(typeBadge.includes('tt-gen')?'一般':''));
   tr.dataset.caseType=caseType;
@@ -1074,7 +1076,7 @@ function renderDischargedRow(tr){
   tr.innerHTML=`
     <td><button class="xb" style="padding:2px 7px" onclick="event.stopPropagation();toggleDischargedRow('${xid}',this)">▶</button></td>
     <td>${nameAgeGenderCell(nameHtml,ageGenderText)}</td>
-    <td>${typeBadge} ${diseaseHtml}</td>
+    <td>${diseaseFormatted!==diseaseTextRaw?diseaseHtml:typeBadge+' '+diseaseHtml}</td>
     <td><span style="color:var(--gray-300)">—</span></td>
     <td>${admitText||'—'}</td>
     <td>${dischargeText||'—'}</td>
@@ -1142,36 +1144,6 @@ function filterDischargedList(){
     }
     row.classList.toggle('hidden',!show);
   });
-}
-
-// ══ 待輸入病歷號個案：輸入病歷號後模擬串接杏翔，帶出主治醫師／科別，完成後從清單移除 ══
-let mrnTargetRow=null;
-function openMrnModal(btn){
-  mrnTargetRow=btn.closest('tr');
-  const name=mrnTargetRow.dataset.caseName||'';
-  document.getElementById('mrn-target-name').textContent='個案：'+name;
-  document.getElementById('mrn-input').value='';
-  document.getElementById('mrn-result').classList.add('hidden');
-  openModal('m-mrn');
-}
-function submitMrn(){
-  const val=document.getElementById('mrn-input').value.trim();
-  if(!val){ alert('請輸入病歷號'); return; }
-  // Prototype：模擬串接杏翔成功，帶出假資料
-  document.getElementById('mrn-doctor').value='王主任（神經內科）';
-  document.getElementById('mrn-dept').value='神經內科';
-  document.getElementById('mrn-result').classList.remove('hidden');
-  setTimeout(()=>{
-    closeModal('m-mrn');
-    if(mrnTargetRow){
-      alert('已完成串接杏翔：病歷號 '+val+'，主治醫師／科別已補上');
-      mrnTargetRow.remove();
-      const badgeCount=document.querySelectorAll('#need-mrn-body tr').length;
-      const ph=document.querySelector('#tc-need-mrn .ps');
-      if(ph) ph.textContent='個案已透過「新增個案」手動建立或從個案管理模組匯入，但尚未輸入病歷號，無法串接杏翔帶出主治醫師／科別（尚有 '+badgeCount+' 筆）';
-    }
-    mrnTargetRow=null;
-  },500);
 }
 
 // ══ 今日更新：個管師勾選「已完成登記」表示已手動同步到杏翔，勾選後該列淡化處理 ══

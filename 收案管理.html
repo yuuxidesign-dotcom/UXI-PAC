@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 版本註記：2026/07/30 更新 -->
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -96,6 +97,11 @@
               <input type="checkbox" id="new-manual-id-unknown" style="accent-color:var(--blue)" onchange="onNewCaseIdUnknownToggle(this.checked)"> 目前尚未取得身分識別資料
             </label>
             <div id="new-manual-id-match-hint" style="margin-top:6px"></div>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>病歷號（若已知，可直接輸入查詢院內既有資料）</label>
+            <input class="form-control" id="new-manual-mrn-search" placeholder="e.g. 123456" oninput="onNewCaseMrnInput()">
+            <div id="new-manual-mrn-match-hint" style="margin-top:6px"></div>
             <div class="form-group hidden" id="new-manual-mrn-wrap" style="margin-top:8px">
               <label>病歷號（已查到院內既有資料，自動帶入）</label>
               <input class="form-control" id="new-manual-mrn" readonly style="background:var(--gray-50);color:var(--green);font-weight:600">
@@ -121,7 +127,7 @@
           <div class="form-group pac-only-field hidden"><label>發病時間</label><input class="form-control" type="date" id="new-manual-onsetdate"></div>
           <div class="form-group"><label>居住地</label><input class="form-control" id="new-manual-address" placeholder="例如：彰化縣員林市○○路○○號"></div>
           <div class="form-group"><label>家屬聯絡電話</label><input class="form-control" type="tel" id="new-manual-familyphone" placeholder="e.g. 0912-345-678"></div>
-          <div class="form-group"><label>疾病別</label>
+          <div class="form-group pac-only-field hidden"><label>疾病別</label>
             <select class="form-control" id="new-manual-disease">
               <option value="">尚未選擇</option>
               <option value="腦中風">腦中風</option>
@@ -130,8 +136,18 @@
               <option value="衰弱高齡">衰弱高齡</option>
             </select>
           </div>
+          <div class="form-group general-only-field"><label>疾病別</label>
+            <input class="form-control" id="new-manual-disease-text" placeholder="請輸入疾病名稱">
+          </div>
+          <div class="form-group general-only-field"><label>類型 <span class="required">*</span></label>
+            <select class="form-control" id="new-manual-casetype" onchange="onNewCaseTypeOrModeChange()">
+              <option value="">請選擇</option>
+              <option value="復健病房">復健病房</option>
+              <option value="一般">一般</option>
+            </select>
+          </div>
           <div class="form-group"><label>照護模式 <span class="required general-only-field" id="new-manual-mode-required">*</span></label>
-            <select class="form-control" id="new-manual-mode">
+            <select class="form-control" id="new-manual-mode" onchange="onNewCaseTypeOrModeChange()">
               <option value="">尚未選擇</option>
               <option value="住院">住院</option>
               <option value="日照">日照</option>
@@ -143,6 +159,13 @@
               <option value="">尚未確定</option>
               <option value="true">需復健</option>
               <option value="false">不需復健</option>
+            </select>
+          </div>
+          <div class="form-group hidden" id="new-manual-admissiontype-wrap"><label>住院類型 <span class="required">*</span></label>
+            <select class="form-control" id="new-manual-admissiontype">
+              <option value="">請選擇</option>
+              <option value="一般住院">一般住院</option>
+              <option value="安寧">安寧</option>
             </select>
           </div>
           <div class="form-group full pac-only-field hidden" style="grid-column:1/-1">
@@ -163,27 +186,6 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-new')">取消</button>
       <button class="btn btn-primary" onclick="saveNewCase()">儲存臨時患者</button>
-    </div>
-  </div>
-</div>
-
-<!-- 轉交醫師/專護判斷 -->
-<div id="modal-judge" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">🩺 轉交判斷</div>
-      <button class="modal-close" onclick="closeModal('modal-judge')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="info-note blue">選擇要委託判斷的人員，系統將發送通知。</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="form-group"><label>委託對象</label><select class="form-control"><option>張宗達醫師（復健科）</option><option>陳玉玲護理師</option></select></div>
-        <div class="form-group"><label>判斷事項說明</label><textarea class="form-control" rows="3" placeholder="說明需要判斷的重點，例如：開刀位置是否符合收案條件..."></textarea></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-judge')">取消</button>
-      <button class="btn btn-primary" onclick="closeModal('modal-judge');alert('已送出委託，對方將收到通知')">送出委託</button>
     </div>
   </div>
 </div>
@@ -390,7 +392,7 @@
 <div id="modal-archive" class="modal-overlay hidden">
   <div class="modal modal-sm">
     <div class="modal-header">
-      <div class="modal-title" id="archive-modal-title">PAC不收案紀錄</div>
+      <div class="modal-title" id="archive-modal-title">確認列入已結束紀錄</div>
       <button class="modal-close" onclick="closeModal('modal-archive')">✕</button>
     </div>
     <div class="modal-body" id="archive-modal-body">
@@ -398,26 +400,46 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-archive')">取消</button>
-      <button class="btn btn-danger" onclick="confirmArchive()">確認列入PAC不收案紀錄</button>
+      <button class="btn btn-danger" onclick="confirmArchive()">確認列入已結束紀錄</button>
     </div>
   </div>
 </div>
 
 <!-- 病摘與PAC判斷（由表格「病摘」／「PAC判斷」徽章觸發，開啟後自動捲動至對應區塊） -->
-<div id="modal-summary-judge" class="modal-overlay hidden">
+<!-- 病摘彈窗（不含PAC判斷、不含杏翔匯入）-->
+<div id="modal-summary" class="modal-overlay hidden">
   <div class="modal modal-lg">
     <div class="modal-header">
       <div style="display:flex;align-items:center;gap:8px">
-        <button class="btn btn-ghost btn-xs hidden" id="summary-judge-back-btn" onclick="summaryJudgeGoBack()">← 返回</button>
-        <div class="modal-title">📄 病摘與PAC判斷</div>
+        <button class="btn btn-ghost btn-xs hidden" id="summary-back-btn" onclick="summaryModalGoBack()">← 返回</button>
+        <div class="modal-title">📄 病摘</div>
       </div>
-      <button class="modal-close" onclick="closeModal('modal-summary-judge')">✕</button>
+      <button class="modal-close" onclick="closeModal('modal-summary')">✕</button>
     </div>
-    <div class="modal-body" id="summary-judge-modal-body">
-      <!-- 由 JS 動態渲染（見 openSummaryJudgeModal / renderSummaryJudgeModalBody）-->
+    <div class="modal-body" id="summary-modal-body">
+      <!-- 由 JS 動態渲染（見 openSummaryModal / renderSummaryOnlyBody）-->
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-summary-judge')">關閉</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-summary')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAC判斷彈窗（獨立於病摘）-->
+<div id="modal-judge" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn btn-ghost btn-xs hidden" id="judge-back-btn" onclick="judgeModalGoBack()">← 返回</button>
+        <div class="modal-title">🩺 PAC 判斷</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-judge')">✕</button>
+    </div>
+    <div class="modal-body" id="judge-modal-body">
+      <!-- 由 JS 動態渲染（見 openJudgeModal / renderJudgeOnlyBody）-->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-judge')">關閉</button>
     </div>
   </div>
 </div>
@@ -512,6 +534,23 @@
     </div>
     <div class="modal-body" id="modal-nonpac-followup-body">
       <!-- 由 JS 動態渲染（見 openNonPacFollowupModal）-->
+    </div>
+  </div>
+</div>
+
+<!-- 轉換類型：一般／復健病房／PAC 三種類型互轉，只能轉成非自己當前的類型 -->
+<div id="modal-convert-case-type" class="modal-overlay hidden">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <div class="modal-title">🔀 轉換類型</div>
+      <button class="modal-close" onclick="closeModal('modal-convert-case-type')">✕</button>
+    </div>
+    <div class="modal-body" id="convert-case-type-body">
+      <!-- 由 JS 動態渲染（見 openConvertCaseTypeModal）-->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-convert-case-type')">取消</button>
+      <button class="btn btn-primary" onclick="submitConvertCaseType()">確認轉換</button>
     </div>
   </div>
 </div>

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- 版本註記：2026/07/31 更新 -->
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -277,7 +278,6 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
     <div class="ph">
       <div><div class="pt">排床管理</div><div class="ps">3F / 5F / 6F・共 97 床</div></div>
       <div style="display:flex;gap:8px">
-        <button class="btn bg" onclick="openModal('m-newcase')">＋ 新增個案</button>
         <button class="btn bp" id="btn-new" onclick="resetCaseModal();bedPickMode='full';openModal('m-case')">＋ 新增排床</button>
       </div>
     </div>
@@ -320,7 +320,6 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
       <div class="tab" id="tab-case" onclick="switchMain(this,'tc-case')">個案排床總覽</div>
       <div class="tab" id="tab-bed" onclick="switchMain(this,'tc-bed')">床位總覽</div>
       <div class="tab" id="tab-today-update" onclick="switchMain(this,'tc-today-update')">今日更新</div>
-      <div class="tab" id="tab-need-mrn" onclick="switchMain(this,'tc-need-mrn')">待輸入病歷號個案</div>
       <div class="tab" id="tab-weekinout" onclick="switchMain(this,'tc-weekinout')">一週內入出院</div>
       <div class="tab" id="tab-discharged" onclick="switchMain(this,'tc-discharged')">已出院</div>
     </div>
@@ -1107,52 +1106,62 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
     <div id="tc-today-update" class="hidden">
       <div class="ph"><div class="pt">今日更新</div><div class="ps">今天所有異動項目（入院／出院／轉床），供個管師手動登記到杏翔後勾選確認，不包含預排候補</div></div>
       <table class="ct" id="today-update-table">
-        <thead><tr><th>時間</th><th>個案姓名</th><th>異動類型</th><th>床位異動</th><th>個管師</th><th style="text-align:center">已完成登記</th></tr></thead>
+        <thead><tr><th>日期</th><th>時間</th><th>個案姓名</th><th>異動類型</th><th>床位異動</th><th>個管師</th><th style="text-align:center">已完成登記</th></tr></thead>
         <tbody id="today-update-body">
           <tr>
-            <td>08:20</td><td><strong>陳志明</strong></td><td><span class="badge bb">入院</span></td><td>安排入住 <strong>303-A</strong></td><td>林美惠</td>
+            <td>2026/06/25</td><td>08:20</td><td><strong>陳志明</strong></td><td><span class="badge bb">入院</span></td><td>安排入住 <strong>303-A</strong></td><td>林美惠</td>
             <td style="text-align:center"><input type="checkbox" onchange="toggleTodayUpdateDone(this)" style="width:16px;height:16px;cursor:pointer"></td>
           </tr>
           <tr>
-            <td>09:05</td><td><strong>蔡美玲</strong></td><td><span class="badge bb">入院</span></td><td>安排入住 <strong>507-B</strong></td><td>張雅婷</td>
+            <td>2026/06/25</td><td>09:05</td><td><strong>蔡美玲</strong></td><td><span class="badge bb">入院</span></td><td>安排入住 <strong>507-B</strong></td><td>張雅婷</td>
             <td style="text-align:center"><input type="checkbox" onchange="toggleTodayUpdateDone(this)" style="width:16px;height:16px;cursor:pointer"></td>
           </tr>
           <tr>
-            <td>10:40</td><td><strong>林淑美</strong></td><td><span class="badge ba">轉床</span></td><td><strong>309-A</strong> → <strong>310-A</strong></td><td>林美惠</td>
+            <td>2026/06/25</td><td>10:40</td><td><strong>林淑美</strong></td><td><span class="badge ba">轉床</span></td><td><strong>309-A</strong> → <strong>310-A</strong></td><td>林美惠</td>
             <td style="text-align:center"><input type="checkbox" onchange="toggleTodayUpdateDone(this)" style="width:16px;height:16px;cursor:pointer"></td>
           </tr>
           <tr>
-            <td>11:15</td><td><strong>鄭大偉</strong></td><td><span class="badge br">出院</span></td><td>釋出 <strong>301-B</strong>（標記清潔中）</td><td>林美惠</td>
+            <td>2026/06/25</td><td>11:15</td><td><strong>鄭大偉</strong></td><td><span class="badge br">出院</span></td><td>釋出 <strong>301-B</strong>（標記清潔中）</td><td>林美惠</td>
             <td style="text-align:center"><input type="checkbox" onchange="toggleTodayUpdateDone(this)" style="width:16px;height:16px;cursor:pointer"></td>
           </tr>
           <tr>
-            <td>13:30</td><td><strong>黃文雄</strong></td><td><span class="badge br">出院</span></td><td>釋出 <strong>302-A</strong>（標記可使用）</td><td>張雅婷</td>
+            <td>2026/06/25</td><td>13:30</td><td><strong>黃文雄</strong></td><td><span class="badge br">出院</span></td><td>釋出 <strong>302-A</strong>（標記可使用）</td><td>張雅婷</td>
             <td style="text-align:center"><input type="checkbox" onchange="toggleTodayUpdateDone(this)" style="width:16px;height:16px;cursor:pointer"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="ph" style="margin-top:24px"><div class="pt" style="font-size:15px">歷史紀錄</div><div class="ps">過去 14 天內所有異動項目與登記完成狀態</div></div>
+      <table class="ct" id="history-update-table">
+        <thead><tr><th>日期</th><th>時間</th><th>個案姓名</th><th>異動類型</th><th>床位異動</th><th>個管師</th><th style="text-align:center">完成狀態</th></tr></thead>
+        <tbody id="history-update-body">
+          <tr>
+            <td>2026/06/24</td><td>09:10</td><td><strong>周淑芬</strong></td><td><span class="badge bb">入院</span></td><td>安排入住 <strong>305-A</strong></td><td>林美惠</td>
+            <td style="text-align:center"><span class="badge bg2">✓ 已完成</span></td>
+          </tr>
+          <tr>
+            <td>2026/06/24</td><td>14:22</td><td><strong>謝國雄</strong></td><td><span class="badge br">出院</span></td><td>釋出 <strong>206-B</strong>（標記可使用）</td><td>張雅婷</td>
+            <td style="text-align:center"><span class="badge bg2">✓ 已完成</span></td>
+          </tr>
+          <tr>
+            <td>2026/06/23</td><td>10:05</td><td><strong>吳志明</strong></td><td><span class="badge ba">轉床</span></td><td><strong>402-A</strong> → <strong>405-B</strong></td><td>林美惠</td>
+            <td style="text-align:center"><span class="badge ba">尚未完成</span></td>
+          </tr>
+          <tr>
+            <td>2026/06/22</td><td>08:45</td><td><strong>王秀美</strong></td><td><span class="badge bb">入院</span></td><td>安排入住 <strong>203-A</strong></td><td>林美惠</td>
+            <td style="text-align:center"><span class="badge bg2">✓ 已完成</span></td>
+          </tr>
+          <tr>
+            <td>2026/06/20</td><td>16:30</td><td><strong>陳建宏</strong></td><td><span class="badge br">出院</span></td><td>釋出 <strong>508-A</strong>（標記清潔中）</td><td>張雅婷</td>
+            <td style="text-align:center"><span class="badge bg2">✓ 已完成</span></td>
+          </tr>
+          <tr>
+            <td>2026/06/15</td><td>11:00</td><td><strong>林月娥</strong></td><td><span class="badge bb">入院</span></td><td>安排入住 <strong>310-B</strong></td><td>林美惠</td>
+            <td style="text-align:center"><span class="badge bg2">✓ 已完成</span></td>
           </tr>
         </tbody>
       </table>
     </div><!-- /tc-today-update -->
-
-    <div id="tc-need-mrn" class="hidden">
-      <div class="ph"><div class="pt">待輸入病歷號個案</div><div class="ps">個案已透過「新增個案」手動建立或從個案管理模組匯入，但尚未輸入病歷號，無法串接杏翔帶出主治醫師／科別</div></div>
-      <table class="ct" id="need-mrn-table">
-        <thead><tr><th style="width:24px"></th><th>姓名</th><th>年齡/性別</th><th>類型</th><th>疾病別</th><th>個案來源</th><th>建立時間</th><th>操作</th></tr></thead>
-        <tbody id="need-mrn-body">
-          <tr data-case-name="謝國雄">
-            <td></td><td><strong>謝國雄</strong></td><td>70歲 男</td><td><span class="tt-pac">PAC</span></td><td>脆弱性骨折</td><td>個案管理模組匯入</td><td>今日 08:12</td>
-            <td><button class="btn bp btn-xs" onclick="event.stopPropagation();openMrnModal(this)">輸入病歷號</button></td>
-          </tr>
-          <tr data-case-name="吳志明">
-            <td></td><td><strong>吳志明</strong></td><td>65歲 男</td><td><span class="tt-gen">一般</span></td><td>外科開刀</td><td>個案管理模組匯入</td><td>今日 08:14</td>
-            <td><button class="btn bp btn-xs" onclick="event.stopPropagation();openMrnModal(this)">輸入病歷號</button></td>
-          </tr>
-          <tr data-case-name="周淑芬">
-            <td></td><td><strong>周淑芬</strong></td><td>69歲 女</td><td><span class="tt-pac">PAC</span></td><td>腦中風</td><td>手動建立</td><td>今日 09:50</td>
-            <td><button class="btn bp btn-xs" onclick="event.stopPropagation();openMrnModal(this)">輸入病歷號</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div><!-- /tc-need-mrn -->
 
     <div id="tc-weekinout" class="hidden">
       <div class="ph"><div class="pt">一週內入出院</div><div class="ps">預計入院／出院日落在未來 7 天內（含今天）的個案</div></div>
@@ -1161,8 +1170,8 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
         <thead><tr><th style="width:24px"></th><th colspan="6" class="bedvw-grp">目前入住</th><th colspan="3" class="bedvw-grp">床位</th><th colspan="2" class="bedvw-grp">下一位入院</th></tr>
         <tr><th style="width:24px"></th><th>姓名</th><th>疾病別</th><th>展延</th><th>入院日</th><th>預計出院</th><th>預計可用</th><th>床號</th><th>房型</th><th>病房類型</th><th>姓名</th><th>預計入院</th></tr></thead>
         <tbody id="weekin-body">
-          <tr data-referral="彰基轉入"><td></td><td><strong>陳志明</strong>(68) 男</td><td>腦中風</td><td><span style="color:var(--gray-300)">—</span></td><td>06/26</td><td>2026/08/07</td><td>2026/08/07</td><td><strong>303-A</strong></td><td>2人</td><td><span class="rb">復健病房</span></td><td>—</td><td>—</td></tr>
-          <tr data-referral="員基轉入"><td></td><td><strong>蔡美玲</strong>(72) 女</td><td>脆弱性骨折</td><td><span style="color:var(--gray-300)">—</span></td><td>06/27</td><td>2026/07/11</td><td>2026/07/11</td><td><strong>507-B</strong></td><td>2人</td><td><span class="rb">—</span></td><td>—</td><td>—</td></tr>
+          <tr data-referral="彰基轉入"><td></td><td><strong>陳志明</strong>(68) 男</td><td>復健病房-腦中風</td><td><span style="color:var(--gray-300)">—</span></td><td>06/26</td><td>2026/08/07</td><td>2026/08/07</td><td><strong>303-A</strong></td><td>2人</td><td><span class="rb">復健病房</span></td><td>—</td><td>—</td></tr>
+          <tr data-referral="員基轉入"><td></td><td><strong>蔡美玲</strong>(72) 女</td><td>PAC脆弱性骨折</td><td><span style="color:var(--gray-300)">—</span></td><td>06/27</td><td>2026/07/11</td><td>2026/07/11</td><td><strong>507-B</strong></td><td>2人</td><td><span class="rb">—</span></td><td>—</td><td>—</td></tr>
         </tbody>
       </table>
       <div class="sl2" style="margin-top:20px">本週出院 <span class="badge ba">2</span></div>
@@ -1170,7 +1179,7 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
         <thead><tr><th style="width:24px"></th><th colspan="6" class="bedvw-grp">目前入住</th><th colspan="3" class="bedvw-grp">床位</th><th colspan="2" class="bedvw-grp">下一位入院</th></tr>
         <tr><th style="width:24px"></th><th>姓名</th><th>疾病別</th><th>展延</th><th>入院日</th><th>預計出院</th><th>預計可用</th><th>床號</th><th>房型</th><th>病房類型</th><th>姓名</th><th>預計入院</th></tr></thead>
         <tbody id="weekout-body">
-          <tr data-referral="自收"><td></td><td><strong>鄭大偉</strong>(62) 男</td><td>脆弱性骨折</td><td><span class="exb exg">同意展延（展延2週）</span></td><td>05/28</td><td>07/12</td><td>07/12</td><td><strong>301-B</strong></td><td>4人</td><td><span class="rb">PAC</span></td><td>—</td><td>—</td></tr>
+          <tr data-referral="自收"><td></td><td><strong>鄭大偉</strong>(62) 男</td><td>PAC脆弱性骨折</td><td><span class="exb exg">同意展延（展延2週）</span></td><td>05/28</td><td>07/12</td><td>07/12</td><td><strong>301-B</strong></td><td>4人</td><td><span class="rb">PAC</span></td><td>—</td><td>—</td></tr>
           <tr data-referral="居家轉住院"><td></td><td><strong>黃文雄</strong>(58) 男</td><td>一般復健</td><td><span style="color:var(--gray-300)">—</span></td><td>06/20</td><td>06/26</td><td>06/26</td><td><strong>302-A</strong></td><td>5人</td><td><span class="rb">—</span></td><td>—</td><td>—</td></tr>
         </tbody>
       </table>
@@ -1194,10 +1203,10 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
         <div id="csel-full">
           <select class="fc" style="width:100%" id="csel" onchange="onCS(this.value)">
             <option value="">請選擇待排床個案</option>
-            <optgroup label="PAC"><option value="p1">陳志明・腦中風（68歲男）</option><option value="p2">蔡美玲・脆弱性骨折（72歲女）</option><option value="p3">黃建國・創傷性神經損傷（55歲男）</option></optgroup>
+            <optgroup label="PAC"><option value="p1">陳志明・PAC腦中風（68歲男）</option><option value="p2">蔡美玲・PAC脆弱性骨折（72歲女）</option><option value="p3">黃建國・PAC創傷性神經損傷（55歲男）</option></optgroup>
             <optgroup label="安寧"><option value="h1">王大明・末期癌症（76歲男）</option></optgroup>
             <optgroup label="一般"><option value="g1">張惠美・一般復健（64歲女）</option><option value="g2">林志偉・外科開刀（45歲男）</option></optgroup>
-            <optgroup label="測試"><option value="t1">排床測試・脆弱性骨折（68歲男）</option></optgroup>
+            <optgroup label="測試"><option value="t1">排床測試・PAC脆弱性骨折（68歲男）</option></optgroup>
           </select>
         </div>
       </div>
@@ -1293,66 +1302,7 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
   </div>
 </div>
 
-<!-- 新增個案（四種來源） -->
-<div id="m-newcase" class="mo hidden">
-  <div class="md md-lg">
-    <div class="mh"><div class="mt">＋ 建立新個案</div><button class="mc" onclick="closeModal('m-newcase')">✕</button></div>
-    <div class="mb">
-      <div class="mtabs">
-        <div class="mtab active" onclick="switchNcTab(this,'nc-m')">✏️ 手動建立</div>
-        <div class="mtab" onclick="switchNcTab(this,'nc-h')">🏥 杏翔帶入</div>
-        <div class="mtab" onclick="switchNcTab(this,'nc-i')">📋 個案管理匯入</div>
-      </div>
-      <!-- 手動 -->
-      <div id="nc-m">
-        <div class="ib">建立後狀態更新為「待排床」，將自動帶回排床流程。非PAC個案不會出現在個案管理模組列表。</div>
-        <div class="fg2">
-          <div class="fg"><label>姓名 <span class="req">*</span></label><input class="fc" placeholder="e.g. 陳志明"></div>
-          <div class="fg"><label>身分證 <span class="req">*</span></label><input class="fc" placeholder="A123456789"></div>
-          <div class="fg"><label>出生日期 <span class="req">*</span></label><input class="fc" type="date"></div>
-          <div class="fg"><label>發病日 <span class="req">*</span></label><input class="fc" type="date"></div>
-          <div class="fg"><label>性別</label><select class="fc"><option>男</option><option>女</option></select></div>
-          <div class="fg"><label>個案類型 <span class="req">*</span></label><select class="fc" onchange="onNcT(this.value)"><option value="">請選擇</option><option value="p">PAC</option><option value="h">安寧</option><option value="g">一般</option></select></div>
-          <div class="fg"><label>轉介來源</label><select class="fc"><option>自收</option><option>彰基轉入</option><option>員基轉入</option><option>其他醫院轉入</option><option>居家轉住院</option></select></div>
-          <div class="fg" id="nc-pd" style="display:none"><label>PAC 疾病別</label><select class="fc"><option>腦中風</option><option>創傷性神經損傷</option><option>脆弱性骨折</option><option>衰弱高齡</option></select></div>
-          <div class="fg" id="nc-gd" style="display:none"><label>一般疾病類型</label><select class="fc"><option>外科開刀</option><option>一般復健（復健）</option><option>一般復健（開刀）</option><option>安寧住院</option><option>內科住院</option><option>其他</option></select></div>
-          <div class="fg"><label>房型偏好</label><select class="fc"><option>無偏好</option><option>單人房</option><option>雙人房</option><option>多人房（3人以上）</option></select></div>
-          <div class="fg"><label>家屬姓名</label><input class="fc" placeholder="主要照顧者姓名"></div>
-          <div class="fg"><label>家屬電話</label><input class="fc" placeholder="0912-345-678"></div>
-          <div class="fg"><label>與個案關係</label><select class="fc"><option>配偶</option><option>兒子</option><option>女兒</option><option>媳婦</option><option>女婿</option><option>其他</option></select></div>
-        </div>
-      </div>
-      <!-- 杏翔 -->
-      <div id="nc-h" class="hidden">
-        <div class="ib">輸入病歷號從杏翔系統帶入基本資料，確認後儲存。</div>
-        <div style="display:flex;gap:8px;margin-bottom:14px"><input class="fc" id="his-no" style="flex:1" placeholder="輸入病歷號 e.g. 00073450"><button class="btn bp btn-sm" onclick="showHis()">查詢</button></div>
-        <div id="hisres" class="hidden">
-          <div class="ib" style="background:var(--green-l);color:var(--green)">✓ 查詢成功，請確認以下資料</div>
-          <div class="fg2"><div class="fg"><label>姓名</label><input class="fc" value="王建民"></div><div class="fg"><label>病歷號</label><input class="fc" value="00073450" readonly></div><div class="fg"><label>身分證</label><input class="fc" value="A123456789"></div><div class="fg"><label>出生日期</label><input class="fc" value="1952/08/20"></div><div class="fg"><label>轉介來源</label><select class="fc"><option>自收</option><option>彰基轉入</option><option>員基轉入</option><option>其他醫院轉入</option><option>居家轉住院</option></select></div></div>
-        </div>
-        <div id="hisres-fail" class="hidden">
-          <div class="ib" style="background:var(--amber-l);color:var(--amber)">查無此病歷號資料，請改用手動建立</div>
-          <button class="btn bp btn-sm" onclick="goToNcTab('nc-m')">切換至手動建立</button>
-        </div>
-      </div>
-      <!-- 個案管理匯入 -->
-      <div id="nc-i" class="hidden">
-        <div class="ib">從個案管理模組封存個案中，選擇當時未匯入排床的非PAC個案，帶入排床流程。</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;background:var(--white);border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">
-          <thead><tr style="background:var(--gray-50)"><th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:10px;color:var(--gray-500);text-transform:uppercase">姓名</th><th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:10px;color:var(--gray-500);text-transform:uppercase">病歷號</th><th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:10px;color:var(--gray-500);text-transform:uppercase">診斷</th><th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:10px;color:var(--gray-500);text-transform:uppercase">封存類型</th><th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);font-size:10px;color:var(--gray-500);text-transform:uppercase">轉介來源</th><th style="padding:8px 12px;border-bottom:1px solid var(--gray-200)"></th></tr></thead>
-          <tbody>
-            <tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:9px 12px"><strong>謝國雄</strong><span style="color:var(--gray-400);font-size:11px">（80歲男）</span></td><td style="padding:9px 12px">00073388</td><td style="padding:9px 12px">一般復健</td><td style="padding:9px 12px"><span class="badge bgr">非PAC退案</span></td><td style="padding:9px 12px">自收</td><td style="padding:9px 12px"><button class="btn bp btn-xs" onclick="alert('謝國雄 已匯入至待排床列表')">選擇匯入</button></td></tr>
-            <tr><td style="padding:9px 12px"><strong>吳志明</strong><span style="color:var(--gray-400);font-size:11px">（65歲男）</span></td><td style="padding:9px 12px">00073412</td><td style="padding:9px 12px">外科開刀</td><td style="padding:9px 12px"><span class="badge bgr">非PAC退案</span></td><td style="padding:9px 12px">其他醫院轉入</td><td style="padding:9px 12px"><button class="btn bp btn-xs" onclick="alert('吳志明 已匯入至待排床列表')">選擇匯入</button></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn bs" onclick="closeModal('m-newcase')">取消</button>
-      <button class="btn bp" onclick="closeModal('m-newcase');alert('個案已建立，狀態更新為「待排床」')">建立個案</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- 床位詳情（PAC） -->
 <div id="m-dpac" class="mo hidden">
@@ -1467,29 +1417,5 @@ textarea.fc{resize:vertical;min-height:65px;line-height:1.6}
 </div>
 
 <script src="排床管理2.js"></script>
-<div id="m-mrn" class="mo hidden">
-  <div class="md">
-    <div class="mh"><div class="mt">輸入病歷號</div><button class="mc" onclick="closeModal('m-mrn')">✕</button></div>
-    <div class="mb">
-      <div class="ib" id="mrn-target-name">個案：</div>
-      <div class="fg" style="margin-bottom:14px">
-        <label>病歷號 <span class="req">*</span></label>
-        <input class="fc" id="mrn-input" placeholder="輸入病歷號後將自動串接杏翔帶出資料">
-      </div>
-      <div id="mrn-result" class="hidden">
-        <div class="ib" style="background:var(--green-l);color:var(--green)">✓ 已串接杏翔，主治醫師／科別已自動帶入</div>
-        <div class="fg2">
-          <div class="fg"><label>主治醫師</label><input class="fc" id="mrn-doctor" readonly></div>
-          <div class="fg"><label>科別</label><input class="fc" id="mrn-dept" readonly></div>
-        </div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn bs" onclick="closeModal('m-mrn')">取消</button>
-      <button class="btn bp" onclick="submitMrn()">查詢並串接杏翔</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>

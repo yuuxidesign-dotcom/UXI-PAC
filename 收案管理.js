@@ -1,3 +1,4 @@
+// ══ 版本註記：2026/07/31 更新（第三輪）— 病歷號直接查詢、刪除待補病歷號卡片、結束收案分類重整（新增結束此筆紀錄）、轉換類型功能、新增一般患者類型欄位、回復資料新增復健病房選項、新增一般＋住院時的住院類型必填欄位 ══
 
 // ── 角色設定 ──
 const ROLES = {
@@ -213,24 +214,21 @@ const ARCHIVE_TYPES_TEMP=[
   {type:'住院不收治'},
   {type:'日照不收治'},
   {type:'居家不收治'},
-  {type:'轉復健病房'}, // PAC 判斷＝非PAC 且疾病別為腦中風時，可選擇直接轉復健病房，跳過匯入排床模組流程
-  {type:'轉居家醫療'}, // PAC 判斷＝非PAC 時，可選擇直接轉居家醫療，跳過匯入排床模組流程
-  {type:'一般（復健）'}, // 手動「結束收案」與 PAC 判斷流程皆可選取，選取後彈窗詢問是否匯入排床管理模組
-  {type:'一般（開刀）'}, // 同上
   {type:'決定不報到／參加',field:'原因說明',hint:'例如：家屬拒絕、病情改變等'},
   {type:'住院當日未報到',field:'原因說明'},
   {type:'日照當日未報到',field:'原因說明'},
   {type:'居家未報到/未參加',field:'原因說明'},
   {type:'資料輸入錯誤'},
   {type:'重複建立個案'},
+  {type:'結束此筆紀錄'},
   {type:'其他',field:'原因說明'},
 ];
 // PAC不收案紀錄 Modal 選擇原因的分組（僅影響 Modal 呈現方式，改為手風琴分組展開；篩選下拉選單維持 flat list，ARCHIVE_TYPES_TEMP 內容不變）
 const ARCHIVE_TYPE_GROUPS=[
-  {group:'轉其他服務',types:['轉復健病房','轉居家醫療','一般（復健）','一般（開刀）']},
   {group:'院方不收治',types:['非PAC退案','住院不收治','日照不收治','居家不收治']},
   {group:'家屬取消／未報到',types:['決定不報到／參加','住院當日未報到','日照當日未報到','居家未報到/未參加']},
   {group:'資料錯誤／重複建立',types:['資料輸入錯誤','重複建立個案']},
+  {group:'結束此筆紀錄',types:['結束此筆紀錄']},
   {group:'其他',types:['其他']}
 ];
 
@@ -285,7 +283,7 @@ let listSortOrder='dateDesc'; // 個案列表排序：建立日期/發病日/預
 
 // ── 統計卡篩選（僅個管師/行政視角使用，與 statusFilter 各自獨立）──
 // TEMP_METRIC_DEFS：「所有臨時患者」Tab 專用，只有 PAC收案中／復健病房收案中 兩張
-// PAC_METRIC_DEFS：「PAC收案中」Tab 專用，維持原本待提供病摘／待收案判斷／待決定報到／已交付建檔／待補病歷號
+// PAC_METRIC_DEFS：「PAC收案中」Tab 專用，維持原本待提供病摘／待收案判斷／待決定報到／已交付建檔
 let metricFilter=null;
 const TEMP_METRIC_DEFS={
   pacActive:{label:'PAC收案中',test:c=>getCaseType(c)==='PAC'},
@@ -297,7 +295,6 @@ const PAC_METRIC_DEFS={
   noFamilyDecision:{label:'待決定報到',sub:'家屬尚未決定',test:c=>c.familyConfirmStatus==='尚未決定'},
   noUpstreamReport:{label:'待回報上游',sub:'尚未回報上游單位',test:c=>c.upstreamStatus==='尚未回報'},
   pendingAdminHandoff:{label:'已交付建檔',sub:'已判斷PAC，待交付',test:c=>!!c.diseaseCategory},
-  pendingRecordNo:{label:'待補病歷號',sub:'已交付建檔，尚未取得病歷號',test:c=>!!c.deliveredToAdmin&&!c.medicalRecordNo},
 };
 // METRIC_DEFS：目前顯示中的統計卡定義集合，依 currentListTab 動態指向 TEMP_METRIC_DEFS 或 PAC_METRIC_DEFS，供 filterByMetric／applyRoleFilter 共用查找
 function getActiveMetricDefs(){
@@ -612,9 +609,11 @@ function renderCaseRow(c){
   // 已結束紀錄列：唯讀，改用「🔄 回復資料」取代「編輯」／快速編輯切換
   const actionCell=isArchiveTab
     ?`<button class="btn btn-ghost btn-xs" onclick="openRestoreModal('${c.id}','${c.name}')">🔄 回復資料</button>`
-    :(isQuickEdit
-      ?`<div style="display:flex;gap:4px"><button class="btn btn-primary btn-xs" onclick="saveQuickEdit('${c.id}')">✓ 儲存</button><button class="btn btn-ghost btn-xs" onclick="cancelQuickEdit('${c.id}')">✕ 取消</button></div>`
-      :`<button class="btn btn-ghost btn-xs" onclick="toggleQuickEdit('${c.id}')">編輯</button>`);
+    :(c.deliveredToAdmin
+      ?`<button class="btn btn-ghost btn-xs" disabled style="opacity:.45;cursor:not-allowed" title="已交付建檔，資料改由個案管理模組維護">編輯</button>`
+      :(isQuickEdit
+        ?`<div style="display:flex;gap:4px"><button class="btn btn-primary btn-xs" onclick="saveQuickEdit('${c.id}')">✓ 儲存</button><button class="btn btn-ghost btn-xs" onclick="cancelQuickEdit('${c.id}')">✕ 取消</button></div>`
+        :`<button class="btn btn-ghost btn-xs" onclick="toggleQuickEdit('${c.id}')">編輯</button>`));
 
   const age=c.birthDate?calcAge(c.birthDate):null;
   const nameCell=isQuickEdit
@@ -731,7 +730,7 @@ function nonPacFollowupGoGeneral(caseId){
     touchCase(c);
   }
   closeModal('modal-nonpac-followup');
-  alert('已移到「所有臨時患者」，類型標示為一般。');
+  alert('本個案已經移動到「所有臨時患者」（標籤為一般）');
   renderPage('list');
 }
 // 移到復健病房：留在「所有臨時患者」列表，類型改為復健病房
@@ -746,9 +745,139 @@ function nonPacFollowupGoRehabWard(caseId){
     touchCase(c);
   }
   closeModal('modal-nonpac-followup');
-  alert('已移到「所有臨時患者」，類型標示為復健病房。');
+  alert('本個案已經移動到「所有臨時患者」（標籤為復健病房）');
   renderPage('list');
 }
+// ── 轉換類型：一般／復健病房／PAC 三種類型互轉，只能轉成非自己當前的類型 ──
+let convertCaseTypeCaseId=null;
+function openConvertCaseTypeModal(caseId){
+  const c=CASES.find(x=>x.id===caseId);
+  if(!c) return;
+  convertCaseTypeCaseId=caseId;
+  const currentType=getCaseType(c);
+  const allTypes=['PAC','復健病房','一般'];
+  const targets=allTypes.filter(t=>t!==currentType);
+  const body=document.getElementById('convert-case-type-body');
+  body.innerHTML=`
+    <div class="info-note blue" style="margin-bottom:12px">目前類型：<strong>${currentType}</strong>，只能轉換成非目前類型的其他類型。</div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>轉換為 <span class="required">*</span></label>
+      <select class="form-control" id="cct-target" onchange="renderConvertCaseTypeFields()">
+        <option value="">請選擇</option>
+        ${targets.map(t=>`<option value="${t}">${t}</option>`).join('')}
+      </select>
+    </div>
+    <div id="cct-fields"></div>
+  `;
+  openModal('modal-convert-case-type');
+}
+function renderConvertCaseTypeFields(){
+  const target=document.getElementById('cct-target').value;
+  const fieldsEl=document.getElementById('cct-fields');
+  if(target==='PAC'){
+    fieldsEl.innerHTML=`
+      <div class="info-note amber" style="margin-bottom:12px">轉為PAC將從頭開始走PAC收案流程，僅保留病摘資料，其餘欄位（家屬確認、上游回報等）將重新開始。</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>PAC疾病別 <span class="required">*</span></label>
+        <select class="form-control" id="cct-disease">
+          <option value="">請選擇</option>
+          <option value="腦中風">腦中風</option>
+          <option value="創傷性神經損傷">創傷性神經損傷</option>
+          <option value="脆弱性骨折">脆弱性骨折</option>
+          <option value="衰弱高齡">衰弱高齡</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>發病時間 <span class="required">*</span></label>
+        <input class="form-control" type="date" id="cct-onsetdate">
+      </div>
+      <div class="form-group">
+        <label>身上是否有管路</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          ${TUBE_QUICK_OPTIONS.map(t=>`<button type="button" class="btn btn-secondary btn-xs" onclick="toggleCctTubeBadge('${t}')">${t}</button>`).join('')}
+        </div>
+        <input class="form-control" id="cct-tubes" placeholder="可點擊上方快選新增，或直接輸入其他管路狀況">
+      </div>
+    `;
+  } else if(target==='復健病房'||target==='一般'){
+    fieldsEl.innerHTML=`
+      <div class="form-group" style="margin-bottom:12px">
+        <label>照護模式 <span class="required">*</span></label>
+        <select class="form-control" id="cct-mode">
+          <option value="">請選擇</option>
+          <option value="住院">住院</option>
+          <option value="日照">日照</option>
+          <option value="居家">居家</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>是否需復健 <span class="required">*</span></label>
+        <select class="form-control" id="cct-needsrehab">
+          <option value="">請選擇</option>
+          <option value="true">需復健</option>
+          <option value="false">不需復健</option>
+        </select>
+      </div>
+    `;
+  } else {
+    fieldsEl.innerHTML='';
+  }
+}
+function toggleCctTubeBadge(label){
+  const input=document.getElementById('cct-tubes');
+  if(!input) return;
+  const current=input.value.split('、').map(s=>s.trim()).filter(Boolean);
+  const idx=current.indexOf(label);
+  if(idx>-1) current.splice(idx,1); else current.push(label);
+  input.value=current.join('、');
+}
+function submitConvertCaseType(){
+  const c=CASES.find(x=>x.id===convertCaseTypeCaseId);
+  if(!c){ closeModal('modal-convert-case-type'); return; }
+  const target=document.getElementById('cct-target').value;
+  if(!target){ alert('請選擇要轉換的類型'); return; }
+  if(target==='PAC'){
+    const disease=document.getElementById('cct-disease').value;
+    const onsetDate=document.getElementById('cct-onsetdate').value;
+    if(!disease){ alert('請選擇PAC疾病別'); return; }
+    if(!onsetDate){ alert('請填寫發病時間'); return; }
+    const tubes=(document.getElementById('cct-tubes').value||'').trim();
+    // 從頭開始走PAC流程：僅保留病摘（chiefComplaint/admissionDiagnosis/dischargeDiagnosis/referralDoc），其餘欄位重置
+    c.caseType='PAC';
+    c.pacFlow=true;
+    c.disease=disease;
+    delete c.diseaseCategory;
+    c.onsetDate=onsetDate.replace(/-/g,'/');
+    c.tubes=tubes||null;
+    c.mode='';
+    c.modeType=null;
+    c.status='收案判斷中';
+    c.timelineStep='收案判斷中';
+    c.familyConfirmStatus='尚未決定';
+    c.upstreamStatus='尚未回報';
+    delete c.bedAssigned;
+    delete c.bedModuleImported;
+    delete c.rehabReport;
+    delete c.homeStep1Delivered;
+    delete c.deliveredToAdmin;
+    delete c.needsRehab;
+  } else {
+    const mode=document.getElementById('cct-mode').value;
+    const needsRehabVal=document.getElementById('cct-needsrehab').value;
+    if(!mode){ alert('請選擇照護模式'); return; }
+    if(needsRehabVal===''){ alert('請選擇是否需復健'); return; }
+    c.caseType=target;
+    c.pacFlow=false;
+    delete c.diseaseCategory;
+    c.mode=mode;
+    c.modeType=MODE_TYPE_MAP[mode];
+    c.needsRehab=needsRehabVal==='true';
+  }
+  closeModal('modal-convert-case-type');
+  alert(`已將此個案轉換為「${target}」類型。`);
+  renderPage('list');
+}
+
 // 結束收案：開啟結束收案彈窗（不鎖定特定類型），由個管師從5大分類裡選擇實際結束原因
 function nonPacFollowupGoArchive(caseId){
   currentCase=caseId;
@@ -888,6 +1017,10 @@ function openRestoreModal(caseId, caseName){
             <div><div style="font-size:13px;font-weight:600">恢復為一般臨時患者</div><div style="font-size:11px;color:var(--gray-400)">保留姓名／身分證／年齡／性別／聯絡方式／地址／家屬資料，其餘欄位清空</div></div>
           </label>
           <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
+            <input type="radio" name="restore-path" value="rehabward" style="accent-color:var(--blue)">
+            <div><div style="font-size:13px;font-weight:600">恢復為復健病房患者</div><div style="font-size:11px;color:var(--gray-400)">保留姓名／身分證／年齡／性別／聯絡方式／地址／家屬資料，其餘欄位清空</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--gray-200);border-radius:7px;cursor:pointer">
             <input type="radio" name="restore-path" value="pac" style="accent-color:var(--blue)">
             <div><div style="font-size:13px;font-weight:600">恢復至 PAC 收案流程</div><div style="font-size:11px;color:var(--gray-400)">保留姓名／身分證／年齡／性別／聯絡方式／地址／家屬資料，其餘欄位清空，重新走一次 PAC 判斷</div></div>
           </label>
@@ -929,6 +1062,7 @@ function confirmRestore(){
     c.status='收案判斷中';
     c.timelineStep='收案判斷中';
     c.pacFlow=(path==='pac');
+    c.caseType=path==='pac'?'PAC':(path==='rehabward'?'復健病房':'一般');
     delete c.archiveType;
     delete c.archiveDate;
     delete c.archiveReason;
@@ -936,7 +1070,8 @@ function confirmRestore(){
     touchCase(c);
   }
   closeModal('modal-restore');
-  alert(`個案已回復為${path==='pac'?'PAC 收案流程':'一般臨時患者'}，已保留基本資料，其餘資料清空，已移回臨時資料列表。`);
+  const pathLabel=path==='pac'?'PAC 收案流程':(path==='rehabward'?'復健病房患者':'一般臨時患者');
+  alert(`個案已回復為${pathLabel}，已保留基本資料，其餘資料清空，已移回臨時資料列表。`);
   renderList(document.getElementById('main-content'));
 }
 
@@ -1037,6 +1172,7 @@ function renderExpandedContent(c){
     ?`<button class="btn btn-primary btn-xs" onclick="saveBasicEdit('${caseId}')">✓ 儲存</button><button class="btn btn-ghost btn-xs" onclick="cancelBasicEdit('${caseId}')">✕ 取消</button>`
     :`<button class="btn btn-ghost btn-xs" ${isArchived?'disabled style="opacity:.45;cursor:not-allowed"':''} onclick="toggleBasicEdit('${caseId}')">✏️ 編輯</button>`;
   const headerActions=isMgr?`
+    <button class="btn btn-secondary btn-xs" ${isArchived?'disabled style="opacity:.45;cursor:not-allowed"':''} onclick="openConvertCaseTypeModal('${caseId}')">🔀 轉換類型</button>
     <button class="btn btn-secondary btn-xs" ${isArchived?'disabled style="opacity:.45;cursor:not-allowed"':''} onclick="openArchiveModal({})">結束收案</button>
     ${editControls}
   `:(isDoc?`<span class="badge badge-amber" style="font-size:11px">醫師視角</span>`
@@ -1149,25 +1285,25 @@ function renderRemarkBlock(c,isEditing){
 // ══════════════════════════════
 
 // ── 病摘與PAC判斷（合併彈窗，依點擊來源自動捲動至對應區塊）──
-// summaryJudgeView：彈窗目前顯示的內容視圖：'main'（病摘＋PAC判斷）｜'translate'（輔助翻譯）｜'handoff'（轉交判斷），後兩者取代整個彈窗內容，並顯示標題旁「← 返回」按鈕
-let summaryJudgeView='main';
-// showNonPacOptions：送出判斷結果為「非 PAC」後，是否在 PAC 判斷區塊下方內嵌顯示 5 個後續處理選項
-let showNonPacOptions=false;
+// summaryModalView：病摘彈窗目前顯示的內容視圖：'main'｜'translate'（輔助翻譯）
+let summaryModalView='main';
+// judgeModalView：PAC判斷彈窗目前顯示的內容視圖：'main'｜'handoff'（轉交判斷）
+let judgeModalView='main';
 
-function renderSummaryJudgeModalBody(c){
-  if(summaryJudgeView==='translate') return renderSummaryTranslateView();
-  if(summaryJudgeView==='handoff') return renderJudgeHandoffView();
-  // 已結束紀錄（c.status==='封存'）唯讀化：個管師視角不再顯示 OCR／編輯功能，PAC判斷區塊比照行政視角唯讀渲染
+// 病摘彈窗內容：OCR辨識＋病摘欄位，不含PAC判斷、不含杏翔匯入（renderOcrImportSection 內部的杏翔匯入欄位已移除，見下方調整）
+function renderSummaryOnlyBody(c){
+  if(summaryModalView==='translate') return renderSummaryTranslateView();
+  // 已結束紀錄（c.status==='封存'）唯讀化：個管師視角不再顯示 OCR／編輯功能
   const isMgr=currentRole==='mgr'&&c.status!=='封存';
   const isDoc=currentRole==='doc';
   const isNur=currentRole==='nur';
+  return (isMgr?renderOcrImportSection(c):'')+renderDigestSection(c,isMgr,isDoc,isNur);
+}
+// PAC判斷彈窗內容：只有PAC判斷區塊，僅類型為PAC的個案才有意義（一般／復健病房個案沒有入口可以開這個彈窗）
+function renderJudgeOnlyBody(c){
+  if(judgeModalView==='handoff') return renderJudgeHandoffView();
   const isAdm=currentRole==='adm';
-  // 一般／復健病房個案（非PAC類型）：仍顯示 OCR辨識（renderOcrImportSection 內部已依 caseType 隱藏杏翔匯入），但不顯示PAC判斷區塊
-  const isPacCaseType=getCaseType(c)==='PAC';
-  if(!isPacCaseType){
-    return (isMgr?renderOcrImportSection(c):'')+renderDigestSection(c,isMgr,isDoc,isNur);
-  }
-  return (isMgr?renderOcrImportSection(c):'')+renderDigestSection(c,isMgr,isDoc,isNur)+renderJudgeSection(c,isAdm||c.status==='封存');
+  return renderJudgeSection(c,isAdm||c.status==='封存');
 }
 // ── 病摘彈窗最上方：OCR 辨識（上傳PDF／上傳圖片／串接Line）與杏翔匯入，模擬「辨識中→成功/失敗」三段流程，僅個管師可用 ──
 let ocrState={}; // caseId -> {phase:'loading'|'success'|'fail', message}
@@ -1181,7 +1317,6 @@ function renderOcrImportSection(c){
   const caseId=c.id;
   const state=ocrState[caseId]||{phase:'idle'};
   const loading=state.phase==='loading';
-  const isPacCaseType=getCaseType(c)==='PAC';
   const statusBox=state.phase==='loading'
     ?`<div class="info-note blue" style="margin-top:12px;margin-bottom:0">⏳ 辨識中，請稍候…</div>`
     :state.phase==='success'
@@ -1192,7 +1327,7 @@ function renderOcrImportSection(c){
   return `
   <div class="section-card">
     <div class="sc-header">
-      <div class="sc-title">🔎 OCR 辨識${isPacCaseType?' / 杏翔匯入':''}</div>
+      <div class="sc-title">🔎 OCR 辨識</div>
     </div>
     <div class="sc-body">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
@@ -1202,10 +1337,6 @@ function renderOcrImportSection(c){
       </div>
       <input type="file" id="ocr-file-pdf-${caseId}" accept=".pdf,.doc,.docx" class="hidden" onchange="handleOcrFileSelected('${caseId}',this,'pdf')">
       <input type="file" id="ocr-file-img-${caseId}" accept=".jpg,.jpeg,.png" class="hidden" onchange="handleOcrFileSelected('${caseId}',this,'image')">
-      ${isPacCaseType?`<div class="form-group" style="margin-bottom:0">
-        <label>杏翔匯入</label>
-        <input class="form-control" id="his-import-input-${caseId}" placeholder="請輸入病歷號" ${loading?'disabled':''} onkeydown="handleHisImportKeydown(event,'${caseId}')">
-      </div>`:''}
       ${statusBox}
     </div>
   </div>`;
@@ -1238,7 +1369,7 @@ function fillOcrDemoContent(caseId){
 // 上傳 PDF／上傳圖片：辨識中 1.5 秒 → 依檔名是否含 fail/error 決定成功或失敗
 function runOcrRecognition(caseId,fileName,sourceLabel){
   ocrState[caseId]={phase:'loading'};
-  refreshSummaryJudgeModal(caseId);
+  refreshSummaryModal(caseId);
   setTimeout(()=>{
     const failed=/fail|error/i.test(fileName);
     if(failed){
@@ -1247,18 +1378,18 @@ function runOcrRecognition(caseId,fileName,sourceLabel){
       fillOcrDemoContent(caseId);
       ocrState[caseId]={phase:'success',message:`✓ 辨識成功，已自動帶入以下欄位，請核對後可手動修正（來源：${sourceLabel}・${fileName}）`};
     }
-    refreshSummaryJudgeModal(caseId);
+    refreshSummaryModal(caseId);
     renderList(document.getElementById('main-content'));
   },1500);
 }
 // 杏翔匯入：辨識中 1.5 秒 → 固定模擬成功
 function runHisImport(caseId,recordNo){
   ocrState[caseId]={phase:'loading'};
-  refreshSummaryJudgeModal(caseId);
+  refreshSummaryModal(caseId);
   setTimeout(()=>{
     fillOcrDemoContent(caseId);
     ocrState[caseId]={phase:'success',message:`✓ 已從杏翔匯入病摘資料（病歷號：${recordNo}），請核對後可手動修正`};
-    refreshSummaryJudgeModal(caseId);
+    refreshSummaryModal(caseId);
     renderList(document.getElementById('main-content'));
   },1500);
 }
@@ -1344,8 +1475,6 @@ function renderJudgeSection(c,isAdm){
     </div>
   </div>`;
 }
-// 判斷結果為「非 PAC」後內嵌顯示的 5 個後續處理選項：居家醫療／復健病房（僅腦中風）／一般（復健）／一般（開刀）／其他服務不收案
-// 這裡只負責記錄使用者勾選了哪一個（selectedNonPacOption，手動控制單選，不用瀏覽器 radio），實際動作留到「送出判斷」才執行（見 submitPacJudgment）
 // 已改為送出判斷後才跳出的彈窗（modal-nonpac-followup），不再於判斷卡片內嵌顯示；此常數保留供該彈窗渲染按鈕清單使用
 const NON_PAC_OPTIONS=[
   {key:'general',label:'移到一般'},
@@ -1382,8 +1511,8 @@ function renderSummaryTranslateView(){
   </div>`;
 }
 function openSummaryTranslateView(){
-  summaryJudgeView='translate';
-  refreshSummaryJudgeModal(currentCase);
+  summaryModalView='translate';
+  refreshSummaryModal(currentCase);
 }
 
 // ── 轉交判斷：同一彈窗內容切換視圖，不開第二層彈窗，「← 返回」切回主畫面 ──
@@ -1399,40 +1528,58 @@ function renderJudgeHandoffView(){
   </div>`;
 }
 function openJudgeHandoffView(){
-  summaryJudgeView='handoff';
-  refreshSummaryJudgeModal(currentCase);
+  judgeModalView='handoff';
+  refreshJudgeModal(currentCase);
 }
 function submitJudgeHandoff(){
-  closeModal('modal-summary-judge');
-  summaryJudgeView='main';
+  closeModal('modal-judge');
+  judgeModalView='main';
   alert('已送出委託，對方將收到通知');
 }
 
-function summaryJudgeGoBack(){
-  summaryJudgeView='main';
-  refreshSummaryJudgeModal(currentCase);
+function summaryModalGoBack(){
+  summaryModalView='main';
+  refreshSummaryModal(currentCase);
+}
+function judgeModalGoBack(){
+  judgeModalView='main';
+  refreshJudgeModal(currentCase);
 }
 
-function openSummaryJudgeModal(caseId,focusKey){
+// 病摘彈窗
+function openSummaryModal(caseId){
   currentCase=caseId;
-  summaryJudgeView='main';
-  showNonPacOptions=false;
-  selectedNonPacOption=null;
-  delete judgeSelectedOption[caseId];
+  summaryModalView='main';
   delete ocrState[caseId];
-  refreshSummaryJudgeModal(caseId);
-  openModal('modal-summary-judge');
-  setTimeout(()=>{
-    const target=document.getElementById((focusKey==='judge'?'sj-judge-section-':'sj-summary-section-')+caseId);
-    if(target) target.scrollIntoView({block:'start',behavior:'smooth'});
-  },0);
+  refreshSummaryModal(caseId);
+  openModal('modal-summary');
 }
-function refreshSummaryJudgeModal(caseId){
-  const body=document.getElementById('summary-judge-modal-body');
+function refreshSummaryModal(caseId){
+  const body=document.getElementById('summary-modal-body');
   const c=CASES.find(x=>x.id===caseId);
-  if(body&&c) body.innerHTML=renderSummaryJudgeModalBody(c);
-  const backBtn=document.getElementById('summary-judge-back-btn');
-  if(backBtn) backBtn.classList.toggle('hidden', summaryJudgeView==='main');
+  if(body&&c) body.innerHTML=renderSummaryOnlyBody(c);
+  const backBtn=document.getElementById('summary-back-btn');
+  if(backBtn) backBtn.classList.toggle('hidden', summaryModalView==='main');
+}
+// PAC判斷彈窗（僅類型為PAC的個案有入口可以開啟）
+function openJudgeModal(caseId){
+  currentCase=caseId;
+  judgeModalView='main';
+  delete judgeSelectedOption[caseId];
+  refreshJudgeModal(caseId);
+  openModal('modal-judge');
+}
+function refreshJudgeModal(caseId){
+  const body=document.getElementById('judge-modal-body');
+  const c=CASES.find(x=>x.id===caseId);
+  if(body&&c) body.innerHTML=renderJudgeOnlyBody(c);
+  const backBtn=document.getElementById('judge-back-btn');
+  if(backBtn) backBtn.classList.toggle('hidden', judgeModalView==='main');
+}
+// 向下相容的路由函式：舊的呼叫端（下一步徽章、病摘/PAC判斷徽章、護理師佇列）依 focusKey 決定開哪個彈窗
+function openSummaryJudgeModal(caseId,focusKey){
+  if(focusKey==='judge') openJudgeModal(caseId);
+  else openSummaryModal(caseId);
 }
 
 // ── 家屬確認彈窗 ──
@@ -1803,20 +1950,10 @@ function judgeOption(label,selectedDefault,disabled,caseId){
     <input type="radio" name="judge-result-${caseId}" ${selected?'checked':''} ${disabled?'disabled':''}><span>${label}</span>
   </div>`;
 }
-// 點擊判斷結果選項：選「非 PAC」時立即帶出下方 5 個後續處理選項（不用等按送出判斷），選其他選項則收起
+// 點擊判斷結果選項：只記錄目前選擇，非PAC後續處理已改為送出判斷後才跳出的獨立彈窗（見 openNonPacFollowupModal），這裡不再需要立即顯示內嵌選項
 function onJudgeOptionSelect(caseId,label){
   judgeSelectedOption[caseId]=label;
-  if(label==='非 PAC'){
-    const categorySel=document.getElementById('pac-disease-category-'+caseId);
-    const c=CASES.find(x=>x.id===caseId);
-    nonPacSelectedDisease=(categorySel&&categorySel.value)?categorySel.value:(c?c.disease:null);
-    showNonPacOptions=true;
-    selectedNonPacOption=null;
-  }else{
-    showNonPacOptions=false;
-    selectedNonPacOption=null;
-  }
-  refreshSummaryJudgeModal(caseId);
+  refreshJudgeModal(caseId);
 }
 
 function submitPacJudgment(caseId){
@@ -1831,7 +1968,7 @@ function submitPacJudgment(caseId){
     const categorySel=document.getElementById('pac-disease-category-'+caseId);
     if(!categorySel||!categorySel.value){alert('請選擇 PAC 疾病別分類');return;}
     if(c) { c.diseaseCategory=categorySel.value; c.caseType='PAC'; }
-    closeModal('modal-summary-judge');
+    closeModal('modal-judge');
     // 是PAC判斷送出後直接套用「確定收案」的邏輯（原本 confirmCollection 對應 variant 的處理），不再另外跳「是否確定收案？」彈窗
     if(c&&c.modeType==='hosp'){
       c.nurseNotified=true;
@@ -1866,10 +2003,10 @@ function submitPacJudgment(caseId){
   } else if(result==='非 PAC'){
     const categorySel=document.getElementById('pac-disease-category-'+caseId);
     nonPacSelectedDisease=(categorySel&&categorySel.value)?categorySel.value:(c?c.disease:null);
-    closeModal('modal-summary-judge');
+    closeModal('modal-judge');
     openNonPacFollowupModal(caseId);
   } else {
-    closeModal('modal-summary-judge');
+    closeModal('modal-judge');
     alert('判斷結果：需再評估\n\n狀態維持不變，已記錄本次判斷意見供後續參考');
     renderPage('detail',currentCase);
   }
@@ -1960,6 +2097,12 @@ function mockXingxiangLookup(idNumber){
   const hit=MOCK_XINGXIANG_DB.find(r=>r.idNumber===idNumber.trim().toUpperCase());
   return hit?{found:true,...hit}:{found:false};
 }
+// 病歷號直接查詢：不透過身分證，直接拿病歷號比對杏翔病患主檔，查到就代表已有正式病歷（身分證與病歷號兩條比對路線並行）
+function mockXingxiangLookupByMrn(mrn){
+  if(!mrn) return {found:false};
+  const hit=MOCK_XINGXIANG_DB.find(r=>r.medicalRecordNo===mrn.trim());
+  return hit?{found:true,...hit}:{found:false};
+}
 // 比對順序：先查杏翔（院內舊病人，最強優先權）→ 再查 PAC 系統自己資料庫裡進行中的臨時資料 → 都沒有則查無資料
 // 若杏翔命中但姓名對不上，視為可能打錯身分證，回傳 nameMismatch 而非直接當同一人
 function checkIdentityMatch(idNumber,inputName,excludeCaseId){
@@ -1997,6 +2140,32 @@ function renderIdMatchHint(result,onApplyFnName){
   return '';
 }
 let newCaseIdMatchResult=null;
+// 病歷號直接查詢：與身分證比對並行的第二條路線，不透過身分證，直接拿病歷號比對杏翔，查到就代表已有正式病歷
+function onNewCaseMrnInput(){
+  const mrnVal=(document.getElementById('new-manual-mrn-search').value||'').trim();
+  const hintEl=document.getElementById('new-manual-mrn-match-hint');
+  const mrnWrap=document.getElementById('new-manual-mrn-wrap');
+  const mrnInput=document.getElementById('new-manual-mrn');
+  if(!mrnVal){ if(hintEl) hintEl.innerHTML=''; return; }
+  const result=mockXingxiangLookupByMrn(mrnVal);
+  if(result.found){
+    newCaseIdMatchResult={level:'formal',data:result};
+    if(mrnInput) mrnInput.value=result.medicalRecordNo;
+    if(mrnWrap) mrnWrap.classList.remove('hidden');
+    if(hintEl) hintEl.innerHTML='';
+    const bodyEl=document.getElementById('modal-id-match-formal-body');
+    if(bodyEl) bodyEl.innerHTML=`<div class="info-note blue">此病歷號已在本醫院有正式病歷，身分證為 <strong>${result.idNumber}</strong>，姓名為 <strong>${result.name}</strong>，最後更新於 ${result.lastUpdated}。</div>
+      <div style="margin-top:10px;font-size:13px;line-height:1.8">
+        <div>地址：${result.address}</div>
+        <div>家屬：${result.familyName}（${result.familyRelation}）</div>
+        <div>聯絡電話：${result.familyPhone}</div>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--gray-500)">是否要沿用既有患者身分，將以上基本資料（含身分證）一併帶入這次的臨時紀錄？</div>`;
+    openModal('modal-id-match-formal');
+  } else {
+    if(hintEl) hintEl.innerHTML=`<div class="info-note amber" style="font-size:12px">查無此病歷號的院內既有資料，可能是全新病歷號或尚未登打，請確認後繼續。</div>`;
+  }
+}
 function onNewCaseIdNumberInput(){
   const idVal=(document.getElementById('new-manual-idnumber').value||'').trim();
   const nameVal=(document.getElementById('new-manual-name').value||'').trim();
@@ -2032,6 +2201,7 @@ function applyNewCaseIdMatch(apply){
     const set=(id,val)=>{const el=document.getElementById(id); if(el&&val) el.value=val;};
     set('new-manual-address',d.address);
     set('new-manual-familyphone',d.familyPhone);
+    set('new-manual-idnumber',d.idNumber);
   }
   closeModal('modal-id-match-formal');
   const hintEl=document.getElementById('new-manual-id-match-hint');
@@ -2055,16 +2225,28 @@ function toggleNewCaseIsPac(checked){
   const knob=document.getElementById('new-manual-ispac-knob');
   if(track) track.style.backgroundColor=checked?'var(--blue)':'var(--gray-300)';
   if(knob) knob.style.transform=checked?'translateX(18px)':'translateX(0)';
+  onNewCaseTypeOrModeChange();
+}
+// 類型＝一般 且 照護模式＝住院 時，多顯示「住院類型」欄位（一般住院／安寧）；其餘組合（含PAC模式）一律隱藏並清空
+function onNewCaseTypeOrModeChange(){
+  const isPac=document.getElementById('new-manual-ispac').checked;
+  const casetype=document.getElementById('new-manual-casetype').value;
+  const mode=document.getElementById('new-manual-mode').value;
+  const wrap=document.getElementById('new-manual-admissiontype-wrap');
+  const show=(!isPac&&casetype==='一般'&&mode==='住院');
+  wrap.classList.toggle('hidden',!show);
+  if(!show) document.getElementById('new-manual-admissiontype').value='';
 }
 
 function resetNewCaseForm(){
-  ['new-manual-name','new-manual-age','new-manual-location','new-manual-onsetdate','new-manual-address','new-manual-familyphone','new-manual-tubes','new-manual-disease','new-manual-mode','new-manual-idnumber'].forEach(id=>{
+  ['new-manual-name','new-manual-age','new-manual-location','new-manual-onsetdate','new-manual-address','new-manual-familyphone','new-manual-tubes','new-manual-disease','new-manual-disease-text','new-manual-mode','new-manual-idnumber','new-manual-mrn-search','new-manual-casetype','new-manual-admissiontype'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.value='';
   });
   const idInput=document.getElementById('new-manual-idnumber'); if(idInput) idInput.disabled=false;
   const unknownCb=document.getElementById('new-manual-id-unknown'); if(unknownCb) unknownCb.checked=false;
   const hintEl=document.getElementById('new-manual-id-match-hint'); if(hintEl) hintEl.innerHTML='';
+  const mrnHintEl=document.getElementById('new-manual-mrn-match-hint'); if(mrnHintEl) mrnHintEl.innerHTML='';
   const mrnWrap=document.getElementById('new-manual-mrn-wrap'); if(mrnWrap) mrnWrap.classList.add('hidden');
   const mrnInput=document.getElementById('new-manual-mrn'); if(mrnInput) mrnInput.value='';
   closeModal('modal-id-match-formal');
@@ -2092,6 +2274,19 @@ function saveNewCase(){
       alert('一般個案必須選擇是否需要復健，選擇需復健才會進入復健排班可選擇的個案清單');
       return;
     }
+    if(!document.getElementById('new-manual-casetype').value){
+      alert('請選擇類型（復健病房或一般）');
+      return;
+    }
+  }
+  const casetypeValEarly=document.getElementById('new-manual-casetype').value;
+  let admissionTypeVal=null;
+  if(!isPac&&casetypeValEarly==='一般'&&document.getElementById('new-manual-mode').value==='住院'){
+    admissionTypeVal=document.getElementById('new-manual-admissiontype').value;
+    if(!admissionTypeVal){
+      alert('請選擇住院類型（一般住院或安寧）');
+      return;
+    }
   }
   const ageVal=document.getElementById('new-manual-age').value;
   const age=ageVal?parseInt(ageVal,10):null;
@@ -2102,12 +2297,13 @@ function saveNewCase(){
   const address=(document.getElementById('new-manual-address').value||'').trim();
   const familyPhone=(document.getElementById('new-manual-familyphone').value||'').trim();
   const tubes=(document.getElementById('new-manual-tubes').value||'').trim();
-  const diseaseVal=document.getElementById('new-manual-disease').value;
+  const diseaseVal=isPac?document.getElementById('new-manual-disease').value:(document.getElementById('new-manual-disease-text').value||'').trim();
   const modeVal=document.getElementById('new-manual-mode').value;
   const idUnknown=document.getElementById('new-manual-id-unknown').checked;
   const idNumberVal=idUnknown?'':(document.getElementById('new-manual-idnumber').value||'').trim().toUpperCase();
   const needsRehabSel=document.getElementById('new-manual-needsrehab').value;
   const needsRehabVal=needsRehabSel===''?null:(needsRehabSel==='true');
+  const caseTypeVal=isPac?'PAC':document.getElementById('new-manual-casetype').value;
 
   const newCase={
     id:'c'+Date.now(),
@@ -2116,6 +2312,7 @@ function saveNewCase(){
     gender:'男',
     mode:modeVal||'',
     modeType:modeVal?MODE_TYPE_MAP[modeVal]:null,
+    admissionType:admissionTypeVal,
     disease:diseaseVal||'',
     source:location||'—',
     date:TODAY_STR,
@@ -2131,13 +2328,24 @@ function saveNewCase(){
     tubes:tubes||null,
     idNumber:idNumberVal||null,
     pacFlow:isPac,
-    caseType:isPac?'PAC':'一般',
+    caseType:caseTypeVal,
     needsRehab:isPac?null:needsRehabVal,
   };
   // 儲存當下若身分證有值，觸發一次比對（三個觸發點之一）；已有病歷號則直接沿用，不再等待行政補登
   if(idNumberVal){
     const result=checkIdentityMatch(idNumberVal,name);
     if(result.level==='formal') newCase.medicalRecordNo=result.data.medicalRecordNo;
+  }
+  // 病歷號直接查詢路線：若身分證路線沒有命中，改用病歷號查詢結果（若有）
+  if(!newCase.medicalRecordNo){
+    const mrnSearchVal=(document.getElementById('new-manual-mrn-search').value||'').trim();
+    if(mrnSearchVal){
+      const mrnResult=mockXingxiangLookupByMrn(mrnSearchVal);
+      if(mrnResult.found){
+        newCase.medicalRecordNo=mrnResult.medicalRecordNo;
+        if(!newCase.idNumber) newCase.idNumber=mrnResult.idNumber;
+      }
+    }
   }
   CASES.push(newCase);
   closeModal('modal-new');
@@ -2176,7 +2384,7 @@ function confirmNurseReceived(caseId){
   if(c) c.nurseNotified=false;
   alert('已確認接收，請至杏翔系統完成病摘登打。');
   if(c){
-    refreshSummaryJudgeModal(caseId);
+    refreshSummaryModal(caseId);
     renderPage('detail',currentCase);
   }
 }
@@ -2198,13 +2406,13 @@ function toggleSummaryEdit(caseId){
       touchCase(c);
     }
     summaryEditMode=false;
-    refreshSummaryJudgeModal(caseId);
+    refreshSummaryModal(caseId);
     renderList(document.getElementById('main-content'));
     alert('病摘已更新，若英文原文有變動，建議重新點擊「輔助翻譯」核對中文對照內容');
   } else {
     summaryEditMode=true;
     summaryEditCaseId=caseId;
-    refreshSummaryJudgeModal(caseId);
+    refreshSummaryModal(caseId);
   }
 }
 
@@ -2540,70 +2748,8 @@ function submitAdminFinalize(){
 }
 
 
-// ── PAC 判斷＝非PAC：依疾病別決定選項（居家醫療／一般（復健）／一般（開刀）／其他服務・不收案，腦中風額外多一個復健病房）
-// 5 個選項內嵌顯示於「病摘與PAC判斷」彈窗（見 renderNonPacOptionsInline），點擊後維持既有的「關閉目前彈窗、開啟下一個」做法──
+// ── PAC 判斷＝非PAC：疾病別記錄下來供「移到復健病房」選項判斷是否為腦中風可選（見 openNonPacFollowupModal／nonPacFollowupGo* 函式）──
 let nonPacSelectedDisease=null;
-// 居家醫療：收案判斷階段當下即可分流的非PAC情境（與正式病歷階段醫師到宅評估後才發現非PAC，屬另一獨立情境），直接列為「PAC不收案紀錄」，類型鎖定「轉居家醫療」，不需匯入排床模組
-function nonPacGoHomeCare(){
-  showNonPacOptions=false;
-  selectedNonPacOption=null;
-  closeModal('modal-summary-judge');
-  openArchiveModal({presetType:'轉居家醫療',locked:true});
-}
-// 疾病別為腦中風時的選項：詢問要放回「所有臨時患者」（類型改為復健病房，繼續留在臨時患者列表）還是直接送入「結束紀錄」
-function nonPacGoRehabWard(){
-  showNonPacOptions=false;
-  selectedNonPacOption=null;
-  closeModal('modal-summary-judge');
-  const c=getCurrentCaseObj();
-  const keepActive=confirm('已選擇「復健病房」。是否將此個案放入「所有臨時患者」列表繼續追蹤（類型將顯示為復健病房）？\n\n選擇「確定」＝放入所有臨時患者；選擇「取消」＝直接送入結束紀錄。');
-  if(keepActive&&c){
-    c.pacFlow=false;
-    delete c.diseaseCategory;
-    c.caseType='復健病房';
-    c.status='收案判斷中';
-    c.timelineStep='收案判斷中';
-    touchCase(c);
-    alert('已放入「所有臨時患者」列表，類型標示為復健病房。');
-    renderPage('list');
-    return;
-  }
-  if(c) c.caseType='復健病房';
-  openArchiveModal({presetType:'轉復健病房',locked:true});
-}
-function nonPacGoArchive(){
-  showNonPacOptions=false;
-  selectedNonPacOption=null;
-  closeModal('modal-summary-judge');
-  openArchiveModal({presetType:'非PAC退案',locked:true});
-}
-// 一般（復健）／一般（開刀）：住院／日照個案選擇「是PAC」或「非PAC→一般」後，皆彈窗詢問是否匯入排床模組，匯入時標記 bedImportIsPac=false 供排床模組區分使用
-function nonPacGoGeneral(type){
-  const c=getCurrentCaseObj();
-  const importBed=confirm(`已選擇「${type}」。是否將個案資料匯入排床管理模組？`);
-  if(c){
-    c.modeType='general';
-    c.mode='一般';
-    c.disease=type;
-    c.statusBeforeArchive=c.status;
-    c.status='封存';
-    c.archiveType=type;
-    c.archiveReason=`收案判斷確認為非PAC個案，選擇類型：${type}${importBed?'，個案資料已移交排床管理模組':''}。`;
-    c.archiveDate='2026/07/09';
-    c.archiveOperator='林美惠';
-    c.bedImportIsPac=false;
-    c.timelineStep=null;
-    delete c.timelineSub;
-    touchCase(c);
-  }
-  showNonPacOptions=false;
-  selectedNonPacOption=null;
-  closeModal('modal-summary-judge');
-  alert(importBed
-    ?`已選擇「${type}」。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。臨時資料模組中本個案狀態更新為「PAC不收案紀錄」。`
-    :`已選擇「${type}」。臨時資料模組中本個案狀態更新為「PAC不收案紀錄」。`);
-  if(c) renderPage('detail',currentCase);
-}
 
 // ── 轉換照護模式（本模組僅臨時病歷階段：選模式→填日期備註→送出即重置為新模式的起始進度，其餘資料保留）──
 const MODE_TYPE_MAP={'住院':'hosp','日照':'day','居家':'home'};
@@ -2732,7 +2878,7 @@ function renderArchiveModalBody(){
       <textarea class="form-control" rows="2" id="archive-field-input" placeholder="${def.hint||''}"></textarea>
     </div>`:'';
 
-  const note=`<div class="info-note amber">個案將列為「PAC不收案紀錄」，並記錄以下類型供後續統計。</div>`;
+  const note=`<div class="info-note amber">個案將列為「已結束紀錄」，並記錄以下類型供後續統計。</div>`;
 
   document.getElementById('archive-modal-body').innerHTML=note+optsHtml+fieldHtml;
 }
@@ -2779,7 +2925,7 @@ function confirmArchive(){
   closeModal('modal-archive');
   alert(isGeneralType&&importBed
     ?`已選擇「${type}」。個案資料已移交排床管理模組，可於排床模組「個案管理匯入」Tab 中選取此個案進行排床。臨時資料模組中本個案狀態更新為「PAC不收案紀錄」。`
-    :'個案已列為「PAC不收案紀錄」');
+    :`本個案已經移動到「已結束紀錄」（原因：${type}）`);
   if(c) renderPage('detail',currentCase);
 }
 
